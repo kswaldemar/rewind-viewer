@@ -184,7 +184,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
 
         //Non Ui related drawing
         solid_color.use();
-        solid_color.set_mat4("view", cam.view_ptr());
+        solid_color.set_mat4("view", cam.view());
         solid_color.set_mat4("projection", proj);
 
         glm::mat4 model;
@@ -195,18 +195,16 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         grid.render();
 
         circle.use();
-        circle.set_mat4("view", cam.view_ptr());
-        circle.set_mat4("projection", proj);
+        circle.set_mat4("proj_view", proj * cam.view());
         glBindVertexArray(tr_vao);
         //solid_color.set_vec3("color", {0.0f, 0.0f, 1.0f});
-        for (int i = 0; i < 5000; ++i) {
+        for (int i = 0; i < 50000; ++i) {
             auto shift = glm::vec3{rnd(0, 100), rnd(0, 100), 0.0f};
             model = glm::translate(glm::mat4(), shift);
             circle.set_mat4("model", model);
             circle.set_vec3("center", shift);
             glDrawArrays(GL_TRIANGLES, 0, 9);
         }
-
 
         // Render Ui
         glBindVertexArray(0);
@@ -217,7 +215,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
             glfwSetWindowShouldClose(window, true);
         }
 
-        cam.update_speed(ImGui::GetIO().Framerate);
+        cam.update(ImGui::GetIO().Framerate);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

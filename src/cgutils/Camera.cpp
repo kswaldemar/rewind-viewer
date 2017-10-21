@@ -85,15 +85,14 @@ void Camera::mouse_move(double xpos, double ypos) {
     front_dir_ = calc_front_dir(yaw_, pitch_);
 }
 
-float *Camera::view_ptr() {
+void Camera::update(float fps) {
+    move_per_frame_ = des_move_speed_ / fps;
+
     const glm::vec3 right = glm::normalize(glm::cross(fake_up_, front_dir_));
     up_dir_ = glm::normalize(glm::cross(front_dir_, right));
-
     view_ = glm::lookAt(pos_, pos_ + front_dir_, up_dir_);
-
-    return glm::value_ptr(view_);
 }
 
-void Camera::update_speed(float fps) {
-    move_per_frame_ = des_move_speed_ / fps;
+const glm::mat4 &Camera::view() const {
+    return view_;
 }

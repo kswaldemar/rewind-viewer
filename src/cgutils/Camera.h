@@ -22,9 +22,9 @@ public:
     void left();
     void right();
 
-    float *view_ptr();
+    const glm::mat4 &view() const;
 
-    void update_speed(float fps);
+    void update(float fps);
 
 private:
     void mouse_move(double xpos, double ypos);
