@@ -25,6 +25,7 @@ public:
     void set_mat4(const std::string &name, float *pv);
     void set_vec3(const std::string &name, const glm::vec3 &v);
 
+    void set_float(const std::string &name, float val);
 private:
     GLuint program_ = 0;
 };

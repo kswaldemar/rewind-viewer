@@ -36,6 +36,7 @@ private:
     float pitch_;
     float des_move_speed_;
     float move_per_frame_;
+    glm::vec3 fake_up_;
 
     glm::mat4 view_;
 

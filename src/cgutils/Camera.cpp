@@ -30,6 +30,7 @@ Camera::Camera(const glm::vec3 &initial_pos, const glm::vec3 &up, float yaw, flo
     , yaw_(yaw)
     , pitch_(pitch)
     , des_move_speed_(move_speed)
+    , fake_up_(up)
 {
     front_dir_ = calc_front_dir(yaw_, pitch_);
     g_this = this;
@@ -85,8 +86,7 @@ void Camera::mouse_move(double xpos, double ypos) {
 }
 
 float *Camera::view_ptr() {
-    const glm::vec3 fake_up = {0.0, 0.0, 1.0};
-    const glm::vec3 right = glm::normalize(glm::cross(fake_up, front_dir_));
+    const glm::vec3 right = glm::normalize(glm::cross(fake_up_, front_dir_));
     up_dir_ = glm::normalize(glm::cross(front_dir_, right));
 
     view_ = glm::lookAt(pos_, pos_ + front_dir_, up_dir_);

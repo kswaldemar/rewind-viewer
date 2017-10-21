@@ -120,3 +120,7 @@ void Shader::set_vec3(const std::string &name, const glm::vec3 &v) {
 void Shader::set_mat4(const std::string &name, float *pv) {
     glUniformMatrix4fv(uniform(name), 1, GL_FALSE, pv);
 }
+
+void Shader::set_float(const std::string &name, float val) {
+    glUniform1f(uniform(name), val);
+}

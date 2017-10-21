@@ -1,9 +1,9 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <viewer/UIController.h>
 #include <cgutils/Shader.h>
 #include <cgutils/utils.h>
+#include <viewer/UIController.h>
 #include <common/logger.h>
 
 #include <glm/glm.hpp>
@@ -11,14 +11,17 @@
 
 #include <exception>
 #include <vector>
+#include <ctime>
 
-
-
-constexpr size_t DEFAULT_WIN_HEIGHT = 800;
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
+constexpr size_t DEFAULT_WIN_HEIGHT = 800;
 
 GLFWwindow *setup_window();
 void prepare_and_run_game_loop(GLFWwindow *window);
+
+inline float rnd(float a, float b) {
+    return a + (b - a) * (static_cast<float>(std::rand()) / RAND_MAX);
+}
 
 int main() {
     // Init GLFW
@@ -37,14 +40,14 @@ int main() {
     LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 #ifdef OPENGL_DEBUG
-    if (GL_ARB_debug_output) { // NOLINT
-        LOG_INFO("OpenGL:: Debug output enabled");
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-        glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-    }
+#  if (GL_ARB_debug_output)
+    LOG_INFO("OpenGL:: Debug output enabled");
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+    glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
+    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#  endif
 #endif
-
+    std::srand(std::time(nullptr));
     try {
         prepare_and_run_game_loop(window);
     } catch (const std::exception &e) {
@@ -55,7 +58,7 @@ int main() {
     return 0;
 }
 
-GLFWwindow *setup_window()  {
+GLFWwindow *setup_window() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -70,7 +73,7 @@ GLFWwindow *setup_window()  {
     GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT,
                                           "OpenGL viewer for Russian AI Cup", nullptr, nullptr);
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int width, int height) {
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
         glViewport(0, 0, width, height);
     });
 
@@ -135,7 +138,9 @@ private:
 };
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
-    const float CAMERA_SPEED_PER_SECOND = 50.0;
+    const float CAMERA_SPEED_PER_SECOND = 60.0;
+    const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
+
     Camera cam({50.0f, 10.0f, 10.0f}, {0.0, 0.0, 1.0}, 90, -30, CAMERA_SPEED_PER_SECOND);
     glfwSetCursorPosCallback(window, Camera::mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -143,18 +148,22 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     UIController ui(window, &cam);
 
     Shader solid_color("shaders/simple.vert", "shaders/simple.frag");
-    const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
+    Shader circle("shaders/circle.vert", "shaders/circle.frag");
+    circle.use();
+    circle.set_float("radius", 0.25f);
+    circle.set_vec3("color", {1.0f, 0.5f, 0.1f});
 
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 
     GridRenderer grid;
 
+    //Fancy triangle ^_^
     GLuint tr_vao;
     glGenVertexArrays(1, &tr_vao);
     float tr_coords[] = {
-        -0.5, -1, 0.1,
-        0.5, -1, 0.1,
-        0, 1, 0.1,
+        -0.5f, -1.0f, 0.1f,
+        0.5f, -1.0f, 0.1f,
+        0.0f, 1.0f, 0.1f,
     };
     GLuint tr_vbo;
     glGenBuffers(1, &tr_vbo);
@@ -166,8 +175,6 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
-
-
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
@@ -185,15 +192,20 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         model = glm::scale(model, {100.0f, 100.0f, 0.0f});
         solid_color.set_vec3("color", grid_color);
         solid_color.set_mat4("model", model);
-
         grid.render();
 
-        solid_color.set_vec3("color", {0.0f, 0.0f, 1.0f});
-        model = glm::mat4();
-        model = glm::translate(model, {10.0f, 10.0f, 0.0f});
-        solid_color.set_mat4("model", model);
+        circle.use();
+        circle.set_mat4("view", cam.view_ptr());
+        circle.set_mat4("projection", proj);
         glBindVertexArray(tr_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 9);
+        //solid_color.set_vec3("color", {0.0f, 0.0f, 1.0f});
+        for (int i = 0; i < 5000; ++i) {
+            auto shift = glm::vec3{rnd(0, 100), rnd(0, 100), 0.0f};
+            model = glm::translate(glm::mat4(), shift);
+            circle.set_mat4("model", model);
+            circle.set_vec3("center", shift);
+            glDrawArrays(GL_TRIANGLES, 0, 9);
+        }
 
 
         // Render Ui

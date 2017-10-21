@@ -13,9 +13,11 @@ RequireLibrary(Glfw glfw)
 set(Sources
     main.cpp
     imgui_impl/imgui_impl_glfw_gl3.cpp
+
     cgutils/Shader.cpp
     cgutils/Camera.cpp
     cgutils/utils.cpp
+    cgutils/ResourceManager.cpp
 
     viewer/UIController.cpp
 )
@@ -41,4 +43,3 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_DEBUG)
 endif()
-
