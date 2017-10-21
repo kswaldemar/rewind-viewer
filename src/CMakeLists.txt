@@ -7,8 +7,6 @@ add_compile_options(-Wall -Wextra -Weffc++)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-message("${CMAKE_MODULE_PATH}")
-
 include(RequireLibrary)
 RequireLibrary(Glfw glfw)
 
@@ -17,6 +15,7 @@ set(Sources
     imgui_impl/imgui_impl_glfw_gl3.cpp
     cgutils/Shader.cpp
     cgutils/Camera.cpp
+    cgutils/utils.cpp
 
     viewer/UIController.cpp
 )
@@ -39,4 +38,7 @@ target_link_libraries(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_DEBUG)
+endif()
 

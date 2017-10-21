@@ -3,6 +3,7 @@
 
 #include <viewer/UIController.h>
 #include <cgutils/Shader.h>
+#include <cgutils/utils.h>
 #include <common/logger.h>
 
 #include <glm/glm.hpp>
@@ -10,6 +11,7 @@
 
 #include <exception>
 #include <vector>
+
 
 
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
@@ -32,7 +34,16 @@ int main() {
         return -2;
     }
 
-    LOG_INFO("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+    LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+#ifdef OPENGL_DEBUG
+    if (GL_ARB_debug_output) { // NOLINT
+        LOG_INFO("OpenGL:: Debug output enabled");
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+        glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
+        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+    }
+#endif
 
     try {
         prepare_and_run_game_loop(window);
@@ -50,6 +61,10 @@ GLFWwindow *setup_window()  {
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+#ifdef OPENGL_DEBUG
+    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #endif
 
     GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT,
@@ -151,6 +166,8 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
+
+
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
