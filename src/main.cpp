@@ -12,6 +12,7 @@
 #include <exception>
 #include <vector>
 #include <ctime>
+#include <cgutils/ResourceManager.h>
 
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
@@ -80,6 +81,52 @@ GLFWwindow *setup_window() {
     return window;
 }
 
+void render_grid(ResourceManager &res) {
+    static constexpr uint16_t CELL_CNT = 100;
+    static GLuint vao = 0;
+    static GLsizei grid_size;
+    if (vao == 0) {
+        vao = res.gen_vertex_array();
+        GLuint vbo = res.gen_buffer();
+
+        std::vector<float> coord_line;
+        const float step = 1.0f / CELL_CNT;
+        for (size_t i = 0; i <= CELL_CNT; ++i) {
+            coord_line.push_back(step * i);
+        }
+
+        std::vector<float> grid;
+        for (float shift : coord_line) {
+            grid.push_back(shift);
+            grid.push_back(0.0);
+            grid.push_back(0.0);
+
+            grid.push_back(shift);
+            grid.push_back(1.0);
+            grid.push_back(0.0);
+
+            grid.push_back(0);
+            grid.push_back(shift);
+            grid.push_back(0.0);
+
+            grid.push_back(1.0);
+            grid.push_back(shift);
+            grid.push_back(0.0);
+        }
+        grid_size = static_cast<GLsizei>(grid.size());
+
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, grid.size() * sizeof(float), grid.data(), GL_STATIC_DRAW);
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(0);
+    }
+
+    glBindVertexArray(vao);
+    glDrawArrays(GL_LINES, 0, grid_size);
+}
+
 struct GridRenderer {
     static constexpr size_t CELL_CNT = 100;
 
@@ -90,46 +137,7 @@ struct GridRenderer {
         }
     }
 
-    void render() {
-        if (vao_ == 0) {
-            glGenVertexArrays(1, &vao_);
-            glGenBuffers(1, &vbo_);
 
-            std::vector<float> coord_line;
-            const float step = 1.0f / CELL_CNT;
-            for (size_t i = 0; i <= CELL_CNT; ++i) {
-                coord_line.push_back(step * i);
-            }
-
-            for (float shift : coord_line) {
-                grid_.push_back(shift);
-                grid_.push_back(0.0);
-                grid_.push_back(0.0);
-
-                grid_.push_back(shift);
-                grid_.push_back(1.0);
-                grid_.push_back(0.0);
-
-                grid_.push_back(0);
-                grid_.push_back(shift);
-                grid_.push_back(0.0);
-
-                grid_.push_back(1.0);
-                grid_.push_back(shift);
-                grid_.push_back(0.0);
-            }
-
-            glBindVertexArray(vao_);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
-            glBufferData(GL_ARRAY_BUFFER, grid_.size() * sizeof(float), grid_.data(), GL_STATIC_DRAW);
-
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-            glEnableVertexAttribArray(0);
-        }
-
-        glBindVertexArray(vao_);
-        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(grid_.size()));
-    }
 
 private:
     std::vector<float> grid_;
@@ -145,28 +153,26 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glfwSetCursorPosCallback(window, Camera::mouse_callback);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
+    ResourceManager res;
+
     UIController ui(window, &cam);
 
     Shader solid_color("shaders/simple.vert", "shaders/simple.frag");
     Shader circle("shaders/circle.vert", "shaders/circle.frag");
     circle.use();
     circle.set_float("radius", 0.25f);
-    circle.set_vec3("color", {1.0f, 0.5f, 0.1f});
+    circle.set_vec3("color", {0.8f, 0.8f, 0.0f});
 
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 
-    GridRenderer grid;
-
     //Fancy triangle ^_^
-    GLuint tr_vao;
-    glGenVertexArrays(1, &tr_vao);
+    GLuint tr_vao = res.gen_vertex_array();
     float tr_coords[] = {
         -0.5f, -1.0f, 0.1f,
         0.5f, -1.0f, 0.1f,
         0.0f, 1.0f, 0.1f,
     };
-    GLuint tr_vbo;
-    glGenBuffers(1, &tr_vbo);
+    GLuint tr_vbo = res.gen_buffer();
     glBindVertexArray(tr_vao);
     glBindBuffer(GL_ARRAY_BUFFER, tr_vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(tr_coords), tr_coords, GL_STATIC_DRAW);
@@ -177,6 +183,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glBindVertexArray(0);
 
     glEnable(GL_DEPTH_TEST);
+
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //Operate UI
@@ -192,13 +199,13 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         model = glm::scale(model, {100.0f, 100.0f, 0.0f});
         solid_color.set_vec3("color", grid_color);
         solid_color.set_mat4("model", model);
-        grid.render();
+        render_grid(res);
 
         circle.use();
         circle.set_mat4("proj_view", proj * cam.view());
         glBindVertexArray(tr_vao);
         //solid_color.set_vec3("color", {0.0f, 0.0f, 1.0f});
-        for (int i = 0; i < 50000; ++i) {
+        for (int i = 0; i < 5000; ++i) {
             auto shift = glm::vec3{rnd(0, 100), rnd(0, 100), 0.0f};
             model = glm::translate(glm::mat4(), shift);
             circle.set_mat4("model", model);
