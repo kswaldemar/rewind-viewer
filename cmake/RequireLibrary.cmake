@@ -1,0 +1,8 @@
+function(RequireLibrary Var LibName)
+    find_library(${Var}_LIBRARY ${LibName})
+    if (NOT ${Var}_LIBRARY)
+        message(FATAL_ERROR "Cannot find library ${LibName}")
+    else()
+        message(STATUS "${Var} library: ${${Var}_LIBRARY}")
+    endif()
+endfunction()

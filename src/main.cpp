@@ -1,0 +1,196 @@
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+#include <viewer/UIController.h>
+#include <cgutils/Shader.h>
+#include <common/logger.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include <exception>
+#include <vector>
+
+
+constexpr size_t DEFAULT_WIN_HEIGHT = 800;
+constexpr size_t DEFAULT_WIN_WIDTH = 1200;
+
+GLFWwindow *setup_window();
+void prepare_and_run_game_loop(GLFWwindow *window);
+
+int main() {
+    // Init GLFW
+    if (glfwInit() != GL_TRUE) {
+        LOG_ERROR("Failed to initialize GLFW");
+        return -1;
+    }
+
+    auto window = setup_window();
+
+    if (!gladLoadGL()) {
+        LOG_ERROR("Failed to load opengl");
+        return -2;
+    }
+
+    LOG_INFO("OpenGL %s, GLSL %s\n", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+    try {
+        prepare_and_run_game_loop(window);
+    } catch (const std::exception &e) {
+        LOG_ERROR("Exception:: %s", e.what());
+    }
+
+    glfwTerminate();
+    return 0;
+}
+
+GLFWwindow *setup_window()  {
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+    GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT,
+                                          "OpenGL viewer for Russian AI Cup", nullptr, nullptr);
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow*, int width, int height) {
+        glViewport(0, 0, width, height);
+    });
+
+    return window;
+}
+
+struct GridRenderer {
+    static constexpr size_t CELL_CNT = 100;
+
+    ~GridRenderer() {
+        if (vao_) {
+            glDeleteBuffers(1, &vbo_);
+            glDeleteVertexArrays(1, &vao_);
+        }
+    }
+
+    void render() {
+        if (vao_ == 0) {
+            glGenVertexArrays(1, &vao_);
+            glGenBuffers(1, &vbo_);
+
+            std::vector<float> coord_line;
+            const float step = 1.0f / CELL_CNT;
+            for (size_t i = 0; i <= CELL_CNT; ++i) {
+                coord_line.push_back(step * i);
+            }
+
+            for (float shift : coord_line) {
+                grid_.push_back(shift);
+                grid_.push_back(0.0);
+                grid_.push_back(0.0);
+
+                grid_.push_back(shift);
+                grid_.push_back(1.0);
+                grid_.push_back(0.0);
+
+                grid_.push_back(0);
+                grid_.push_back(shift);
+                grid_.push_back(0.0);
+
+                grid_.push_back(1.0);
+                grid_.push_back(shift);
+                grid_.push_back(0.0);
+            }
+
+            glBindVertexArray(vao_);
+            glBindBuffer(GL_ARRAY_BUFFER, vbo_);
+            glBufferData(GL_ARRAY_BUFFER, grid_.size() * sizeof(float), grid_.data(), GL_STATIC_DRAW);
+
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+            glEnableVertexAttribArray(0);
+        }
+
+        glBindVertexArray(vao_);
+        glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(grid_.size()));
+    }
+
+private:
+    std::vector<float> grid_;
+    GLuint vao_ = 0;
+    GLuint vbo_ = 0;
+};
+
+void prepare_and_run_game_loop(GLFWwindow *window) {
+    const float CAMERA_SPEED_PER_SECOND = 50.0;
+    Camera cam({50.0f, 10.0f, 10.0f}, {0.0, 0.0, 1.0}, 90, -30, CAMERA_SPEED_PER_SECOND);
+    glfwSetCursorPosCallback(window, Camera::mouse_callback);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    UIController ui(window, &cam);
+
+    Shader solid_color("shaders/simple.vert", "shaders/simple.frag");
+    const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
+
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+
+    GridRenderer grid;
+
+    GLuint tr_vao;
+    glGenVertexArrays(1, &tr_vao);
+    float tr_coords[] = {
+        -0.5, -1, 0.1,
+        0.5, -1, 0.1,
+        0, 1, 0.1,
+    };
+    GLuint tr_vbo;
+    glGenBuffers(1, &tr_vbo);
+    glBindVertexArray(tr_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, tr_vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(tr_coords), tr_coords, GL_STATIC_DRAW);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0);
+
+    glEnable(GL_DEPTH_TEST);
+    while (!glfwWindowShouldClose(window)) {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //Operate UI
+        ui.next_frame();
+
+        //Non Ui related drawing
+        solid_color.use();
+        solid_color.set_mat4("view", cam.view_ptr());
+        solid_color.set_mat4("projection", proj);
+
+        glm::mat4 model;
+        //model = glm::rotate(model, glm::radians(-90.0f), {1.0f, 0.0f, 0.0f});
+        model = glm::scale(model, {100.0f, 100.0f, 0.0f});
+        solid_color.set_vec3("color", grid_color);
+        solid_color.set_mat4("model", model);
+
+        grid.render();
+
+        solid_color.set_vec3("color", {0.0f, 0.0f, 1.0f});
+        model = glm::mat4();
+        model = glm::translate(model, {10.0f, 10.0f, 0.0f});
+        solid_color.set_mat4("model", model);
+        glBindVertexArray(tr_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 9);
+
+
+        // Render Ui
+        glBindVertexArray(0);
+        glUseProgram(0);
+        ui.frame_end();
+
+        if (ui.close_requested()) {
+            glfwSetWindowShouldClose(window, true);
+        }
+
+        cam.update_speed(ImGui::GetIO().Framerate);
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+}
