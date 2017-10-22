@@ -20,8 +20,9 @@ glm::vec3 calc_front_dir(float yaw, float pitch) {
     return glm::normalize(front);
 }
 
-glm::vec3 remove_z(glm::vec3 vec) {
-    return {vec.x, vec.y, 0.0f};
+glm::vec3 strip_z_norm(glm::vec3 vec) {
+    vec.z = 0;
+    return glm::normalize(vec);
 }
 
 } // anonymous namespace
@@ -38,19 +39,19 @@ Camera::Camera(const glm::vec3 &initial_pos, const glm::vec3 &up, float yaw, flo
 }
 
 void Camera::forward() {
-    pos_ += remove_z(front_dir_ * move_per_frame_);
+    pos_ += strip_z_norm(front_dir_) * move_per_frame_;
 }
 
 void Camera::backward() {
-    pos_ -= remove_z(front_dir_ * move_per_frame_);
+    pos_ -= strip_z_norm(front_dir_) * move_per_frame_;
 }
 
 void Camera::left() {
-    pos_ += remove_z(glm::normalize(glm::cross(up_dir_, front_dir_)) * move_per_frame_);
+    pos_ += strip_z_norm(glm::cross(up_dir_, front_dir_)) * move_per_frame_;
 }
 
 void Camera::right() {
-    pos_ -= remove_z(glm::normalize(glm::cross(up_dir_, front_dir_)) * move_per_frame_);
+    pos_ -= strip_z_norm(glm::cross(up_dir_, front_dir_)) * move_per_frame_;
 }
 
 void Camera::update(float fps, float mouse_wheel) {
@@ -60,9 +61,9 @@ void Camera::update(float fps, float mouse_wheel) {
     auto new_pos = pos_ + front_dir_ * mouse_wheel;
     if (new_pos.z > opt_.min_z && new_pos.z < opt_.max_z ) {
         pos_ = new_pos;
-        const float offset = pos_.z;
-        pos_.x = cg::clamp(pos_.x, offset, 100.0f + offset);
-        pos_.y = cg::clamp(pos_.y, -offset, 100.0f - offset);
+        //const float offset = pos_.z;
+        //pos_.x = cg::clamp(pos_.x, offset, 100.0f + offset);
+        //pos_.y = cg::clamp(pos_.y, -offset, 100.0f - offset);
     }
 
     const glm::vec3 right = glm::normalize(glm::cross(fake_up_, front_dir_));

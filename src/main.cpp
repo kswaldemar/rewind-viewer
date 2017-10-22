@@ -80,7 +80,7 @@ GLFWwindow *setup_window() {
 void prepare_and_run_game_loop(GLFWwindow *window) {
     const float CAMERA_SPEED_PER_SECOND = 60.0;
 
-    Camera cam({0.0f, 0.0f, 20.0f}, {0.0, 0.0, 1.0}, 120, -50, CAMERA_SPEED_PER_SECOND);
+    Camera cam({10.0f, -10.0f, 20.0f}, {0.0, 0.0, 1.0}, 120, -50, CAMERA_SPEED_PER_SECOND);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     ResourceManager res;
