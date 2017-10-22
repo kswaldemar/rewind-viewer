@@ -20,13 +20,20 @@ set(Sources
     cgutils/ResourceManager.cpp
 
     viewer/UIController.cpp
+    viewer/PlaybackController.cpp
+    viewer/NetClient.cpp
+    viewer/Scene.cpp
 )
 
 set(Headers
     cgutils/utils.h
+
     common/logger.h
+
     imgui_impl/style.h
-    viewer/UIController.h
+
+    viewer/Frame.h
+    viewer/Primitives.h
 )
 
 add_executable(${PROJECT_NAME} ${Sources} ${Headers})
