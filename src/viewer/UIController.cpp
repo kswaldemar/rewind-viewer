@@ -113,12 +113,12 @@ void UIController::check_input() {
     if (io.KeysDown[GLFW_KEY_D]) {
         camera_->right();
     }
-    if (io.KeysDown[GLFW_KEY_E]) {
-        camera_->up();
-    }
-    if (io.KeysDown[GLFW_KEY_Q]) {
-        camera_->down();
-    }
+    //if (io.KeysDown[GLFW_KEY_E]) {
+    //    camera_->up();
+    //}
+    //if (io.KeysDown[GLFW_KEY_Q]) {
+    //    camera_->down();
+    //}
 
     request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
 }

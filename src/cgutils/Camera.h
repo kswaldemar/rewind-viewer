@@ -4,46 +4,43 @@
 
 #pragma once
 
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
-#include <GLFW/glfw3.h>
 
 class Camera {
 public:
-    static void mouse_callback(GLFWwindow *, double xpos, double ypos);
-
     Camera(const glm::vec3 &initial_pos, const glm::vec3 &up, float yaw, float pitch, float move_speed);
     ~Camera() = default;
 
     void forward();
     void backward();
-    void up();
-    void down();
     void left();
     void right();
 
     const glm::mat4 &view() const;
 
-    void update(float fps);
+    void update(float fps, float mouse_wheel);
 
 private:
-    void mouse_move(double xpos, double ypos);
+    struct settings_t {
+        const float min_z = 0.1f;
+        const float max_z = 100.0f;
+        float speed_per_second = 0.0f;
+    };
 
     glm::vec3 pos_;
     glm::vec3 up_dir_;
     glm::vec3 front_dir_;
     float yaw_;
     float pitch_;
-    float des_move_speed_;
     float move_per_frame_;
     glm::vec3 fake_up_;
 
     glm::mat4 view_;
 
-    //Previous position
-    double xprev_;
-    double yprev_;
-    bool first_capture_ = false;
+    settings_t opt_;
 };
 
 
