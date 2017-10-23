@@ -56,6 +56,8 @@ inline void setup_custom_style(bool bStyleDark_)
     style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.26f, 0.59f, 0.98f, 0.35f);
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 
+    style.WindowPadding.y = 7;
+
     if( bStyleDark_ )
     {
         for (int i = 0; i <= ImGuiCol_COUNT; i++)

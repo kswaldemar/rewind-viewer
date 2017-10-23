@@ -11,6 +11,8 @@
 
 class Camera {
 public:
+    friend class UIController;
+
     Camera(const glm::vec3 &initial_pos, const glm::vec3 &up, float yaw, float pitch, float move_speed);
     ~Camera() = default;
 

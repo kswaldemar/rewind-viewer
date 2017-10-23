@@ -8,6 +8,8 @@
 #include <cgutils/Shader.h>
 #include <cgutils/Camera.h>
 
+#include <viewer/Frame.h>
+
 #include <glm/glm.hpp>
 
 #include <memory>
@@ -27,6 +29,13 @@ public:
 
     void render(const glm::mat4 &view, const glm::mat4 &proj);
 
+    ///Set currently drawed frame, index should be in range [0, frames_count)
+    void set_frame_index(int idx);
+    int get_frame_index();
+
+    ///Total loaded frames count
+    int get_frames_count();
+
 private:
     void render_grid();
     void render_fancy_triangle();
@@ -37,13 +46,17 @@ private:
         const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
 
         glm::vec2 fancy_triangle_pos_ = {2.0f, 2.0f};
+        glm::vec3 clear_color = {0.447, 0.565, 0.604};
     };
 
     ResourceManager *rsm_;
 
+    Shader color_sh_;
+
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;
-    settings_t settings_;
+    settings_t opt_;
 
-    Shader color_sh_;
+    std::vector<Frame> frames_;
+    int cur_frame_idx_ = 0;
 };

@@ -13,6 +13,7 @@ RequireLibrary(Glfw glfw)
 set(Sources
     main.cpp
     imgui_impl/imgui_impl_glfw_gl3.cpp
+    imgui_impl/imgui_widgets.cpp
 
     cgutils/Shader.cpp
     cgutils/Camera.cpp
@@ -20,7 +21,6 @@ set(Sources
     cgutils/ResourceManager.cpp
 
     viewer/UIController.cpp
-    viewer/PlaybackController.cpp
     viewer/NetClient.cpp
     viewer/Scene.cpp
 )

@@ -16,24 +16,26 @@ Scene::Scene(ResourceManager *res)
 {
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
-    attr_->grid_model = glm::scale(glm::mat4{}, {settings_.grid_dim.x, settings_.grid_dim.y, 0.0f});
+    attr_->grid_model = glm::scale(glm::mat4{}, {opt_.grid_dim.x, opt_.grid_dim.y, 0.0f});
 }
 
 Scene::~Scene() = default;
 
 void Scene::render(const glm::mat4 &view, const glm::mat4 &proj) {
+    glClearColor(opt_.clear_color.r, opt_.clear_color.g, opt_.clear_color.b, 1.0f);
+
     color_sh_.use();
     color_sh_.set_mat4("projection", proj);
     color_sh_.set_mat4("view", view);
 
     color_sh_.set_mat4("model", attr_->grid_model);
-    color_sh_.set_vec3("color", settings_.grid_color);
+    color_sh_.set_vec3("color", opt_.grid_color);
     render_grid();
 
     color_sh_.set_vec3("color", {0.0f, 0.0f, 1.0f});
     color_sh_.set_mat4(
         "model", glm::translate(glm::mat4{},
-                                glm::vec3{settings_.fancy_triangle_pos_.x, settings_.fancy_triangle_pos_.y, 0.01f})
+                                glm::vec3{opt_.fancy_triangle_pos_.x, opt_.fancy_triangle_pos_.y, 0.01f})
     );
     render_fancy_triangle();
 }
@@ -44,8 +46,8 @@ void Scene::render_grid() {
         GLuint vbo = rsm_->gen_buffer();
 
         std::vector<float> coord_line;
-        const float step = 1.0f / settings_.grid_cells_count;
-        for (size_t i = 0; i <= settings_.grid_cells_count; ++i) {
+        const float step = 1.0f / opt_.grid_cells_count;
+        for (size_t i = 0; i <= opt_.grid_cells_count; ++i) {
             coord_line.push_back(step * i);
         }
 
@@ -104,6 +106,20 @@ void Scene::render_fancy_triangle() {
 
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void Scene::set_frame_index(int idx) {
+    if (idx >= 0 && idx < get_frames_count() && idx != cur_frame_idx_) {
+        cur_frame_idx_ = idx;
+    }
+}
+
+int Scene::get_frame_index() {
+    return cur_frame_idx_;
+}
+
+int Scene::get_frames_count() {
+    return static_cast<int>(frames_.size()) + 20000;
 }
 
 

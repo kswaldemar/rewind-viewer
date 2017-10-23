@@ -93,15 +93,14 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //Updates
-        ui.next_frame();
+        ui.next_frame(&scene);
+
         const auto &io = ImGui::GetIO();
         cam.update(io.Framerate, io.MouseWheel);
 
         if (ui.close_requested()) {
             glfwSetWindowShouldClose(window, true);
         }
-
-        //Playback control
 
         //Non Ui related drawing
         scene.render(cam.view(), proj);

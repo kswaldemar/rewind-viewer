@@ -12,6 +12,7 @@
 #include <cgutils/Camera.h>
 
 #include <memory>
+#include "Scene.h"
 
 /**
  * Class for all ui interaction using ImGui
@@ -24,28 +25,31 @@ public:
     /**
      * Call ImGui next frame and clear up OpenGl background
      */
-    void next_frame();
+    void next_frame(Scene *scene);
     void frame_end();
 
     bool close_requested();
 
 private:
-    ///Draw all enabled windows
-    void update_windows();
+    void check_hotkeys();
 
-    void debug_window();
+    void main_menu_bar();
+
     void fps_overlay_window();
-    void check_input();
+    void camera_settings_window();
+    void playback_control_window(Scene *scene);
+    void user_message_window(Scene *scene);
 
     ///Handling flags whenever window should be drawed or not etc.
     struct wnd_t;
     std::unique_ptr<wnd_t> wnd_;
 
-    ImVec4 clear_color_ = ImColor(114, 144, 154);
-
     Camera *camera_;
 
     bool request_exit_ = false;
+    bool autoplay_scene_ = true;
+    bool space_pressed_ = false;
+
 };
 
 

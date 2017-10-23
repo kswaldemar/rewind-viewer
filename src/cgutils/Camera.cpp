@@ -6,6 +6,8 @@
 
 #include <cgutils/utils.h>
 
+#include <imgui.h>
+
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -58,12 +60,14 @@ void Camera::update(float fps, float mouse_wheel) {
     move_per_frame_ = opt_.speed_per_second / fps;
 
     //Should depend from grid size
-    auto new_pos = pos_ + front_dir_ * mouse_wheel;
-    if (new_pos.z > opt_.min_z && new_pos.z < opt_.max_z ) {
-        pos_ = new_pos;
-        //const float offset = pos_.z;
-        //pos_.x = cg::clamp(pos_.x, offset, 100.0f + offset);
-        //pos_.y = cg::clamp(pos_.y, -offset, 100.0f - offset);
+    if (!ImGui::IsAnyWindowHovered()) {
+        auto new_pos = pos_ + front_dir_ * mouse_wheel;
+        if (new_pos.z > opt_.min_z && new_pos.z < opt_.max_z) {
+            pos_ = new_pos;
+            //const float offset = pos_.z;
+            //pos_.x = cg::clamp(pos_.x, offset, 100.0f + offset);
+            //pos_.y = cg::clamp(pos_.y, -offset, 100.0f - offset);
+        }
     }
 
     const glm::vec3 right = glm::normalize(glm::cross(fake_up_, front_dir_));
