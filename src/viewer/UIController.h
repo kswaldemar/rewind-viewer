@@ -35,10 +35,9 @@ private:
 
     void main_menu_bar();
 
-    void fps_overlay_window();
-    void camera_settings_window();
-    void playback_control_window(Scene *scene);
-    void user_message_window(Scene *scene);
+    void fps_overlay_widget();
+    void info_widget(Scene *scene);
+    void playback_control_widget(Scene *scene);
 
     ///Handling flags whenever window should be drawed or not etc.
     struct wnd_t;

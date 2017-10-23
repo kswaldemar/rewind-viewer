@@ -57,6 +57,8 @@ inline void setup_custom_style(bool bStyleDark_)
     style.Colors[ImGuiCol_ModalWindowDarkening]  = ImVec4(0.20f, 0.20f, 0.20f, 0.35f);
 
     style.WindowPadding.y = 7;
+    style.WindowRounding = 4;
+    style.GrabRounding = 2;
 
     if( bStyleDark_ )
     {

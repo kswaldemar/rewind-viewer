@@ -4,36 +4,35 @@
 
 #include "UIController.h"
 
-//#include <imgui_impl/imgui_widgets.h>
-#include <imgui_impl/imgui_impl_glfw_gl3.h>
-#include <imgui_impl/style.h>
-
-#include <imgui_internal.h>
-
 #include <cgutils/utils.h>
 
 #include <viewer/Scene.h>
 
-#include <glm/gtc/type_ptr.hpp>
 #include <imgui_impl/imgui_widgets.h>
+#include <imgui_impl/imgui_impl_glfw_gl3.h>
+#include <imgui_impl/style.h>
+#include <imgui_internal.h>
 
+#include <glm/gtc/type_ptr.hpp>
 
 struct UIController::wnd_t {
     bool show_style_editor = false;
     bool show_fps_overlay = true;
-    bool show_camera_settings = false;
+    bool show_info = true;
     bool show_playback_control = true;
     bool show_user_messages = false;
 };
 
 UIController::UIController(GLFWwindow *window, Camera *camera)
-    : camera_(camera)
-{
+    : camera_(camera) {
     // Setup ImGui binding
     ImGui_ImplGlfwGL3_Init(window, true);
     wnd_ = std::make_unique<wnd_t>();
 
     setup_custom_style(false);
+
+    auto &io = ImGui::GetIO();
+    io.IniFilename = "rewindviewer.ini";
 }
 
 UIController::~UIController() {
@@ -48,23 +47,20 @@ void UIController::next_frame(Scene *scene) {
     //Update windows status
     main_menu_bar();
     if (wnd_->show_fps_overlay) {
-        fps_overlay_window();
+        fps_overlay_widget();
     }
-    if (wnd_->show_camera_settings) {
-        camera_settings_window();
+    if (wnd_->show_info) {
+        info_widget(scene);
     }
     if (wnd_->show_playback_control) {
-        playback_control_window(scene);
+        playback_control_widget(scene);
     }
     if (wnd_->show_style_editor) {
         ImGui::Begin("Style editor", &wnd_->show_style_editor);
         ImGui::ShowStyleEditor();
         ImGui::End();
     }
-    if (wnd_->show_user_messages) {
-        user_message_window(scene);
-    }
-
+    //ImGui::ShowTestWindow();
     //Checking hotkeys
     check_hotkeys();
 }
@@ -77,7 +73,7 @@ bool UIController::close_requested() {
     return request_exit_;
 }
 
-void UIController::fps_overlay_window() {
+void UIController::fps_overlay_widget() {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
     const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
                        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
@@ -124,38 +120,54 @@ void UIController::main_menu_bar() {
             ImGui::Checkbox("Style editor", &wnd_->show_style_editor);
             ImGui::Separator();
             ImGui::Checkbox("FPS overlay", &wnd_->show_fps_overlay);
-            ImGui::Checkbox("Camera settings", &wnd_->show_camera_settings);
-            ImGui::Checkbox("Messages", &wnd_->show_user_messages);
-
+            ImGui::Checkbox("Utility window", &wnd_->show_info);
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Help", false)) {
+            //if (ImGui::BeginPopupModal("UI Help")) {
+            //    ImGui::ShowUserGuide();
+            //}
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
     }
 }
 
-void UIController::camera_settings_window() {
-    static const ImVec2 size{300, 70};
-    if (ImGui::Begin("Camera settings", &wnd_->show_camera_settings, size)) {
+void UIController::info_widget(Scene *scene) {
+    //static const ImVec2 size{300, 300};
+    //ImGui::SetNextWindowSize(size);
+    ImGui::SetNextWindowPos({100, 100}, ImGuiCond_FirstUseEver);
+    ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
+    const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
+    if (ImGui::CollapsingHeader("Settings")) {
+        if (ImGui::CollapsingHeader("Camera", flags)) {
+            ImGui::DragFloat3("Position", glm::value_ptr(camera_->pos_), 0.1, 0, 0, "%.1f");
+            float speed = camera_->opt_.speed_per_second;
+            ImGui::PushItemWidth(0);
+            if (ImGui::InputFloat("Speed", &speed, 1.0, 10.0, 1)) {
+                speed = cg::clamp(speed, 0.1f, 1000.0f);
+                camera_->opt_.speed_per_second = speed;
+            }
+            ImGui::PopItemWidth();
+            ImGui::SameLine();
+            ImGui::ShowHelpMarker("In units per second with same metric as unit coordinates");
+        }
+        if (ImGui::CollapsingHeader("Layers", flags)) {
 
-        //float yaw = -camera_->yaw_;
-        //if (ImGui::SliderFloat("Course", &yaw, 0, 180, "%.1f")) {
-        //    camera_->yaw_ = -cg::clamp(yaw, 0.0f, 180.0f);
-        //}
-        //float pitch = camera_->pitch_;
-        //if (ImGui::SliderFloat("Pitch", &pitch, -89.9f, 0, "%.1f")) {
-        //    camera_->pitch_ = cg::clamp(pitch, -89.9f, 0.0f);
-        //}
+        }
+        if (ImGui::CollapsingHeader("Colors", flags)) {
 
-
-        ImGui::DragFloat3("Position", glm::value_ptr(camera_->pos_), 0.1, 0, 0, "%.1f");
-
-        //ImGui::LabelText("Position", "x=%.1f, y=%.1f, z=%.1f", camera_->pos_.x, camera_->pos_.y, camera_->pos_.z);
-
-        ImGui::End();
+        }
     }
+    if (ImGui::CollapsingHeader("Frame message", flags)) {
+        ImGui::BeginChild("FrameMsg", {0, 0}, true);
+        ImGui::TextUnformatted(scene->get_frame_user_message());
+        ImGui::EndChild();
+    }
+    ImGui::End();
 }
 
-void UIController::playback_control_window(Scene *scene) {
+void UIController::playback_control_widget(Scene *scene) {
     static const ImVec2 button_size(0, 20);
     auto &io = ImGui::GetIO();
     auto height = button_size.y;
@@ -206,11 +218,4 @@ void UIController::playback_control_window(Scene *scene) {
         ImGui::EndGroup();
         ImGui::End();
     }
-}
-
-void UIController::user_message_window(Scene *scene) {
-    if (ImGui::Begin("Messages", &wnd_->show_user_messages)) {
-
-    }
-
 }

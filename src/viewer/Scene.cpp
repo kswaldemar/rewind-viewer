@@ -122,4 +122,14 @@ int Scene::get_frames_count() {
     return static_cast<int>(frames_.size()) + 20000;
 }
 
+const char *Scene::get_frame_user_message() {
+    static std::string ret;
+    if (ret.empty()) {
+        for (int i = 0; i < 1000; ++i) {
+            ret += "Sample message\nMay span multiple lines";
+        }
+    }
+    return ret.c_str();
+}
+
 

@@ -4,6 +4,8 @@
 ///Drawable primitives for Russian AI Cup 2017
 #pragma once
 
+#include <cstdint>
+
 struct Point {
     float x;
     float y;

@@ -18,6 +18,8 @@
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
 
+constexpr const char *WINDOW_TITLE = "Rewind viewer for Russian AI Cup";
+
 GLFWwindow *setup_window();
 void prepare_and_run_game_loop(GLFWwindow *window);
 
@@ -67,8 +69,7 @@ GLFWwindow *setup_window() {
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #endif
 
-    GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT,
-                                          "OpenGL viewer for Russian AI Cup", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
         glViewport(0, 0, width, height);
@@ -80,7 +81,7 @@ GLFWwindow *setup_window() {
 void prepare_and_run_game_loop(GLFWwindow *window) {
     const float CAMERA_SPEED_PER_SECOND = 60.0;
 
-    Camera cam({10.0f, -10.0f, 20.0f}, {0.0, 0.0, 1.0}, 120, -50, CAMERA_SPEED_PER_SECOND);
+    Camera cam({10.0f, 10.0f, 20.0f}, {0.0, 0.0, 1.0}, 90, -89.9, CAMERA_SPEED_PER_SECOND);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     ResourceManager res;

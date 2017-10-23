@@ -36,6 +36,9 @@ public:
     ///Total loaded frames count
     int get_frames_count();
 
+    ///Arbitrary message written in current frame
+    const char *get_frame_user_message();
+
 private:
     void render_grid();
     void render_fancy_triangle();
