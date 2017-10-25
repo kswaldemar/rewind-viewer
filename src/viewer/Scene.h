@@ -39,9 +39,14 @@ public:
     ///Arbitrary message written in current frame
     const char *get_frame_user_message();
 
+    ///Called from network listener when next frame is ready
+    void add_frame(std::unique_ptr<Frame> &&frame);
+
 private:
+    void render_frame(const Frame &frame);
     void render_grid();
     void render_fancy_triangle();
+    void render_circle(const pod::Circle &circle);
 
     struct settings_t {
         const uint16_t grid_cells_count = 100;
@@ -55,11 +60,13 @@ private:
     ResourceManager *rsm_;
 
     Shader color_sh_;
+    Shader circle_sh_;
+    GLuint rect_vao_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;
     settings_t opt_;
 
-    std::vector<Frame> frames_;
+    std::vector<std::unique_ptr<Frame>> frames_;
     int cur_frame_idx_ = 0;
 };

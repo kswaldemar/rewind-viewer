@@ -21,7 +21,7 @@ enum class PrimitiveType {
     types_count
 };
 
-inline PrimitiveType from_str(const std::string &str) {
+inline PrimitiveType primitve_type_from_str(const std::string &str) {
 #define X(type) if (str == #type) return PrimitiveType::type;
     X_PRIMITIVE_TYPES_LIST
 #undef X

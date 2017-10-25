@@ -9,6 +9,8 @@
 #include <csimplesocket/PassiveSocket.h>
 #include <csimplesocket/ActiveSocket.h>
 
+struct Frame;
+
 /**
  * Negotiation with running strategy
  *  - listen socket, read json primitives
@@ -35,9 +37,16 @@ public:
     ///Blocking call, should be running on personal thread
     void run();
 
+    void stop();
+
 private:
+    void process_json_message(const std::string &message);
+
     Scene *scene_;
     std::unique_ptr<CPassiveSocket> socket_;
     CActiveSocket *client_ = nullptr;
     ConStatus status_;
+
+    std::unique_ptr<Frame> frame_ = nullptr;
+    bool stop_ = false;
 };

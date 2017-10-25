@@ -13,10 +13,30 @@ struct Scene::render_attrs_t {
 Scene::Scene(ResourceManager *res)
     : rsm_(res)
     , color_sh_("shaders/simple.vert", "shaders/simple.frag")
+    , circle_sh_("shaders/circle.vert", "shaders/circle.frag")
 {
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
     attr_->grid_model = glm::scale(glm::mat4{}, {opt_.grid_dim.x, opt_.grid_dim.y, 0.0f});
+
+    //Preload rectangle to memory for further drawing
+    rect_vao_ = rsm_->gen_vertex_array();
+    GLuint vbo = rsm_->gen_buffer();
+    const float points[] = {
+        -1.0f, -1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,
+
+        -1.0f,  1.0f, 0.0f,
+        1.0f, -1.0f, 0.0f,
+        1.0f,  1.0f, 0.0f,
+    };
+    glBindVertexArray(rect_vao_);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glEnableVertexAttribArray(0);
+    glBindVertexArray(0);
 }
 
 Scene::~Scene() = default;
@@ -38,6 +58,28 @@ void Scene::render(const glm::mat4 &view, const glm::mat4 &proj) {
                                 glm::vec3{opt_.fancy_triangle_pos_.x, opt_.fancy_triangle_pos_.y, 0.01f})
     );
     render_fancy_triangle();
+
+    if (!frames_.empty()) {
+        circle_sh_.use();
+        circle_sh_.set_mat4("proj_view", proj * view);
+
+        const Frame *frame = frames_[cur_frame_idx_].get();
+        render_frame(*frame);
+    }
+}
+
+void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
+    //TODO: Is that thread safe?!
+    frames_.emplace_back(std::move(frame));
+}
+
+void Scene::render_frame(const Frame &frame) {
+    if (!frame.circles.empty()) {
+        circle_sh_.use();
+        for (const auto &obj : frame.circles) {
+            render_circle(obj);
+        }
+    }
 }
 
 void Scene::render_grid() {
@@ -103,9 +145,22 @@ void Scene::render_fancy_triangle() {
 
         glBindVertexArray(0);
     }
-
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLES, 0, 3);
+}
+
+void Scene::render_circle(const pod::Circle &circle) {
+    glBindVertexArray(rect_vao_);
+    glm::mat4 model;
+    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
+    model = glm::translate(model, vcenter);
+    model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
+    circle_sh_.set_float("radius", circle.radius);
+    circle_sh_.set_vec3("center", vcenter);
+    circle_sh_.set_vec3("color", circle.color);
+    circle_sh_.set_mat4("model", model);
+
+    glDrawArrays(GL_TRIANGLES, 0, 18);
 }
 
 void Scene::set_frame_index(int idx) {
@@ -119,17 +174,14 @@ int Scene::get_frame_index() {
 }
 
 int Scene::get_frames_count() {
-    return static_cast<int>(frames_.size()) + 20000;
+    return static_cast<int>(frames_.size());
 }
 
 const char *Scene::get_frame_user_message() {
-    static std::string ret;
-    if (ret.empty()) {
-        for (int i = 0; i < 1000; ++i) {
-            ret += "Sample message\nMay span multiple lines";
-        }
+    if (cur_frame_idx_ >= 0 && cur_frame_idx_ < frames_.size()) {
+        return frames_[cur_frame_idx_]->user_message.c_str();
     }
-    return ret.c_str();
+    return "";
 }
 
 
