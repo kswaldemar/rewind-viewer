@@ -5,9 +5,9 @@
 #include <cgutils/utils.h>
 #include <cgutils/ResourceManager.h>
 #include <viewer/UIController.h>
-#include <viewer/NetListener.h>
 #include <viewer/Scene.h>
 #include <common/logger.h>
+#include <net/NetListener.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

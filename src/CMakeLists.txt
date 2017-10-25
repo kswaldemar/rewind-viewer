@@ -21,8 +21,9 @@ set(Sources
     cgutils/ResourceManager.cpp
 
     viewer/UIController.cpp
-    viewer/NetListener.cpp
     viewer/Scene.cpp
+
+    net/NetListener.cpp
 )
 
 set(Headers
@@ -34,6 +35,7 @@ set(Headers
 
     viewer/Frame.h
     viewer/Primitives.h
+    net/PrimitiveType.h
 )
 
 add_executable(${PROJECT_NAME} ${Sources} ${Headers})

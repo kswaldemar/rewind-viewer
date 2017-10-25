@@ -28,8 +28,7 @@ public:
     NetListener(Scene *scene, const std::string &listen_host, uint16_t listen_port);
 
     ///Return current connection status.
-    ///Will be wait until first data chunk, established while tcp connection alive and closed in case of error
-    ///or connection termination
+    ///Will be wait until first data chunk, established while tcp connection alive
     ConStatus connection_status() const;
 
     ///Start gathering and operating information from socket
