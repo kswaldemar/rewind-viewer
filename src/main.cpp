@@ -3,7 +3,10 @@
 
 #include <cgutils/Shader.h>
 #include <cgutils/utils.h>
+#include <cgutils/ResourceManager.h>
 #include <viewer/UIController.h>
+#include <viewer/NetListener.h>
+#include <viewer/Scene.h>
 #include <common/logger.h>
 
 #include <glm/glm.hpp>
@@ -12,8 +15,7 @@
 #include <exception>
 #include <vector>
 #include <ctime>
-#include <cgutils/ResourceManager.h>
-#include <viewer/Scene.h>
+#include <thread>
 
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
@@ -87,6 +89,12 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     ResourceManager res;
     Scene scene(&res);
     UIController ui(window, &cam);
+
+    //Start network listening
+    NetListener net(&scene, "127.0.0.1", 7000);
+    std::thread network_thread([&net]{
+        net.run();
+    });
 
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
 

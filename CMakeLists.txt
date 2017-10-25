@@ -6,6 +6,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 add_subdirectory(3rdparty/glad)
 add_subdirectory(3rdparty/imgui)
 add_subdirectory(3rdparty/stb_image)
+add_subdirectory(3rdparty/csimplesocket)
 
 #Project
 add_subdirectory(src)

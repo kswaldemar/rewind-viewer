@@ -21,7 +21,7 @@ set(Sources
     cgutils/ResourceManager.cpp
 
     viewer/UIController.cpp
-    viewer/NetClient.cpp
+    viewer/NetListener.cpp
     viewer/Scene.cpp
 )
 
@@ -43,6 +43,7 @@ target_link_libraries(${PROJECT_NAME}
     Glad
     ImGui
     stb_image
+    csimplesocket
     ${Glfw_LIBRARY})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
@@ -50,3 +51,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_DEBUG)
 endif()
+

@@ -1,5 +1,5 @@
 #Major 
- - NetClient implementation
+ - NetListener implementation
     - Add simple socket library
  - Sample client for C++ using socket
  - More primitives
