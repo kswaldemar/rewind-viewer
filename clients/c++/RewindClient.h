@@ -9,14 +9,11 @@
  *  Class for interaction with rewind-viewer from your own startegy class
  *  
  *  Implemented using CActiveSocket, but cpp-cgdk depends from it anyway
- *  For each frame (game tick) rewind-viewer expect "begin" command at frame start and "end" command at frame end
+ *  For each frame "end" command at frame end
  *  All objects should be represented as json string, 
  *  and will be decoded at viewer side to corresponding structures
  *  
- *  For example begin will looks like
- *      {"type": "begin"}
- *  
- *  For available types see enum PrimitveType in <path to primitives here> 
+ *  For available types see enum PrimitveType in <path to primitives here>
  *
  *  In order to provide support for your own primitives:
  *     - add type with name of your choice to PrimitiveType in <path to primitives here> 
@@ -51,11 +48,6 @@ public:
         static uint16_t PORT = 7000;
         static RewindClient inst(HOST, PORT);
         return inst;
-    }
-
-    ///Initiate new frame recording
-    void beginFrame() {
-        send(R"({"type":"begin"})");
     }
 
     ///Should be send on end of move function
