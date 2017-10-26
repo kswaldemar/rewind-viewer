@@ -32,7 +32,7 @@ class RewindClient {
     template<typename... Args>
     static inline std::string format(const char *fmt, Args... args) {
         static char buf[2048];
-        size_t bytes = sprintf(buf, fmt, args...);
+        int bytes = sprintf(buf, fmt, args...);
         buf[bytes] = '\0';
         return buf;
     }
@@ -55,13 +55,13 @@ public:
 
     ///Initiate new frame recording
     void beginFrame() {
-        send(R"({type:"begin"})");
+        send(R"({"type":"begin"})");
     }
 
     ///Should be send on end of move function
     ///all turn primitives can be rendered after that point
     void endFrame() {
-        send(R"({type:"end"})");
+        send(R"({"type":"end"})");
     }
 
     void circle(double x, double y, double r, Color color = Color::GRAY, bool fill = false) {
@@ -98,7 +98,7 @@ public:
     void message(Args... args) {
         std::string s = R"({"type": "message", "message": ")";
         s += format(args...);
-        s += "\"}";
+        s += "\"}\n";
         send(s);
     }
 

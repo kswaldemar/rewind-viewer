@@ -40,7 +40,7 @@ public:
     void stop();
 
 private:
-    void process_json_message(const std::string &message);
+    void process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end);
 
     Scene *scene_;
     std::unique_ptr<CPassiveSocket> socket_;

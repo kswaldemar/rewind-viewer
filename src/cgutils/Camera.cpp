@@ -60,7 +60,8 @@ void Camera::update(float fps, float mouse_wheel) {
     move_per_frame_ = opt_.speed_per_second / fps;
 
     //Should depend from grid size
-    if (!ImGui::IsAnyWindowHovered()) {
+    const auto &io = ImGui::GetIO();
+    if (!io.WantCaptureMouse) {
         auto new_pos = pos_ + front_dir_ * mouse_wheel;
         if (new_pos.z > opt_.min_z && new_pos.z < opt_.max_z) {
             pos_ = new_pos;

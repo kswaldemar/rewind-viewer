@@ -5,8 +5,8 @@
 #include "UIController.h"
 
 #include <cgutils/utils.h>
-
 #include <viewer/Scene.h>
+#include <net/NetListener.h>
 
 #include <imgui_impl/imgui_widgets.h>
 #include <imgui_impl/imgui_impl_glfw_gl3.h>
@@ -14,6 +14,7 @@
 #include <imgui_internal.h>
 
 #include <glm/gtc/type_ptr.hpp>
+
 
 struct UIController::wnd_t {
     bool show_style_editor = false;
@@ -23,10 +24,10 @@ struct UIController::wnd_t {
     bool show_user_messages = false;
 };
 
-UIController::UIController(GLFWwindow *window, Camera *camera)
+UIController::UIController(Camera *camera)
     : camera_(camera) {
     // Setup ImGui binding
-    ImGui_ImplGlfwGL3_Init(window, true);
+    ImGui_ImplGlfwGL3_Init(glfwGetCurrentContext(), true);
     wnd_ = std::make_unique<wnd_t>();
 
     setup_custom_style(false);
@@ -46,6 +47,11 @@ void UIController::next_frame(Scene *scene) {
 
     //Update windows status
     main_menu_bar();
+
+    if (ImGui::BeginMainMenuBar()) {
+        ImGui::EndMainMenuBar();
+    }
+
     if (wnd_->show_fps_overlay) {
         fps_overlay_widget();
     }
@@ -73,42 +79,30 @@ bool UIController::close_requested() {
     return request_exit_;
 }
 
-void UIController::fps_overlay_widget() {
-    ImGui::SetNextWindowPos(ImVec2(10, 20));
-    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
-                       | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-    if (ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, ImVec2(0, 0), 0.3f, flags)) {
-        ImGui::BeginGroup();
-        ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS %.1f", ImGui::GetIO().Framerate);
-        ImGui::SameLine();
-        ImGui::Text("[%.1f ms]", 1000.0f / ImGui::GetIO().Framerate);
-        ImGui::EndGroup();
-        ImGui::End();
-    }
-}
-
 void UIController::check_hotkeys() {
     const auto &io = ImGui::GetIO();
-    if (io.KeysDown[GLFW_KEY_W]) {
-        camera_->forward();
-    }
-    if (io.KeysDown[GLFW_KEY_S]) {
-        camera_->backward();
-    }
-    if (io.KeysDown[GLFW_KEY_A]) {
-        camera_->left();
-    }
-    if (io.KeysDown[GLFW_KEY_D]) {
-        camera_->right();
-    }
-
-    if (io.KeysDown[GLFW_KEY_SPACE]) {
-        if (!space_pressed_) {
-            space_pressed_ = true;
-            autoplay_scene_ = !autoplay_scene_;
+    if (!io.WantTextInput) {
+        if (io.KeysDown[GLFW_KEY_W]) {
+            camera_->forward();
         }
-    } else {
-        space_pressed_ = false;
+        if (io.KeysDown[GLFW_KEY_S]) {
+            camera_->backward();
+        }
+        if (io.KeysDown[GLFW_KEY_A]) {
+            camera_->left();
+        }
+        if (io.KeysDown[GLFW_KEY_D]) {
+            camera_->right();
+        }
+
+        if (io.KeysDown[GLFW_KEY_SPACE]) {
+            if (!space_pressed_) {
+                space_pressed_ = true;
+                autoplay_scene_ = !autoplay_scene_;
+            }
+        } else {
+            space_pressed_ = false;
+        }
     }
 
     request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
@@ -131,6 +125,21 @@ void UIController::main_menu_bar() {
         }
         ImGui::EndMainMenuBar();
     }
+}
+
+void UIController::fps_overlay_widget() {
+    ImGui::SetNextWindowPos(ImVec2(10, 20));
+    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
+                       | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+    if (ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, ImVec2(0, 0), 0.3f, flags)) {
+        ImGui::BeginGroup();
+        ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS %.1f", ImGui::GetIO().Framerate);
+        ImGui::SameLine();
+        ImGui::Text("[%.1f ms]", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::EndGroup();
+        ImGui::End();
+    }
+
 }
 
 void UIController::info_widget(Scene *scene) {
@@ -161,7 +170,7 @@ void UIController::info_widget(Scene *scene) {
     }
     if (ImGui::CollapsingHeader("Frame message", flags)) {
         ImGui::BeginChild("FrameMsg", {0, 0}, true);
-        ImGui::TextUnformatted(scene->get_frame_user_message());
+        ImGui::TextWrapped("%s", scene->get_frame_user_message());
         ImGui::EndChild();
     }
     ImGui::End();
@@ -182,6 +191,12 @@ void UIController::playback_control_widget(Scene *scene) {
         ImGui::BeginGroup();
 
         int tick = scene->get_frame_index();
+
+        if (!io.WantTextInput) {
+            if (io.KeysDown[GLFW_KEY_LEFT] || io.KeysDown[GLFW_KEY_RIGHT]) {
+                tick += io.KeysDown[GLFW_KEY_RIGHT] ? 1 : -1;
+            }
+        }
 
         if (ImGui::ButtonEx("Prev", button_size, ImGuiButtonFlags_Repeat)) {
             --tick;

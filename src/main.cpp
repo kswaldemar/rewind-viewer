@@ -83,12 +83,12 @@ GLFWwindow *setup_window() {
 void prepare_and_run_game_loop(GLFWwindow *window) {
     const float CAMERA_SPEED_PER_SECOND = 60.0;
 
-    Camera cam({10.0f, 10.0f, 20.0f}, {0.0, 0.0, 1.0}, 90, -89.9, CAMERA_SPEED_PER_SECOND);
+    Camera cam({10.0f, 10.0f, 20.0f}, {0.0, 0.0, 1.0}, 90, -89.9f, CAMERA_SPEED_PER_SECOND);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     ResourceManager res;
     Scene scene(&res);
-    UIController ui(window, &cam);
+    UIController ui(&cam);
 
     //Start network listening
     NetListener net(&scene, "127.0.0.1", 7000);
@@ -97,6 +97,9 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     });
 
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+    //int width, height;
+    //glfwGetFramebufferSize(window, &width, &height);
+    //glm::mat4 proj = glm::ortho<float>(0, 125, 0, 10, 0.1, 100.0);
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {

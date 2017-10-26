@@ -10,8 +10,11 @@ NetListener::NetListener(Scene *scene, const std::string &listen_host, uint16_t 
     socket_ = std::make_unique<CPassiveSocket>(CPassiveSocket::SocketTypeTcp);
     if (!socket_->Initialize()) {
         LOG_ERROR("NetListener:: Cannot initialize socket: %d", errno);
-    } else if (!socket_->Listen(reinterpret_cast<const uint8_t *>(listen_host.data()), listen_port)) {
-        LOG_ERROR("NetListener:: Cannot listen on socket: %d", errno);
+    } else {
+        socket_->DisableNagleAlgoritm();
+        if (!socket_->Listen(reinterpret_cast<const uint8_t *>(listen_host.data()), listen_port)) {
+            LOG_ERROR("NetListener:: Cannot listen on socket: %d", errno);
+        }
     }
 
     status_ = ConStatus::CLOSED;
@@ -41,7 +44,19 @@ void NetListener::run() {
             auto data = client_->GetData();
             data[nbytes] = '\0';
             LOG_INFO("NetClient:: Message %d bytes, '%s'", nbytes, data);
-            process_json_message(reinterpret_cast<const char *>(data));
+            //Strategy can send several messages in one block
+            //Note: Fragmented messages are not supported, just drop them
+            const uint8_t *beg = data;
+            const uint8_t *block_end = data + nbytes;
+            while (true) {
+                const uint8_t *end = std::find(beg, block_end, '}');
+                if (end == block_end) {
+                    break;
+                }
+                ++end;
+                process_json_message(beg, end);
+                beg = end;
+            }
         } else {
             socket_->Close();
             status_ = ConStatus::CLOSED;
@@ -50,26 +65,19 @@ void NetListener::run() {
     }
 }
 
-void NetListener::process_json_message(const std::string &message) {
+void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end) {
     using namespace nlohmann;
     try {
-        auto j = json::parse(message);
+        auto j = json::parse(chunk_begin, chunk_end);
         PrimitiveType type = primitve_type_from_str(j["type"]);
 
-        //if (!frame_ && type != PrimitiveType::begin) {
-        //    LOG_ERROR("NetListener:: Incorrect state, frame doesn't exist but command");
-        //    return;
-        //}
         if (!frame_) {
             frame_ = std::make_unique<Frame>();
         }
 
         switch (type) {
             case PrimitiveType::begin:
-                //if (!frame_) {
-                    LOG_INFO("NetClient::Begin");
-                    //frame_ = std::make_unique<Frame>();
-                //}
+                LOG_INFO("NetClient::Begin");
                 break;
             case PrimitiveType::end:
                 LOG_INFO("NetClient::End");

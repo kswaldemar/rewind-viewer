@@ -10,16 +10,18 @@
 #include <imgui.h>
 
 #include <cgutils/Camera.h>
+#include <net/NetListener.h>
 
 #include <memory>
-#include "Scene.h"
+
+class Scene;
 
 /**
  * Class for all ui interaction using ImGui
  */
 class UIController {
 public:
-    UIController(GLFWwindow *window, Camera *camera);
+    UIController(Camera *camera);
     ~UIController();
 
     /**
