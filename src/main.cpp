@@ -83,7 +83,7 @@ GLFWwindow *setup_window() {
 void prepare_and_run_game_loop(GLFWwindow *window) {
     const float CAMERA_SPEED_PER_SECOND = 60.0;
 
-    Camera cam({10.0f, 10.0f, 20.0f}, {0.0, 0.0, 1.0}, 90, -89.9f, CAMERA_SPEED_PER_SECOND);
+    Camera cam({0.0f, 0.0f, 0.0f}, {0.0, 0.0, 1.0}, 90, -89.9f, CAMERA_SPEED_PER_SECOND);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     ResourceManager res;
@@ -96,10 +96,10 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         net.run();
     });
 
-    glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
-    //int width, height;
-    //glfwGetFramebufferSize(window, &width, &height);
-    //glm::mat4 proj = glm::ortho<float>(0, 125, 0, 10, 0.1, 100.0);
+    //glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
+    int width, height;
+    glfwGetFramebufferSize(window, &width, &height);
+    glm::mat4 proj = glm::ortho<float>(-500, 6000, -500, 5000, 0.1, 1000.0);
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {

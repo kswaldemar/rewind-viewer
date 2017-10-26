@@ -1,6 +1,8 @@
 ## Major 
- - [ ] NetListener implementation
-    - [ ] Add simple socket library
+ - [x] NetListener implementation
+    - [x] Add simple socket library
+    - [ ] Ability to reconnect
+    - [ ] No drops because of fragmentation (Improve simple socket or implement your own) 
  - [x] Sample client for C++ using socket
  - [ ] More primitives
     - [x] Circle
@@ -13,6 +15,7 @@
  
 ## Minor
  - [ ] Score table
+ - [ ] Orthographic projection, remove Camera
  - [ ] Camera mouse drag navigation and zoom to point
  - [ ] Primitives:
      - [ ] Round textures for units, to distinguish by type

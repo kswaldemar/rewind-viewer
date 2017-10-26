@@ -49,8 +49,8 @@ private:
     void render_circle(const pod::Circle &circle);
 
     struct settings_t {
-        const uint16_t grid_cells_count = 100;
-        const glm::vec2 grid_dim = {100.0f, 100.0f};
+        const uint16_t grid_cells_count = 10;
+        const glm::vec2 grid_dim = {4000.0f, 4000.0f};
         const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
 
         glm::vec2 fancy_triangle_pos_ = {2.0f, 2.0f};
