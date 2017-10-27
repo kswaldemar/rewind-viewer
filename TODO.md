@@ -6,7 +6,7 @@
  - [x] Sample client for C++ using socket
  - [ ] More primitives
     - [x] Circle
-    - [ ] Rectangle
+    - [x] Rectangle
     - [ ] Line
  - [ ] Adding and rendering all those primitives in scene
  - [ ] Readme
