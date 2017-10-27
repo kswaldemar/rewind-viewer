@@ -51,6 +51,7 @@ private:
     bool autoplay_scene_ = true;
     bool space_pressed_ = false;
 
+    glm::vec3 clear_color_ = {0.447, 0.565, 0.604};
 };
 
 

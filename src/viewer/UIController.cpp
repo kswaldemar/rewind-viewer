@@ -70,6 +70,9 @@ void UIController::next_frame(Scene *scene) {
 
     //Checking hotkeys
     check_hotkeys();
+
+    //Background color
+    glClearColor(clear_color_.r, clear_color_.g, clear_color_.b, 1.0f);
 }
 
 void UIController::frame_end() {
@@ -136,18 +139,16 @@ void UIController::info_widget(Scene *scene) {
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader("Settings")) {
         if (ImGui::CollapsingHeader("Camera", flags)) {
+            ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
-
             ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size_, 50.0, 1000.0, 0);
-
-            ImGui::SameLine();
-            ImGui::ShowHelpMarker("Result speed is \"viewport size * speed\" pers second");
+            ImGui::PopItemWidth();
         }
-        if (ImGui::CollapsingHeader("Layers", flags)) {
-
-        }
+        //if (ImGui::CollapsingHeader("Layers", flags)) {
+        //
+        //}
         if (ImGui::CollapsingHeader("Colors", flags)) {
-
+            ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
         }
     }
     if (ImGui::CollapsingHeader("Frame message", flags)) {

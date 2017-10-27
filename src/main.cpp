@@ -9,6 +9,8 @@
 #include <common/logger.h>
 #include <net/NetListener.h>
 
+#include <stb_image.h>
+
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -72,10 +74,20 @@ GLFWwindow *setup_window() {
 #endif
 
     GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
+
+    int width;
+    int height;
+    int nr_channels;
+    auto icon_data = stbi_load("resources/icon.png", &width, &height, &nr_channels, 0);
+    GLFWimage icon{width, height, icon_data};
+    glfwSetWindowIcon(window, 1, &icon);
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
         glViewport(0, 0, width, height);
     });
+
+
 
     return window;
 }

@@ -25,7 +25,7 @@ You may find updated files and more primitives support (maybe potential fields, 
 ## Build
 
 Istall thirdparties:
- - [glfw library](http://www.glfw.org/), viewer need at least version 3.2
+ - [glfw library](http://www.glfw.org/) need at least version 3.2
  - [glm library](https://glm.g-truc.net/0.9.8/index.html) please install version **0.9.8**, 
  because there breaking changes in newer releases
  

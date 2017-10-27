@@ -7,7 +7,7 @@ add_compile_options(-Wall -Wextra -Weffc++)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include(RequireLibrary)
+include(utils)
 RequireLibrary(Glfw glfw)
 
 set(Sources
@@ -54,4 +54,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     target_compile_definitions(${PROJECT_NAME} PRIVATE OPENGL_DEBUG)
 endif()
+
+# Set symlink to resources folder
+execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_SOURCE_DIR}/resources ${CMAKE_BINARY_DIR}/resources)
+message(STATUS "Created symlink: ${CMAKE_BINARY_DIR}/resources -> ${CMAKE_SOURCE_DIR}/resources")
 

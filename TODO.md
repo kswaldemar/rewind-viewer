@@ -1,19 +1,4 @@
-## Major 
- - [x] NetListener implementation
-    - [x] Add simple socket library
-    - [ ] Ability to reconnect
-    - [x] No drops because of fragmentation (Improve simple socket or implement your own) 
- - [x] Sample client for C++ using socket
- - [x] More primitives
-    - [x] Circle
-    - [x] Rectangle
-    - [x] Line
- - [x] Adding and rendering all those primitives in scene
- - [ ] Readme
- - [ ] Contribution guide - how to write clients
- - [ ] Documentation how to extend 
- 
-## Minor
+# TODO
  - [ ] Score table
  - [x] Orthographic projection
  - [x] Camera mouse drag navigation and zoom to point
@@ -25,12 +10,11 @@
  - [ ] Layout controlling - choose which primitives to draw
  - [ ] Popup when click on unit (show detailed info)
  - [ ] Window icon, bump glfw to 3.2
- - [ ] Use CMake for loading 3rdparties
  - [ ] Add glm to 3rdparties
  - [ ] Add glfw to 3rdparties (maybe using git submodule)
  - [ ] Text rendering (Hack ImGui or whatever)
  - [ ] Using truetype in UI
- - [ ] Docked layout, draw visualization to separate window using Framebuffer
+ - [ ] Draw visualization to separate window using Framebuffer
  
 ## Features
  - [ ] Minimap

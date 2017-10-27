@@ -81,14 +81,6 @@ public:
         send(s);
     }
 
-    ///Unit example
-    ///Hint: Viewer treat object with equal id as same object between frames
-    void livingUnit(double x, double y, double r, int hp, int maxhp, int id) {
-        static const char *fmt =
-            R"({"type": "unit", "x": %lf, "y": %lf, "r": %lf, "hp": %d, "maxhp": %d, "id": %d})";
-        send(format(fmt, x, y, r, hp, maxhp, id));
-    }
-
 private:
     template<typename... Args>
     static inline std::string format(const char *fmt, Args... args) {

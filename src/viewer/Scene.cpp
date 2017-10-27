@@ -21,9 +21,9 @@ struct Scene::render_attrs_t {
 
 Scene::Scene(ResourceManager *res)
     : rsm_(res)
-    , color_sh_("shaders/simple.vert", "shaders/simple.frag")
-    , circle_sh_("shaders/circle.vert", "shaders/circle.frag")
-    , lines_sh_("shaders/lines.vert", "shaders/lines.frag")
+    , color_sh_ ("resources/shaders/simple.vert", "resources/shaders/simple.frag")
+    , circle_sh_("resources/shaders/circle.vert", "resources/shaders/circle.frag")
+    , lines_sh_ ("resources/shaders/lines.vert",  "resources/shaders/lines.frag")
 {
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
@@ -53,8 +53,6 @@ Scene::Scene(ResourceManager *res)
 Scene::~Scene() = default;
 
 void Scene::render(const glm::mat4 &proj_view) {
-    glClearColor(opt_.clear_color.r, opt_.clear_color.g, opt_.clear_color.b, 1.0f);
-
     color_sh_.use();
     color_sh_.set_mat4("proj_view", proj_view);
     color_sh_.set_mat4("model", attr_->grid_model);
@@ -67,10 +65,10 @@ void Scene::render(const glm::mat4 &proj_view) {
     );
     render_fancy_triangle();
 
-    lines_sh_.use();
-    lines_sh_.set_mat4("proj_view", proj_view);
-
     if (!frames_.empty()) {
+        lines_sh_.use();
+        lines_sh_.set_mat4("proj_view", proj_view);
+
         circle_sh_.use();
         circle_sh_.set_mat4("proj_view", proj_view);
 
@@ -85,7 +83,7 @@ void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
 }
 
 void Scene::render_frame(const Frame &frame) {
-    ImGui::LabelText("Circles", "%zu", frame.circles.size());
+    //ImGui::LabelText("Circles", "%zu", frame.circles.size());
     if (!frame.circles.empty()) {
         circle_sh_.use();
         for (const auto &obj : frame.circles) {
@@ -93,7 +91,7 @@ void Scene::render_frame(const Frame &frame) {
         }
     }
 
-    ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
+    //ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
     if (!frame.rectangles.empty()) {
         color_sh_.use();
         for (const auto &obj : frame.rectangles) {
@@ -101,7 +99,7 @@ void Scene::render_frame(const Frame &frame) {
         }
     }
 
-    ImGui::LabelText("Lines", "%zu", frame.lines.size());
+    //ImGui::LabelText("Lines", "%zu", frame.lines.size());
     if (!frame.lines.empty()) {
         color_sh_.use();
         render_lines(frame.lines);
@@ -255,7 +253,7 @@ int Scene::get_frames_count() {
 }
 
 const char *Scene::get_frame_user_message() {
-    if (cur_frame_idx_ >= 0 && cur_frame_idx_ < frames_.size()) {
+    if (cur_frame_idx_ >= 0 && cur_frame_idx_ < static_cast<int>(frames_.size())) {
         return frames_[cur_frame_idx_]->user_message.c_str();
     }
     return "";

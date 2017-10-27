@@ -14,7 +14,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE include/csimplesocket)
 
 
 #TODO: Test cross compilation
-include(RequireLibrary)
+include(utils)
 if (CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
     set(os_definition _LINUX)
 

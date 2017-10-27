@@ -56,7 +56,6 @@ private:
         const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
 
         glm::vec2 fancy_triangle_pos_ = {2.0f, 2.0f};
-        glm::vec3 clear_color = {0.447, 0.565, 0.604};
     };
 
     ResourceManager *rsm_;

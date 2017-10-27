@@ -34,7 +34,7 @@ void gl_check_error(const char *file, int line) {
 } // namespace details
 
 void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenum severity,
-                                    GLsizei length, const GLchar *message, const void *userParam) {
+                                    GLsizei, const GLchar *message, const void *) {
 
     // ignore non-significant error/warning codes
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204) {
