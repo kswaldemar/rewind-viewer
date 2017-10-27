@@ -37,7 +37,7 @@ void NetListener::run() {
         LOG_INFO("NetListener:: Got connection from %s:%d", client_->GetClientAddr(), client_->GetClientPort());
     }
     status_ = ConStatus::ESTABLISHED;
-
+    std::string prev_block;
     while (true) {
         const int32_t nbytes = client_->Receive(1024);
         if (nbytes > 0) {
@@ -45,16 +45,26 @@ void NetListener::run() {
             data[nbytes] = '\0';
             LOG_INFO("NetClient:: Message %d bytes, '%s'", nbytes, data);
             //Strategy can send several messages in one block
-            //Note: Fragmented messages are not supported, just drop them
             const uint8_t *beg = data;
             const uint8_t *block_end = data + nbytes;
             while (true) {
                 const uint8_t *end = std::find(beg, block_end, '}');
                 if (end == block_end) {
+                    if (beg != block_end) {
+                        prev_block = std::string(beg, end);
+                    }
                     break;
                 }
                 ++end;
-                process_json_message(beg, end);
+                //Support fragmented messages
+                if (prev_block.empty()) {
+                    process_json_message(beg, end);
+                } else {
+                    prev_block += std::string(beg, end);
+                    process_json_message(reinterpret_cast<const uint8_t *>(prev_block.data()),
+                                         reinterpret_cast<const uint8_t *>(prev_block.data() + prev_block.size()));
+                    prev_block.clear();
+                }
                 beg = end;
             }
         } else {
