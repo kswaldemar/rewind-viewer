@@ -29,6 +29,15 @@ struct Line : Colored {
     float y2;
 };
 
+inline void from_json(const nlohmann::json &j, Line &p) {
+    from_json(j, static_cast<Colored&>(p));
+
+    p.x1 = j["x1"].get<float>();
+    p.y1 = j["y1"].get<float>();
+    p.x2 = j["x2"].get<float>();
+    p.y2 = j["y2"].get<float>();
+}
+
 struct Circle : Colored {
     glm::vec2 center;
     float radius;

@@ -4,11 +4,11 @@
     - [ ] Ability to reconnect
     - [x] No drops because of fragmentation (Improve simple socket or implement your own) 
  - [x] Sample client for C++ using socket
- - [ ] More primitives
+ - [x] More primitives
     - [x] Circle
     - [x] Rectangle
-    - [ ] Line
- - [ ] Adding and rendering all those primitives in scene
+    - [x] Line
+ - [x] Adding and rendering all those primitives in scene
  - [ ] Readme
  - [ ] Contribution guide - how to write clients
  - [ ] Documentation how to extend 

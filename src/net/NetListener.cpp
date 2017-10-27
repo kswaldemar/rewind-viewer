@@ -103,6 +103,8 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 frame_->rectangles.emplace_back(j);
                 break;
             case PrimitiveType::line:
+                LOG_DEBUG("NetClient::Line detected");
+                frame_->lines.emplace_back(j);
                 break;
             case PrimitiveType::message:
                 LOG_DEBUG("NetClient::Message");
