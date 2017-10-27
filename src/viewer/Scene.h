@@ -27,7 +27,7 @@ public:
     explicit Scene(ResourceManager *res);
     ~Scene();
 
-    void render(const glm::mat4 &view, const glm::mat4 &proj);
+    void render(const glm::mat4 &proj_view);
 
     ///Set currently drawed frame, index should be in range [0, frames_count)
     void set_frame_index(int idx);

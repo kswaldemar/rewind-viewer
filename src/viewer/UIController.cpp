@@ -83,10 +83,10 @@ void UIController::check_hotkeys() {
     const auto &io = ImGui::GetIO();
     if (!io.WantTextInput) {
         if (io.KeysDown[GLFW_KEY_W]) {
-            camera_->forward();
+            camera_->up();
         }
         if (io.KeysDown[GLFW_KEY_S]) {
-            camera_->backward();
+            camera_->down();
         }
         if (io.KeysDown[GLFW_KEY_A]) {
             camera_->left();
@@ -150,16 +150,22 @@ void UIController::info_widget(Scene *scene) {
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader("Settings")) {
         if (ImGui::CollapsingHeader("Camera", flags)) {
-            ImGui::DragFloat3("Position", glm::value_ptr(camera_->pos_), 0.1, 0, 0, "%.1f");
-            float speed = camera_->opt_.speed_per_second;
+            ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
+
+            int viewport = static_cast<int>(camera_->opt_.viewport_size_);
+            if (ImGui::InputInt("Viewport size", &viewport, 10, 100)) {
+                viewport = cg::clamp(viewport, 10, 4000);
+                camera_->opt_.viewport_size_ = viewport;
+            }
+
+            float speed_coef = camera_->opt_.speed_coef_per_second;
             ImGui::PushItemWidth(0);
-            if (ImGui::InputFloat("Speed", &speed, 1.0, 10.0, 1)) {
-                speed = cg::clamp(speed, 0.1f, 1000.0f);
-                camera_->opt_.speed_per_second = speed;
+            if (ImGui::InputFloat("Speed", &speed_coef, 0.1, 1.0, 1)) {
+                camera_->opt_.speed_coef_per_second = speed_coef;
             }
             ImGui::PopItemWidth();
             ImGui::SameLine();
-            ImGui::ShowHelpMarker("In units per second with same metric as unit coordinates");
+            ImGui::ShowHelpMarker("Result speed is \"viewport size * speed\" pers second");
         }
         if (ImGui::CollapsingHeader("Layers", flags)) {
 

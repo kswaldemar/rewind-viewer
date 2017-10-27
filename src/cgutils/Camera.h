@@ -13,34 +13,28 @@ class Camera {
 public:
     friend class UIController;
 
-    Camera(const glm::vec3 &initial_pos, const glm::vec3 &up, float yaw, float pitch, float move_speed);
+    Camera(const glm::vec2 &initial_pos, float viewport_size);
     ~Camera() = default;
 
-    void forward();
-    void backward();
+    void up();
+    void down();
     void left();
     void right();
 
-    const glm::mat4 &view() const;
+    const glm::mat4 &proj_view() const;
 
-    void update(float fps, float mouse_wheel);
+    void update();
 
 private:
     struct settings_t {
-        const float min_z = 0.1f;
-        const float max_z = 100.0f;
-        float speed_per_second = 0.0f;
+        float speed_coef_per_second = 2.0f;
+        float viewport_size_;
     };
 
-    glm::vec3 pos_;
-    glm::vec3 up_dir_;
-    glm::vec3 front_dir_;
-    float yaw_;
-    float pitch_;
     float move_per_frame_;
-    glm::vec3 fake_up_;
 
-    glm::mat4 view_;
+    glm::mat4 pr_view_;
+    glm::vec2 pos_;
 
     settings_t opt_;
 };

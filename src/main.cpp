@@ -81,9 +81,9 @@ GLFWwindow *setup_window() {
 }
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
-    const float CAMERA_SPEED_PER_SECOND = 60.0;
+    //const float CAMERA_SPEED_PER_SECOND = 60.0;
 
-    Camera cam({0.0f, 0.0f, 0.0f}, {0.0, 0.0, 1.0}, 90, -89.9f, CAMERA_SPEED_PER_SECOND);
+    Camera cam({0.0f, 0.0f}, 1000);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     ResourceManager res;
@@ -99,23 +99,21 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     //glm::mat4 proj = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 1000.0f);
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
-    glm::mat4 proj = glm::ortho<float>(-500, 6000, -500, 5000, 0.1, 1000.0);
+    //glm::mat4 proj = glm::ortho<float>(-500, 6000, -500, 5000, 0.1, 1000.0);
 
     glEnable(GL_DEPTH_TEST);
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //Updates
         ui.next_frame(&scene);
-
-        const auto &io = ImGui::GetIO();
-        cam.update(io.Framerate, io.MouseWheel);
+        cam.update();
 
         if (ui.close_requested()) {
             glfwSetWindowShouldClose(window, true);
         }
 
         //Non Ui related drawing
-        scene.render(cam.view(), proj);
+        scene.render(cam.proj_view());
 
         // Cleanup opengl state
         glBindVertexArray(0);

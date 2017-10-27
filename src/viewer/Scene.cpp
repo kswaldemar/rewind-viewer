@@ -41,13 +41,11 @@ Scene::Scene(ResourceManager *res)
 
 Scene::~Scene() = default;
 
-void Scene::render(const glm::mat4 &view, const glm::mat4 &proj) {
+void Scene::render(const glm::mat4 &proj_view) {
     glClearColor(opt_.clear_color.r, opt_.clear_color.g, opt_.clear_color.b, 1.0f);
 
     color_sh_.use();
-    color_sh_.set_mat4("projection", proj);
-    color_sh_.set_mat4("view", view);
-
+    color_sh_.set_mat4("proj_view", proj_view);
     color_sh_.set_mat4("model", attr_->grid_model);
     color_sh_.set_vec3("color", opt_.grid_color);
     render_grid();
@@ -61,7 +59,7 @@ void Scene::render(const glm::mat4 &view, const glm::mat4 &proj) {
 
     if (!frames_.empty()) {
         circle_sh_.use();
-        circle_sh_.set_mat4("proj_view", proj * view);
+        circle_sh_.set_mat4("proj_view", proj_view);
 
         const Frame *frame = frames_[cur_frame_idx_].get();
         render_frame(*frame);
