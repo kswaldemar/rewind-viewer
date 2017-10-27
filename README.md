@@ -1,5 +1,6 @@
 # Rewind viewer
 
+[![MIT License](https://img.shields.io/github/license/kswaldemar/highloadcup2017.svg?style=flat-square)](./LICENSE)
 [![C++ standard](https://img.shields.io/badge/C++-14-blue.svg?style=flat-square)](https://isocpp.org/)
 [![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green.svg?style=flat-square)](https://www.khronos.org/opengl/)
 [![RAIC](https://img.shields.io/badge/Russian%20AI%20Cup-2017-yellow.svg?style=flat-square)](http://russianaicup.ru/)
@@ -46,7 +47,7 @@ Also see [client examples for official local runner](https://github.com/JustAMan
 Then run viewer before strategy and it should start draw frames
 
 ## License
-Project sources distibuted under [Apache 2.0 license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), thirdparties distributed under their own licences
+Project sources distibuted under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), thirdparties distributed under their own licences
 
 ## Credits
 Project builded using many libraries
@@ -56,4 +57,5 @@ Project builded using many libraries
  - [ImGui](https://github.com/ocornut/imgui) for UI widgets inside application
  - [nlohmann json](https://github.com/nlohmann/json) for json operating
  - [csimplesocket](https://github.com/DFHack/clsocket) for network interaction
+ - [stb_image](https://github.com/nothings/stb) for images processing
  
