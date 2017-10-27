@@ -47,6 +47,7 @@ private:
     void render_grid();
     void render_fancy_triangle();
     void render_circle(const pod::Circle &circle);
+    void render_rectangle(const pod::Rectangle &rect);
 
     struct settings_t {
         const uint16_t grid_cells_count = 10;

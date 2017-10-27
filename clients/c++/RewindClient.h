@@ -8,12 +8,16 @@
 /**
  *  Class for interaction with rewind-viewer from your own startegy class
  *  
- *  Implemented using CActiveSocket, but cpp-cgdk depends from it anyway
- *  For each frame "end" command at frame end
+ *  Implemented using CActiveSocket, which is shipped with cpp-cgdk
+ *  For each frame (game tick) rewind-viewer expect "end" command at frame end
  *  All objects should be represented as json string, 
  *  and will be decoded at viewer side to corresponding structures
+ *
+ *  Every object has mandatory field "type" and arbitrary number of additional fields
+ *  For example end will looks like
+ *      {"type": "end"}
  *  
- *  For available types see enum PrimitveType in <path to primitives here>
+ *  For available types see enum PrimitveType in <path to primitives here> 
  *
  *  In order to provide support for your own primitives:
  *     - add type with name of your choice to PrimitiveType in <path to primitives here> 
@@ -26,20 +30,12 @@
  *  Currently you should send object each frame to display it in viewer
  */
 class RewindClient {
-    template<typename... Args>
-    static inline std::string format(const char *fmt, Args... args) {
-        static char buf[2048];
-        int bytes = sprintf(buf, fmt, args...);
-        buf[bytes] = '\0';
-        return buf;
-    }
-
 public:
-    enum class Color : uint32_t {
-        RED   = 0xFF0000,
-        GREEN = 0x00FF00,
-        BLUE  = 0x0000FF,
-        GRAY  = 0x273142,
+    enum Color : uint32_t {
+        COLOR_RED   = 0xFF0000,
+        COLOR_GREEN = 0x00FF00,
+        COLOR_BLUE  = 0x0000FF,
+        COLOR_GRAY  = 0x273142,
     };
 
     ///Singleton
@@ -56,36 +52,27 @@ public:
         send(R"({"type":"end"})");
     }
 
-    void circle(double x, double y, double r, Color color = Color::GRAY, bool fill = false) {
+    void circle(double x, double y, double r, uint32_t color) {
         static const char *fmt =
-            R"({"type": "circle", "x": %lf, "y": %lf, "r": %lf, "color": %d, "fill": %d})";
-        send(format(fmt, x, y, r, static_cast<int32_t>(color), fill));
-    }
-    void fillCircle(double x, double y, double r, Color color = Color::GRAY) {
-        circle(x, y, r, color, true);
+            R"({"type": "circle", "x": %lf, "y": %lf, "r": %lf, "color": %u})";
+        send(format(fmt, x, y, r, color));
     }
 
-    void rect(double x1, double y1, double x2, double y2,
-              Color color = Color::GRAY, bool fill = false) {
+    void rect(double x1, double y1, double x2, double y2, uint32_t color) {
         static const char *fmt =
-            R"({"type": "rectangle", "p1": {"x": %lf, "y": %lf}, "p1": {"x": %lf, "y": %lf}, "color": %ud, "fill": %d})";
-        send(format(fmt, x1, y1, x2, y2, static_cast<int32_t>(color), fill));
-    }
-    void fillRect(double x1, double y1, double x2, double y2, Color color = Color::GRAY) {
-        rect(x1, y1, x2, y2, color, true);
+            R"({"type": "rectangle", "x1": %lf, "y1": %lf, "x2": %lf, "y2": %lf, "color": %u})";
+        send(format(fmt, x1, y1, x2, y2, color));
     }
 
-    void line(double x1, double y1, double x2, double y2, Color color = Color::GRAY) {
+    void line(double x1, double y1, double x2, double y2, uint32_t color) {
         static const char *fmt =
-            R"({"type": "line", "p1": {"x": %lf, "y": %lf}, "p1": {"x": %lf, "y": %lf}, "color": %ud})";
-        send(format(fmt, x1, y1, x2, y2, static_cast<int32_t>(color)));
+            R"({"type": "line", "x1": %lf, "y1": %lf, "x2": %lf, "y2": %lf, "color": %u})";
+        send(format(fmt, x1, y1, x2, y2, color));
     }
 
     ///Pass arbitrary user message to be stored in frame
     ///Message content displayed in separate window inside viewer
     ///Can be used several times per frame
-    ///By default viewer buffer is 2048 bytes, so string longer is not supported, 
-    ///but you can easily split it on client side
     template<typename... Args>
     void message(Args... args) {
         std::string s = R"({"type": "message", "message": ")";
@@ -103,6 +90,14 @@ public:
     }
 
 private:
+    template<typename... Args>
+    static inline std::string format(const char *fmt, Args... args) {
+        static char buf[2048];
+        int bytes = sprintf(buf, fmt, args...);
+        buf[bytes] = '\0';
+        return std::string(buf);
+    }
+
     RewindClient(const std::string &host, uint16_t port) {
         socket_.Initialize();
         socket_.DisableNagleAlgoritm();

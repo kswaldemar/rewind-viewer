@@ -3,6 +3,7 @@
 #include <cgutils/Shader.h>
 
 #include <glm/gtc/matrix_transform.hpp>
+#include <imgui.h>
 
 struct Scene::render_attrs_t {
     GLuint grid_vao = 0;
@@ -31,6 +32,7 @@ Scene::Scene(ResourceManager *res)
         1.0f, -1.0f, 0.0f,
         1.0f,  1.0f, 0.0f,
     };
+
     glBindVertexArray(rect_vao_);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
@@ -52,8 +54,7 @@ void Scene::render(const glm::mat4 &proj_view) {
 
     color_sh_.set_vec3("color", {0.0f, 0.0f, 1.0f});
     color_sh_.set_mat4(
-        "model", glm::translate(glm::mat4{},
-                                glm::vec3{opt_.fancy_triangle_pos_.x, opt_.fancy_triangle_pos_.y, 0.01f})
+        "model", glm::translate(glm::mat4{}, glm::vec3{opt_.fancy_triangle_pos_.x, opt_.fancy_triangle_pos_.y, 0.01f})
     );
     render_fancy_triangle();
 
@@ -64,18 +65,34 @@ void Scene::render(const glm::mat4 &proj_view) {
         const Frame *frame = frames_[cur_frame_idx_].get();
         render_frame(*frame);
     }
+
+    pod::Rectangle r;
+    r.w = 400;
+    r.h = 800;
+    r.center = {400, 400};
+    r.color = {0.4, 0.2, 0.7};
+    render_rectangle(r);
 }
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
-    //TODO: Is that thread safe?!
+    //Very careful with that call from other thread
     frames_.emplace_back(std::move(frame));
 }
 
 void Scene::render_frame(const Frame &frame) {
+    ImGui::LabelText("Circles", "%zu", frame.circles.size());
     if (!frame.circles.empty()) {
         circle_sh_.use();
         for (const auto &obj : frame.circles) {
             render_circle(obj);
+        }
+    }
+
+    ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
+    if (!frame.rectangles.empty()) {
+        color_sh_.use();
+        for (const auto &obj : frame.rectangles) {
+            render_rectangle(obj);
         }
     }
 }
@@ -149,6 +166,7 @@ void Scene::render_fancy_triangle() {
 
 void Scene::render_circle(const pod::Circle &circle) {
     glBindVertexArray(rect_vao_);
+
     glm::mat4 model;
     auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
     model = glm::translate(model, vcenter);
@@ -158,6 +176,17 @@ void Scene::render_circle(const pod::Circle &circle) {
     circle_sh_.set_vec3("color", circle.color);
     circle_sh_.set_mat4("model", model);
 
+    glDrawArrays(GL_TRIANGLES, 0, 18);
+}
+
+void Scene::render_rectangle(const pod::Rectangle &rect) {
+    color_sh_.set_vec3("color", rect.color);
+    glm::mat4 model;
+    model = glm::translate(model, glm::vec3{rect.center.x, rect.center.y, 0.1f});
+    model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 0.0f});
+    color_sh_.set_mat4("model", model);
+
+    glBindVertexArray(rect_vao_);
     glDrawArrays(GL_TRIANGLES, 0, 18);
 }
 
@@ -181,5 +210,6 @@ const char *Scene::get_frame_user_message() {
     }
     return "";
 }
+
 
 

@@ -21,7 +21,6 @@ struct UIController::wnd_t {
     bool show_fps_overlay = true;
     bool show_info = true;
     bool show_playback_control = true;
-    bool show_user_messages = false;
 };
 
 UIController::UIController(Camera *camera)
@@ -66,7 +65,9 @@ void UIController::next_frame(Scene *scene) {
         ImGui::ShowStyleEditor();
         ImGui::End();
     }
+
     //ImGui::ShowTestWindow();
+
     //Checking hotkeys
     check_hotkeys();
 }
@@ -82,19 +83,6 @@ bool UIController::close_requested() {
 void UIController::check_hotkeys() {
     const auto &io = ImGui::GetIO();
     if (!io.WantTextInput) {
-        if (io.KeysDown[GLFW_KEY_W]) {
-            camera_->up();
-        }
-        if (io.KeysDown[GLFW_KEY_S]) {
-            camera_->down();
-        }
-        if (io.KeysDown[GLFW_KEY_A]) {
-            camera_->left();
-        }
-        if (io.KeysDown[GLFW_KEY_D]) {
-            camera_->right();
-        }
-
         if (io.KeysDown[GLFW_KEY_SPACE]) {
             if (!space_pressed_) {
                 space_pressed_ = true;
@@ -143,8 +131,6 @@ void UIController::fps_overlay_widget() {
 }
 
 void UIController::info_widget(Scene *scene) {
-    //static const ImVec2 size{300, 300};
-    //ImGui::SetNextWindowSize(size);
     ImGui::SetNextWindowPos({100, 100}, ImGuiCond_FirstUseEver);
     ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
@@ -152,18 +138,8 @@ void UIController::info_widget(Scene *scene) {
         if (ImGui::CollapsingHeader("Camera", flags)) {
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
 
-            int viewport = static_cast<int>(camera_->opt_.viewport_size_);
-            if (ImGui::InputInt("Viewport size", &viewport, 10, 100)) {
-                viewport = cg::clamp(viewport, 10, 4000);
-                camera_->opt_.viewport_size_ = viewport;
-            }
+            ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size_, 50.0, 1000.0, 0);
 
-            float speed_coef = camera_->opt_.speed_coef_per_second;
-            ImGui::PushItemWidth(0);
-            if (ImGui::InputFloat("Speed", &speed_coef, 0.1, 1.0, 1)) {
-                camera_->opt_.speed_coef_per_second = speed_coef;
-            }
-            ImGui::PopItemWidth();
             ImGui::SameLine();
             ImGui::ShowHelpMarker("Result speed is \"viewport size * speed\" pers second");
         }

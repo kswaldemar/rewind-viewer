@@ -11,15 +11,6 @@
 
 namespace pod {
 
-struct Point {
-    float x;
-    float y;
-};
-
-struct Fillable {
-    bool fill;
-};
-
 struct Colored {
     glm::vec3 color;
 };
@@ -31,30 +22,18 @@ inline void from_json(const nlohmann::json &j, Colored &p) {
     p.color.b = ((color & 0x0000FF)) / 256.0f;
 }
 
-struct OrientPoint : Point {
-    float course;
-};
-
-struct Unit : OrientPoint {
-    uint16_t hp;
-    uint32_t id;
-};
-
 struct Line : Colored {
-    Point p1;
-    Point p2;
+    float x1, y1;
+    float x2, y2;
 };
 
 struct Circle : Colored {
-    Point center;
+    glm::vec2 center;
     float radius;
 };
 
 inline void from_json(const nlohmann::json &j, Circle &p) {
-    auto color = j["color"].get<uint32_t>();
-    p.color.r = ((color & 0xFF0000) >> 16) / 256.0f;
-    p.color.g = ((color & 0x00FF00) >> 8) / 256.0f;
-    p.color.b = ((color & 0x0000FF)) / 256.0f;
+    from_json(j, static_cast<Colored&>(p));
 
     p.radius = j["r"].get<float>();
     p.center.x = j["x"].get<float>();
@@ -62,8 +41,22 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
 }
 
 struct Rectangle : Colored {
-    Point top_left;
-    Point bot_right;
+    glm::vec2 center;
+    float w;
+    float h;
 };
+
+inline void from_json(const nlohmann::json &j, Rectangle &p) {
+    from_json(j, static_cast<Colored&>(p));
+    float x1 = j["x1"].get<float>();
+    float y1 = j["y1"].get<float>();
+    float x2 = j["x2"].get<float>();
+    float y2 = j["y2"].get<float>();
+
+    p.w = x2 - x1;
+    p.h = y1 - y2;
+    p.center.x = x1 + p.w * 0.5f;
+    p.center.y = y2 + p.h * 0.5f;
+}
 
 } // namespace pod

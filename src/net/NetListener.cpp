@@ -87,23 +87,25 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
 
         switch (type) {
             case PrimitiveType::begin:
-                LOG_INFO("NetClient::Begin");
+                LOG_DEBUG("NetClient::Begin");
                 break;
             case PrimitiveType::end:
-                LOG_INFO("NetClient::End");
+                LOG_DEBUG("NetClient::End");
                 scene_->add_frame(std::move(frame_));
                 frame_ = nullptr;
                 break;
             case PrimitiveType::circle:
-                LOG_INFO("NetClient::Circle detected");
+                LOG_DEBUG("NetClient::Circle detected");
                 frame_->circles.emplace_back(j);
                 break;
             case PrimitiveType::rectangle:
+                LOG_DEBUG("NetClient::Rectangle detected");
+                frame_->rectangles.emplace_back(j);
                 break;
             case PrimitiveType::line:
                 break;
             case PrimitiveType::message:
-                LOG_INFO("NetClient::Message");
+                LOG_DEBUG("NetClient::Message");
                 frame_->user_message = j["message"];
                 break;
             case PrimitiveType::types_count:

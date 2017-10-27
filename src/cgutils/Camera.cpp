@@ -11,6 +11,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <algorithm>
 
 
 namespace {
@@ -21,22 +22,7 @@ Camera::Camera(const glm::vec2 &initial_pos, float viewport_size)
     : pos_(initial_pos)
 {
     opt_.viewport_size_ = viewport_size;
-}
-
-void Camera::up() {
-    pos_.y += move_per_frame_;
-}
-
-void Camera::down() {
-    pos_.y -= move_per_frame_;
-}
-
-void Camera::left() {
-    pos_.x -= move_per_frame_;
-}
-
-void Camera::right() {
-    pos_.x += move_per_frame_;
+    update_matrix();
 }
 
 const glm::mat4 &Camera::proj_view() const {
@@ -45,12 +31,13 @@ const glm::mat4 &Camera::proj_view() const {
 
 void Camera::update() {
     const auto &io = ImGui::GetIO();
-    move_per_frame_ = (opt_.viewport_size_ * opt_.speed_coef_per_second) / io.Framerate;
 
     const float zoom_speed = 0.1;
     const float diff_sense = 0.1;
+
+
     //Should depend from grid size
-    if (!io.WantCaptureMouse) {
+    if (!ImGui::IsAnyItemActive()) {
         int width, height;
         glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
 
@@ -83,10 +70,21 @@ void Camera::update() {
             delta.y = opt_.viewport_size_ * (delta.y / height);
             pos_ += delta;
         }
-    }
 
-    const float half_view = opt_.viewport_size_ * 0.5f;
-    pr_view_ = glm::ortho(pos_.x - half_view, pos_.x + half_view, pos_.y - half_view, pos_.y + half_view, -10.0f, 10.0f);
-    glm::translate(pr_view_, glm::vec3{0.0f, 0.0f, 10.0f});
+        update_matrix();
+    }
 }
 
+void Camera::update_matrix() {
+    int width, height;
+    glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
+
+    const float half_view = opt_.viewport_size_ * 0.5f;
+    const float min_size = std::min<float>(width, height);
+    const float x_half_view = half_view * width / min_size;
+    const float y_half_view = half_view * height / min_size;
+
+    pr_view_ = glm::ortho(pos_.x - x_half_view, pos_.x + x_half_view,
+                          pos_.y - y_half_view, pos_.y + y_half_view,
+                          -10.0f, 10.0f);
+}

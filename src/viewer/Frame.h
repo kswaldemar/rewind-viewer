@@ -13,5 +13,6 @@
  */
 struct Frame {
     std::vector<pod::Circle> circles;
+    std::vector<pod::Rectangle> rectangles;
     std::string user_message;
 };

@@ -16,22 +16,16 @@ public:
     Camera(const glm::vec2 &initial_pos, float viewport_size);
     ~Camera() = default;
 
-    void up();
-    void down();
-    void left();
-    void right();
-
     const glm::mat4 &proj_view() const;
 
     void update();
 
 private:
+    void update_matrix();
+
     struct settings_t {
-        float speed_coef_per_second = 2.0f;
         float viewport_size_;
     };
-
-    float move_per_frame_;
 
     glm::mat4 pr_view_;
     glm::vec2 pos_;
