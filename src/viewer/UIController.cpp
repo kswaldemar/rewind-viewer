@@ -21,6 +21,8 @@ struct UIController::wnd_t {
     bool show_fps_overlay = true;
     bool show_info = true;
     bool show_playback_control = true;
+    bool show_ui_help = false;
+    bool show_shortcuts_help = false;
 };
 
 UIController::UIController(Camera *camera)
@@ -65,8 +67,20 @@ void UIController::next_frame(Scene *scene) {
         ImGui::ShowStyleEditor();
         ImGui::End();
     }
-
-    //ImGui::ShowTestWindow();
+    if (wnd_->show_ui_help) {
+        ImGui::Begin("UI Help", &wnd_->show_ui_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::ShowUserGuide();
+        ImGui::End();
+    }
+    if (wnd_->show_shortcuts_help) {
+        ImGui::Begin("Viewer Help", &wnd_->show_shortcuts_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::BulletText("Mouse drag on map to move camera");
+        ImGui::BulletText("Mouse wheel to zoom");
+        ImGui::BulletText("Space to play/stop frame playback");
+        ImGui::BulletText("Left, right arrow to manually change frames");
+        ImGui::BulletText("Esc to close application");
+        ImGui::End();
+    }
 
     //Checking hotkeys
     check_hotkeys();
@@ -108,10 +122,9 @@ void UIController::main_menu_bar() {
             ImGui::Checkbox("Utility window", &wnd_->show_info);
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Help", false)) {
-            //if (ImGui::BeginPopupModal("UI Help")) {
-            //    ImGui::ShowUserGuide();
-            //}
+        if (ImGui::BeginMenu("Help", true)) {
+            ImGui::MenuItem("UI help", nullptr, &wnd_->show_ui_help);
+            ImGui::MenuItem("Viewer help", nullptr, &wnd_->show_shortcuts_help);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -134,7 +147,8 @@ void UIController::fps_overlay_widget() {
 }
 
 void UIController::info_widget(Scene *scene) {
-    ImGui::SetNextWindowPos({100, 100}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos({900, 20}, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize({300, 750}, ImGuiCond_FirstUseEver);
     ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader("Settings")) {
@@ -144,9 +158,6 @@ void UIController::info_widget(Scene *scene) {
             ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size_, 50.0, 1000.0, 0);
             ImGui::PopItemWidth();
         }
-        //if (ImGui::CollapsingHeader("Layers", flags)) {
-        //
-        //}
         if (ImGui::CollapsingHeader("Colors", flags)) {
             ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
         }
