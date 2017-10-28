@@ -12,18 +12,13 @@ add_library(${PROJECT_NAME} STATIC ${Sources})
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE include/csimplesocket)
 
-#TODO: Test cross compilation
 include(utils)
 if (CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
     set(os_definition _LINUX)
-
     RequireLibrary(Pthread pthread)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${Pthread_LIBRARY})
 elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL Windows)
     set(os_definition _WIN32)
-
-    RequireLibrary(WinSock wsock32)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${WinSock_LIBRARY})
 elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL Darwin)
     set(os_definition _DARWIN)
 endif()
