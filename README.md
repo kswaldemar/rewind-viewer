@@ -24,18 +24,22 @@ You may find updated files and more primitives support (maybe potential fields, 
 
 ## Build
 
-Istall thirdparties:
- - [glfw library](http://www.glfw.org/) need at least version 3.2
- - [glm library](https://glm.g-truc.net/0.9.8/index.html) please install version **0.9.8**, 
- because there breaking changes in newer releases
- 
-All other dependencies shipped together with project.
+Clone repository with submodules:
+```
+git clone --recursive https://github.com/kswaldemar/rewind-viewer.git
+```
 
-Clone repository and run:
+Unix, MacOS:
 ```
 mkdir build && cd build
 cmake --CMAKE_BUILD_TYPE=Release ..
 cmake --build .
+```
+Windows:
+```
+mkdir buld && cd build
+cmake ..
+cmake --build . --config Release
 ```
 *Note*: You need compiler with c++14 support.
 
