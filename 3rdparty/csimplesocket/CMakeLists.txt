@@ -12,7 +12,6 @@ add_library(${PROJECT_NAME} STATIC ${Sources})
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE include/csimplesocket)
 
-
 #TODO: Test cross compilation
 include(utils)
 if (CMAKE_HOST_SYSTEM_NAME STREQUAL Linux)
