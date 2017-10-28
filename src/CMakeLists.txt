@@ -2,13 +2,14 @@ cmake_minimum_required(VERSION 3.0)
 
 project(rewindviewer LANGUAGES C CXX)
 
-add_compile_options(-Wall -Wextra -Weffc++)
-if (NOT MSVC)
-    add_compile_options(-Wextra)
+add_compile_options(-Wall)
+if (MSVC)
+    add_compile_options(/W0)
+else()
+    add_compile_options(-Wextra -Weffc++)
 endif()
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(Sources
     main.cpp
