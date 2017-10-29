@@ -21,8 +21,9 @@ struct Scene::render_attrs_t {
 
 Scene::Scene(ResourceManager *res)
     : mgr_(res)
-    , color_sh_ ("resources/shaders/simple.vert", "resources/shaders/simple.frag")
+    , color_sh_ ("resources/shaders/simple.vert", "resources/shaders/uniform_color.frag")
     , circle_sh_("resources/shaders/circle.vert", "resources/shaders/circle.frag")
+    , lines_sh_ ("resources/shaders/lines.vert",  "resources/shaders/lines.frag")
 {
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
@@ -60,6 +61,8 @@ Scene::Scene(ResourceManager *res)
     glUniformBlockBinding(color_sh_.id(), block_index, 0);
     block_index = glGetUniformBlockIndex(circle_sh_.id(), "Matrix");
     glUniformBlockBinding(circle_sh_.id(), block_index, 0);
+    block_index = glGetUniformBlockIndex(lines_sh_.id(), "Matrix");
+    glUniformBlockBinding(lines_sh_.id(), block_index, 0);
 }
 
 Scene::~Scene() = default;
@@ -101,7 +104,7 @@ void Scene::render_frame(const Frame &frame) {
     }
 
     if (!frame.lines.empty()) {
-        color_sh_.use();
+        lines_sh_.use();
         render_lines(frame.lines);
     }
 
@@ -167,7 +170,7 @@ void Scene::render_circle(const pod::Circle &circle) {
     circle_sh_.set_vec3("color", circle.color);
     circle_sh_.set_mat4("model", model);
 
-    glDrawArrays(GL_TRIANGLES, 0, 18);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
@@ -178,7 +181,7 @@ void Scene::render_rectangle(const pod::Rectangle &rect) {
     color_sh_.set_mat4("model", model);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 18);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void Scene::render_lines(const std::vector<pod::Line> &lines) {
@@ -189,13 +192,15 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
         glBindVertexArray(attr_->lines_vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        //They stored in lines as (vec3 color, vec2 pos)
-        //Color to 1 pos
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
-        glEnableVertexAttribArray(1);
+        //Plain float format: vec3 color, vec2 pos
+
         //Pos
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), cg::offset<float>(3));
         glEnableVertexAttribArray(0);
+
+        //Color to 1 pos
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(1);
 
         glBindVertexArray(0);
     }
@@ -217,7 +222,7 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
     }
 
     glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(float), points.data(), GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(points.size()));
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(points.size() / 5));
 }
 
 void Scene::set_frame_index(int idx) {
