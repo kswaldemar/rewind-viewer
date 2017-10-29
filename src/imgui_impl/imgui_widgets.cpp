@@ -76,6 +76,10 @@ bool TickBar(const char *label, float *v, float v_min, float v_max, const ImVec2
                           &bb);
     }
 
+    if (g.ActiveId == id) {
+        ClearActiveID();
+    }
+
     return false;
 }
 
