@@ -24,7 +24,7 @@ private:
     void update_matrix();
 
     struct settings_t {
-        float viewport_size_;
+        float viewport_size;
     };
 
     glm::mat4 pr_view_;

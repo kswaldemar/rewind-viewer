@@ -28,13 +28,8 @@ else()
     add_subdirectory(3rdparty/glfw)
 endif()
 
-
 set(GLM_TEST_ENABLE OFF)
 add_subdirectory(3rdparty/glm)
 
-
 #Project
 add_subdirectory(src)
-
-#Copy resources dir
-file(COPY resources DESTINATION ${CMAKE_BINARY_DIR})

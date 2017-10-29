@@ -24,12 +24,14 @@
  */
 class Scene {
 public:
+    friend class UIController;
+
     explicit Scene(ResourceManager *res);
     ~Scene();
 
     void render(const glm::mat4 &proj_view);
 
-    ///Set currently drawed frame, index should be in range [0, frames_count)
+    ///Set frame to draw now, index should be in range [0, frames_count)
     void set_frame_index(int idx);
     int get_frame_index();
 
@@ -52,12 +54,10 @@ private:
     struct settings_t {
         const uint16_t grid_cells_count = 10;
         const glm::vec2 grid_dim = {4000.0f, 4000.0f};
-        const glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
-
-        glm::vec2 fancy_triangle_pos_ = {2.0f, 2.0f};
+        glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
     };
 
-    ResourceManager *rsm_;
+    ResourceManager *mgr_;
 
     Shader color_sh_;
     Shader circle_sh_;

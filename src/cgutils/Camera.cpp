@@ -19,7 +19,7 @@ namespace {
 Camera::Camera(const glm::vec2 &initial_pos, float viewport_size)
     : pos_(initial_pos)
 {
-    opt_.viewport_size_ = viewport_size;
+    opt_.viewport_size = viewport_size;
     update_matrix();
 }
 
@@ -58,14 +58,14 @@ void Camera::update() {
                 ImVec2 new_cursor = {io.MousePos.x - shift.x * diff_sense, io.MousePos.y - shift.y * diff_sense};
                 glfwSetCursorPos(glfwGetCurrentContext(), new_cursor.x, new_cursor.y);
             }
-            opt_.viewport_size_ -= (opt_.viewport_size_ * zoom_speed) * io.MouseWheel;
+            opt_.viewport_size -= (opt_.viewport_size * zoom_speed) * io.MouseWheel;
         }
 
         //Map dragging
         if (ImGui::IsMouseDragging()) {
             glm::vec2 delta = {io.MouseDelta.x, io.MouseDelta.y};
-            delta.x = -opt_.viewport_size_ * (delta.x / width);
-            delta.y = opt_.viewport_size_ * (delta.y / height);
+            delta.x = -opt_.viewport_size * (delta.x / width);
+            delta.y = opt_.viewport_size * (delta.y / height);
             pos_ += delta;
         }
 
@@ -77,7 +77,7 @@ void Camera::update_matrix() {
     int width, height;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
 
-    const float half_view = opt_.viewport_size_ * 0.5f;
+    const float half_view = opt_.viewport_size * 0.5f;
     const float min_size = std::min<float>(width, height);
     const float x_half_view = half_view * width / min_size;
     const float y_half_view = half_view * height / min_size;

@@ -6,8 +6,6 @@
 
 #include <common/logger.h>
 
-#include <glad/glad.h>
-
 #include <string>
 
 namespace cg {
@@ -52,6 +50,7 @@ void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenu
         case GL_DEBUG_SOURCE_THIRD_PARTY_ARB:     fprintf(stderr, "Source: Third Party"); break;
         case GL_DEBUG_SOURCE_APPLICATION_ARB:     fprintf(stderr, "Source: Application"); break;
         case GL_DEBUG_SOURCE_OTHER_ARB:           fprintf(stderr, "Source: Other"); break;
+        default: break;
     }
     fprintf(stderr, "\n");
 
@@ -63,6 +62,7 @@ void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenu
         case GL_DEBUG_TYPE_PORTABILITY_ARB:         fprintf(stderr, "Type: Portability"); break;
         case GL_DEBUG_TYPE_PERFORMANCE_ARB:         fprintf(stderr, "Type: Performance"); break;
         case GL_DEBUG_TYPE_OTHER_ARB:               fprintf(stderr, "Type: Other"); break;
+        default: break;
     }
     fprintf(stderr, "\n");
 
@@ -71,6 +71,7 @@ void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenu
         case GL_DEBUG_SEVERITY_HIGH_ARB:         fprintf(stderr, "Severity: high"); break;
         case GL_DEBUG_SEVERITY_MEDIUM_ARB:       fprintf(stderr, "Severity: medium"); break;
         case GL_DEBUG_SEVERITY_LOW_ARB:          fprintf(stderr, "Severity: low"); break;
+        default: break;
     }
     fprintf(stderr, "\n");
     //@formatter:on

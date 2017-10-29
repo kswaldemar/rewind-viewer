@@ -6,7 +6,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include <cstring>
 #include <stdexcept>
 
 namespace {
@@ -15,7 +14,7 @@ std::string load_file(const std::string &file_path) {
     FILE *fd = fopen(file_path.c_str(), "r");
     if (!fd) {
         char err_buf[512];
-        sprintf(err_buf, "Load file: %s", strerror(errno));
+        sprintf(err_buf, "Load file(%s): %s", file_path.c_str(), strerror(errno));
         throw std::runtime_error(err_buf);
     }
 
@@ -123,4 +122,8 @@ void Shader::set_mat4(const std::string &name, float *pv) {
 
 void Shader::set_float(const std::string &name, float val) {
     glUniform1f(uniform(name), val);
+}
+
+GLuint Shader::id() const {
+    return program_;
 }

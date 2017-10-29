@@ -151,11 +151,13 @@ void UIController::info_widget(Scene *scene) {
         if (ImGui::CollapsingHeader("Camera", flags)) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
-            ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size_, 50.0, 1000.0, 0);
+            ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size, 50.0, 1000.0, 0);
             ImGui::PopItemWidth();
         }
         if (ImGui::CollapsingHeader("Colors", flags)) {
+            ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
+            ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt_.grid_color));
         }
     }
     if (ImGui::CollapsingHeader("Frame message", flags)) {

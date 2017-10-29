@@ -43,7 +43,11 @@ cmake --build . --config Release
 ```
 *Note*: You need compiler with c++14 support.
 
-## Launch
+**Note**: Folder `resources` should be located together with executable. 
+So you need manualy copy `resources` to build folder, or
+copy executable to project root directory.
+
+## Strategy integration
 You need special client to be able send messages in viewer. See [example C++ client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/c%2B%2B/RewindClient.h) for information about json based message
 protocol and implement one for your language of choice.
 Also see [client examples for official local runner](https://github.com/JustAMan/russian-ai-cup-visual/tree/master/clients).
