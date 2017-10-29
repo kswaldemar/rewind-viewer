@@ -1,6 +1,5 @@
 #include "Scene.h"
 
-#include <cgutils/Shader.h>
 #include <cgutils/utils.h>
 
 #include <imgui.h>
@@ -23,7 +22,6 @@ Scene::Scene(ResourceManager *res)
     : rsm_(res)
     , color_sh_ ("resources/shaders/simple.vert", "resources/shaders/simple.frag")
     , circle_sh_("resources/shaders/circle.vert", "resources/shaders/circle.frag")
-    , lines_sh_ ("resources/shaders/lines.vert",  "resources/shaders/lines.frag")
 {
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
@@ -59,16 +57,7 @@ void Scene::render(const glm::mat4 &proj_view) {
     color_sh_.set_vec3("color", opt_.grid_color);
     render_grid();
 
-    color_sh_.set_vec3("color", {0.0f, 0.0f, 1.0f});
-    color_sh_.set_mat4(
-        "model", glm::translate(glm::mat4{}, glm::vec3{opt_.fancy_triangle_pos_.x, opt_.fancy_triangle_pos_.y, 0.01f})
-    );
-    render_fancy_triangle();
-
     if (!frames_.empty()) {
-        lines_sh_.use();
-        lines_sh_.set_mat4("proj_view", proj_view);
-
         circle_sh_.use();
         circle_sh_.set_mat4("proj_view", proj_view);
 
@@ -83,7 +72,6 @@ void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
 }
 
 void Scene::render_frame(const Frame &frame) {
-    //ImGui::LabelText("Circles", "%zu", frame.circles.size());
     if (!frame.circles.empty()) {
         circle_sh_.use();
         for (const auto &obj : frame.circles) {
@@ -91,7 +79,6 @@ void Scene::render_frame(const Frame &frame) {
         }
     }
 
-    //ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
     if (!frame.rectangles.empty()) {
         color_sh_.use();
         for (const auto &obj : frame.rectangles) {
@@ -99,11 +86,16 @@ void Scene::render_frame(const Frame &frame) {
         }
     }
 
-    //ImGui::LabelText("Lines", "%zu", frame.lines.size());
     if (!frame.lines.empty()) {
         color_sh_.use();
         render_lines(frame.lines);
     }
+
+#ifndef NDEBUG
+    ImGui::LabelText("Circles", "%zu", frame.circles.size());
+    ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
+    ImGui::LabelText("Lines", "%zu", frame.lines.size());
+#endif
 }
 
 void Scene::render_grid() {
@@ -147,30 +139,6 @@ void Scene::render_grid() {
 
     glBindVertexArray(attr_->grid_vao);
     glDrawArrays(GL_LINES, 0, attr_->grid_vertex_count);
-}
-
-void Scene::render_fancy_triangle() {
-    static GLuint vao = 0;
-    if (vao == 0) {
-        //Fancy triangle ^_^
-        vao = rsm_->gen_vertex_array();
-        float tr_coords[] = {
-            -0.5f, -1.0f, 0.0f,
-            0.5f, -1.0f, 0.0f,
-            0.0f, 1.0f, 0.0f,
-        };
-        GLuint vbo = rsm_->gen_buffer();
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(tr_coords), tr_coords, GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-        glEnableVertexAttribArray(0);
-
-        glBindVertexArray(0);
-    }
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLES, 0, 9);
 }
 
 void Scene::render_circle(const pod::Circle &circle) {

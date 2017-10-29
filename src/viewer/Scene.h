@@ -45,7 +45,6 @@ public:
 private:
     void render_frame(const Frame &frame);
     void render_grid();
-    void render_fancy_triangle();
     void render_circle(const pod::Circle &circle);
     void render_rectangle(const pod::Rectangle &rect);
     void render_lines(const std::vector<pod::Line> &lines);
@@ -62,7 +61,6 @@ private:
 
     Shader color_sh_;
     Shader circle_sh_;
-    Shader lines_sh_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;

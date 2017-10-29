@@ -4,8 +4,6 @@
 
 #include "Camera.h"
 
-#include <cgutils/utils.h>
-
 #include <imgui.h>
 #include <imgui_impl/imgui_widgets.h>
 

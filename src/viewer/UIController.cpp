@@ -4,10 +4,6 @@
 
 #include "UIController.h"
 
-#include <cgutils/utils.h>
-#include <viewer/Scene.h>
-#include <net/NetListener.h>
-
 #include <imgui_impl/imgui_widgets.h>
 #include <imgui_impl/imgui_impl_glfw_gl3.h>
 #include <imgui_impl/style.h>
