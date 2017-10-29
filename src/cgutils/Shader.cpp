@@ -19,7 +19,7 @@ std::string load_file(const std::string &file_path) {
     }
 
     constexpr uint16_t CHUNK_SIZE = 256;
-    char buf[CHUNK_SIZE];
+    char buf[CHUNK_SIZE + 1];
     std::string content;
     while (size_t sz = fread(buf, 1, CHUNK_SIZE, fd)) {
         buf[sz] = '\0';
