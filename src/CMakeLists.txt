@@ -6,7 +6,7 @@ add_compile_options(-Wall)
 if (MSVC)
     add_compile_options(/W0)
 else()
-    add_compile_options(-Wextra -Weffc++)
+    add_compile_options(-Wextra)
 endif()
 
 set(CMAKE_CXX_STANDARD 14)

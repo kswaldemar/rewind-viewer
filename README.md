@@ -1,6 +1,6 @@
 # Rewind viewer
 
-[![MIT License](https://img.shields.io/github/license/kswaldemar/highloadcup2017.svg?style=flat-square)](./LICENSE)
+[![MIT License](https://img.shields.io/github/license/kswaldemar/rewind-viewer.svg?style=flat-square)](./LICENSE)
 [![C++ standard](https://img.shields.io/badge/C++-14-blue.svg?style=flat-square)](https://isocpp.org/)
 [![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green.svg?style=flat-square)](https://www.khronos.org/opengl/)
 [![RAIC](https://img.shields.io/badge/Russian%20AI%20Cup-2017-yellow.svg?style=flat-square)](http://russianaicup.ru/)
@@ -23,6 +23,8 @@ send all data (like buildings, units etc.) and you can draw only data visible by
 You may find updated files and more primitives support (maybe potential fields, etc.) during championship.
 
 ## Build
+
+[![Build status](https://travis-ci.org/kswaldemar/rewind-viewer.svg?branch=master)](https://travis-ci.org/kswaldemar/rewind-viewer)
 
 Clone repository with submodules:
 ```
