@@ -66,4 +66,5 @@ Project builded using many libraries
  - [nlohmann json](https://github.com/nlohmann/json) for json operating
  - [csimplesocket](https://github.com/DFHack/clsocket) for network interaction
  - [stb_image](https://github.com/nothings/stb) for images processing
+ - [loguru](https://github.com/emilk/loguru) for logging support
  

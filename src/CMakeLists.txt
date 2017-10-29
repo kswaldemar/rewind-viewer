@@ -38,7 +38,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME}
     Glad glfw glm
-    ImGui stb_image csimplesocket nljson)
+    ImGui stb_image csimplesocket nljson loguru)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 

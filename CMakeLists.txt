@@ -8,6 +8,7 @@ add_subdirectory(3rdparty/imgui)
 add_subdirectory(3rdparty/stb_image)
 add_subdirectory(3rdparty/csimplesocket)
 add_subdirectory(3rdparty/json)
+add_subdirectory(3rdparty/loguru)
 
 if(UNIX)
     find_library(Glfw_LIBRARY glfw)

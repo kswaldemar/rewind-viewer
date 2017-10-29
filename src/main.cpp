@@ -5,18 +5,11 @@
 #include <cgutils/utils.h>
 #include <cgutils/ResourceManager.h>
 #include <viewer/UIController.h>
-#include <viewer/Scene.h>
 #include <common/logger.h>
-#include <net/NetListener.h>
+#include <imgui_impl/imgui_impl_glfw_gl3.h>
 
 #include <stb_image.h>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <exception>
-#include <vector>
-#include <ctime>
 #include <thread>
 
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
@@ -27,7 +20,11 @@ constexpr const char *WINDOW_TITLE = "Rewind viewer for Russian AI Cup";
 GLFWwindow *setup_window();
 void prepare_and_run_game_loop(GLFWwindow *window);
 
-int main() {
+int main(int argc, char **argv) {
+    loguru::init(argc, argv);
+    loguru::add_file("rewindviewer-debug.log", loguru::Truncate, loguru::Verbosity_MAX);
+    loguru::add_file("rewindviewer.log", loguru::Append, loguru::Verbosity_INFO);
+
     // Init GLFW
     if (glfwInit() != GL_TRUE) {
         LOG_ERROR("Failed to initialize GLFW");
@@ -86,8 +83,6 @@ GLFWwindow *setup_window() {
     glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
         glViewport(0, 0, width, height);
     });
-
-
 
     return window;
 }
