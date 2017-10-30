@@ -3,6 +3,7 @@
 //
 
 #include "Camera.h"
+#include "utils.h"
 
 #include <imgui.h>
 #include <imgui_impl/imgui_widgets.h>
@@ -30,35 +31,31 @@ const glm::mat4 &Camera::proj_view() const {
 void Camera::update() {
     const auto &io = ImGui::GetIO();
 
-    const float zoom_speed = 0.1;
-    const float diff_sense = 0.1;
-
+    static const float zoom_speed = 0.1;
 
     //Should depend from grid size
-    if (!ImGui::IsAnyItemActive()) {
+    if (!io.WantCaptureMouse) {
         int width, height;
         glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
 
         if (io.MouseWheel != 0.0) {
-            glm::vec2 des_pos = {(io.MousePos.x / width) * 2.0f - 1.0f,
-                                 1.0f - (io.MousePos.y / height) * 2.0f};
-            des_pos = glm::inverse(pr_view_) * glm::vec4{des_pos.x, des_pos.y, 0.0f, 1.0f};
-            glm::vec2 diff = des_pos - pos_;
+            const float half_view = opt_.viewport_size * 0.5f;
+            const float min_size = std::min<float>(width, height);
+            const float x_half_view = half_view * width / min_size;
+            const float y_half_view = half_view * height / min_size;
 
-            if (io.MouseWheel > 0) {
-                glm::vec2 shift = diff * 0.1f * io.MouseWheel;
-                //Adjust cursor and position if zoom in
-                pos_ += shift;
+            const double mouse_x = cg::lerp(io.MousePos.x, 0, width, -x_half_view, x_half_view);
+            const double mouse_y = cg::lerp(io.MousePos.y, height, 0, -y_half_view, y_half_view);
 
-                //TODO: Not exact zoom in, bug somewhere
-                shift = pr_view_ * glm::vec4{shift.x, shift.y, 0.0f, 0.0f};
-                shift.x = (shift.x + 1.0f) / 2.0f * width - 0.5f * width;
-                shift.y = -(shift.y - 1.0f) / 2.0f * height - 0.5f * height;
+            const double zoom_k = (1 - zoom_speed * io.MouseWheel);
 
-                ImVec2 new_cursor = {io.MousePos.x - shift.x * diff_sense, io.MousePos.y - shift.y * diff_sense};
-                glfwSetCursorPos(glfwGetCurrentContext(), new_cursor.x, new_cursor.y);
-            }
-            opt_.viewport_size -= (opt_.viewport_size * zoom_speed) * io.MouseWheel;
+            const double new_mouse_x = mouse_x * zoom_k;
+            const double new_mouse_y = mouse_y * zoom_k;
+
+            pos_.x += mouse_x - new_mouse_x;
+            pos_.y += mouse_y - new_mouse_y;
+
+            opt_.viewport_size *= zoom_k;
         }
 
         //Map dragging
