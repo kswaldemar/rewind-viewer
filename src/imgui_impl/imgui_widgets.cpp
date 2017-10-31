@@ -23,12 +23,12 @@ bool TickBar(const char *label, float *v, float v_min, float v_max, const ImVec2
     ImRect bb(pos, pos + CalcItemSize(size_arg, CalcItemWidth(), g.FontSize + style.FramePadding.y * 2.0f));
 
     const ImGuiID id = window->GetID(label);
-    if (!ItemAdd(bb, &id)) {
+    if (!ItemAdd(bb, id)) {
         ItemSize(bb, style.FramePadding.y);
         return false;
     }
 
-    const bool hovered = IsHovered(bb, id);
+    const bool hovered = ItemHoverable(bb, id);
     if (hovered) {
         SetHoveredID(id);
     }
