@@ -7,10 +7,9 @@
 #include <imgui_impl/imgui_widgets.h>
 #include <imgui_impl/imgui_impl_glfw_gl3.h>
 #include <imgui_impl/style.h>
-#include <imgui_internal.h>
+#include <fontawesome.h>
 
 #include <glm/gtc/type_ptr.hpp>
-
 
 struct UIController::wnd_t {
     bool show_style_editor = false;
@@ -30,7 +29,16 @@ UIController::UIController(Camera *camera)
     setup_custom_style(false);
 
     auto &io = ImGui::GetIO();
+
     io.IniFilename = "rewindviewer.ini";
+
+    //Load and merge fontawesome to current font
+    io.Fonts->AddFontDefault();
+    const ImWchar icons_range[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true;
+    icons_config.PixelSnapH = true;
+    io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf", 14.0f, &icons_config, icons_range);
 }
 
 UIController::~UIController() {
@@ -147,20 +155,20 @@ void UIController::info_widget(Scene *scene) {
     ImGui::SetNextWindowSize({300, 750}, ImGuiCond_FirstUseEver);
     ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
-    if (ImGui::CollapsingHeader("Settings")) {
-        if (ImGui::CollapsingHeader("Camera", flags)) {
+    if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
+        if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
             ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size, 50.0, 1000.0, 0);
             ImGui::PopItemWidth();
         }
-        if (ImGui::CollapsingHeader("Colors", flags)) {
+        if (ImGui::CollapsingHeader(ICON_FA_EYEDROPPER " Colors", flags)) {
             ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
             ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt_.grid_color));
         }
     }
-    if (ImGui::CollapsingHeader("Frame message", flags)) {
+    if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {
         ImGui::BeginChild("FrameMsg", {0, 0}, true);
         ImGui::TextWrapped("%s", scene->get_frame_user_message());
         ImGui::EndChild();
@@ -169,13 +177,12 @@ void UIController::info_widget(Scene *scene) {
 }
 
 void UIController::playback_control_widget(Scene *scene) {
-    static const ImVec2 button_size(0, 20);
+    static const auto button_size = ImVec2{0, 0};
+    static const float buttons_spacing = 5.0f;
     auto &io = ImGui::GetIO();
-    auto height = button_size.y;
     auto width = io.DisplaySize.x;
-
-    ImGui::SetNextWindowPos({0, io.DisplaySize.y - height - 2 * ImGui::GetStyle().WindowPadding.y});
-    ImGui::SetNextWindowSize({width, -1});
+    ImGui::SetNextWindowPos({0, io.DisplaySize.y - 20 - 2 * ImGui::GetStyle().WindowPadding.y});
+    ImGui::SetNextWindowSize({width, 100});
     static const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
                               | ImGuiWindowFlags_NoMove
                               | ImGuiWindowFlags_NoSavedSettings;
@@ -190,20 +197,32 @@ void UIController::playback_control_widget(Scene *scene) {
             }
         }
 
-        if (ImGui::ButtonEx("Prev", button_size, ImGuiButtonFlags_Repeat)) {
+        ImGui::Button(ICON_FA_FAST_BACKWARD "##fastprev", button_size);
+        if (ImGui::IsItemActive()) {
+            tick -= fast_skip_speed_;
+        }
+        ImGui::SameLine(0.0f, buttons_spacing);
+
+        if (ImGui::Button(ICON_FA_BACKWARD "##prev", button_size)) {
             --tick;
         }
-        ImGui::SameLine();
+        ImGui::SameLine(0.0f, buttons_spacing);
 
         if (autoplay_scene_) {
-            autoplay_scene_ = !ImGui::Button("Pause", button_size);
+            autoplay_scene_ = !ImGui::Button(ICON_FA_PAUSE "##pause", button_size);
         } else {
-            autoplay_scene_ = ImGui::Button("Play", button_size);
+            autoplay_scene_ = ImGui::Button(ICON_FA_PLAY "##play", button_size);
         }
-        ImGui::SameLine();
+        ImGui::SameLine(0.0f, buttons_spacing);
 
-        if (ImGui::ButtonEx("Next", button_size, ImGuiButtonFlags_Repeat)) {
+        if (ImGui::Button(ICON_FA_FORWARD "##next", button_size)) {
             ++tick;
+        }
+        ImGui::SameLine(0.0f, buttons_spacing);
+
+        ImGui::Button(ICON_FA_FAST_FORWARD "##fastnext", button_size);
+        if (ImGui::IsItemActive()) {
+            tick += fast_skip_speed_;
         }
         ImGui::SameLine();
 

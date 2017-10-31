@@ -23,7 +23,7 @@ void prepare_and_run_game_loop(GLFWwindow *window);
 int main(int argc, char **argv) {
     loguru::init(argc, argv);
     loguru::add_file("rewindviewer-debug.log", loguru::Truncate, loguru::Verbosity_MAX);
-    loguru::add_file("rewindviewer.log", loguru::Append, loguru::Verbosity_INFO);
+    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_INFO);
 
     // Init GLFW
     if (glfwInit() != GL_TRUE) {
@@ -48,6 +48,8 @@ int main(int argc, char **argv) {
     glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 #  endif
 #endif
+
+    glfwSwapInterval(1);
     try {
         prepare_and_run_game_loop(window);
     } catch (const std::exception &e) {

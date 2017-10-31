@@ -3,8 +3,6 @@
 #include <net/PrimitiveType.h>
 #include <common/logger.h>
 
-#include <json.hpp>
-
 NetListener::NetListener(Scene *scene, const std::string &listen_host, uint16_t listen_port)
     : scene_(scene) {
     socket_ = std::make_unique<CPassiveSocket>(CPassiveSocket::SocketTypeTcp);
@@ -43,7 +41,7 @@ void NetListener::run() {
         if (nbytes > 0) {
             auto data = client_->GetData();
             data[nbytes] = '\0';
-            LOG_INFO("NetClient:: Message %d bytes, '%s'", nbytes, data);
+            LOG_V2("NetClient:: Message %d bytes, '%s'", nbytes, data);
             //Strategy can send several messages in one block
             const uint8_t *beg = data;
             const uint8_t *block_end = data + nbytes;
