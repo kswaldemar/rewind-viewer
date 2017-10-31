@@ -110,6 +110,10 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 break;
             case PrimitiveType::types_count:
                 break;
+            case PrimitiveType::unit:
+                LOG_DEBUG("NetClient::Unit");
+                frame_->units.emplace_back(j);
+                break;
         }
     } catch (const std::exception &e) {
         LOG_WARN("NetListener::Exception: %s", e.what());

@@ -70,6 +70,12 @@ public:
         send(format(fmt, x1, y1, x2, y2, color));
     }
 
+    void living_unit(int id, double x, double y, double r, int hp, int max_hp, int enemy) {
+        static const char *fmt =
+            R"({"type": "unit", "x": %lf, "y": %lf, "r": %lf, "hp": %d, "max_hp": %d, "enemy": %d})";
+        send(format(fmt, x, y, r, hp, max_hp, enemy));
+    }
+
     ///Pass arbitrary user message to be stored in frame
     ///Message content displayed in separate window inside viewer
     ///Can be used several times per frame

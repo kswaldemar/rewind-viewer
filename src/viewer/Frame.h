@@ -24,6 +24,7 @@ struct Frame {
     std::vector<pod::Circle> circles;
     std::vector<pod::Rectangle> rectangles;
     std::vector<pod::Line> lines;
+    std::vector<pod::Unit> units;
     std::string user_message;
 };
 
@@ -53,6 +54,15 @@ struct Rectangle : Colored {
     float h;
 };
 
+struct Unit : Circle {
+    int hp;
+    int max_hp;
+};
+
+
+/*
+ * Json deserialisation
+ */
 inline void from_json(const nlohmann::json &j, Colored &p) {
     auto color = j["color"].get<uint32_t>();
     p.color.r = ((color & 0xFF0000) >> 16) / 256.0f;
@@ -90,5 +100,26 @@ inline void from_json(const nlohmann::json &j, Rectangle &p) {
     p.center.x = x1 + p.w * 0.5f;
     p.center.y = y2 + p.h * 0.5f;
 }
+
+inline void from_json(const nlohmann::json &j, Unit &p) {
+    p.radius = j["r"].get<float>();
+    p.center.x = j["x"].get<float>();
+    p.center.y = j["y"].get<float>();
+
+    static const glm::vec3 our_color{0.0f, 0.0f, 1.0f};
+    static const glm::vec3 enemy_color{1.0f, 0.0f, 0.0f};
+    static const glm::vec3 neutral_color{0.5f, 0.5f, 0.0f};
+    int is_enemy = j["enemy"].get<int>();
+    if (is_enemy == 1) {
+        p.color = enemy_color;
+    } else if (is_enemy == -1) {
+        p.color = our_color;
+    } else {
+        p.color = neutral_color;
+    }
+    p.hp = j["hp"].get<int>();
+    p.max_hp = j["max_hp"].get<int>();
+}
+
 
 } // namespace pod

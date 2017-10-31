@@ -50,6 +50,7 @@ private:
     void render_circle(const pod::Circle &circle);
     void render_rectangle(const pod::Rectangle &rect);
     void render_lines(const std::vector<pod::Line> &lines);
+    void render_unit(const pod::Unit &unit);
 
     struct settings_t {
         const uint16_t grid_cells_count = 10;

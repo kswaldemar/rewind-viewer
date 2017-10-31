@@ -12,7 +12,8 @@
     X(circle) \
     X(rectangle) \
     X(line) \
-    X(message)
+    X(message) \
+    X(unit)
 
 enum class PrimitiveType {
 #define X(type) type,

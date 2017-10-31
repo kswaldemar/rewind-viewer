@@ -105,10 +105,15 @@ void Scene::render_frame(const Frame &frame) {
         render_lines(frame.lines);
     }
 
+    for (const auto &unit : frame.units) {
+        render_unit(unit);
+    }
+
 #ifndef NDEBUG
     ImGui::LabelText("Circles", "%zu", frame.circles.size());
     ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
     ImGui::LabelText("Lines", "%zu", frame.lines.size());
+    ImGui::LabelText("Units", "%zu", frame.units.size());
 #endif
 }
 
@@ -156,8 +161,6 @@ void Scene::render_grid() {
 }
 
 void Scene::render_circle(const pod::Circle &circle) {
-    glBindVertexArray(attr_->rect_vao);
-
     auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
@@ -166,6 +169,7 @@ void Scene::render_circle(const pod::Circle &circle) {
     circle_sh_.set_vec3("color", circle.color);
     circle_sh_.set_mat4("model", model);
 
+    glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
@@ -199,6 +203,42 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
     glBindVertexArray(attr_->lines_vao);
     glBufferData(GL_ARRAY_BUFFER, lines.size() * sizeof(pod::Line), lines.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lines.size() * 2));
+}
+
+void Scene::render_unit(const pod::Unit &unit) {
+    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
+    model = glm::scale(model, glm::vec3{unit.radius, unit.radius, 0.0f});
+    circle_sh_.use();
+    circle_sh_.set_float("radius", unit.radius);
+    circle_sh_.set_vec3("center", vcenter);
+    circle_sh_.set_vec3("color", unit.color);
+    circle_sh_.set_mat4("model", model);
+
+    glBindVertexArray(attr_->rect_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    //It is kind of magic
+
+    //model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z});
+    //model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.08, 1.0), 0.0f});
+    //model = glm::translate(model, {1.0f, 0.0f, 0.0f});
+    //color_sh_.use();
+    //color_sh_.set_mat4("model", model);
+    //color_sh_.set_vec3("color", {0.1, 0.1, 0.1});
+    //glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
+    model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+    model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
+    model = glm::translate(model, {1.0f, 0.0f, 0.0f});
+    float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
+    glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
+    auto m = 1.0f / std::max(color.r, color.g);
+    color_sh_.use();
+    color_sh_.set_mat4("model", model);
+    color_sh_.set_vec3("color", color * m);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void Scene::set_frame_index(int idx) {
