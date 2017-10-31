@@ -18,6 +18,7 @@ struct UIController::wnd_t {
     bool show_playback_control = true;
     bool show_ui_help = false;
     bool show_shortcuts_help = false;
+    bool show_metrics = false;
 };
 
 UIController::UIController(Camera *camera)
@@ -71,13 +72,16 @@ void UIController::next_frame(Scene *scene) {
         ImGui::ShowStyleEditor();
         ImGui::End();
     }
+    if (wnd_->show_metrics) {
+        ImGui::ShowMetricsWindow(&wnd_->show_metrics);
+    }
     if (wnd_->show_ui_help) {
-        ImGui::Begin("UI Help", &wnd_->show_ui_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin(ICON_FA_INFO_CIRCLE " UI Help", &wnd_->show_ui_help, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::ShowUserGuide();
         ImGui::End();
     }
     if (wnd_->show_shortcuts_help) {
-        ImGui::Begin("Viewer Help", &wnd_->show_shortcuts_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin(ICON_FA_KEYBOARD_O " Viewer Help", &wnd_->show_shortcuts_help, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
         ImGui::BulletText("Space to play/stop frame playback");
@@ -112,6 +116,9 @@ void UIController::check_hotkeys() {
         } else {
             space_pressed_ = false;
         }
+        if (io.KeysDown[GLFW_KEY_D] && io.KeyCtrl) {
+            developer_mode_ = true;
+        }
     }
 
     request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
@@ -119,16 +126,20 @@ void UIController::check_hotkeys() {
 
 void UIController::main_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("View", true)) {
-            ImGui::Checkbox("Style editor", &wnd_->show_style_editor);
-            ImGui::Separator();
+        if (ImGui::BeginMenu(ICON_FA_EYE " View", true)) {
             ImGui::Checkbox("FPS overlay", &wnd_->show_fps_overlay);
             ImGui::Checkbox("Utility window", &wnd_->show_info);
+            if (developer_mode_) {
+                ImGui::Separator();
+                ImGui::Checkbox("Style editor", &wnd_->show_style_editor);
+                ImGui::Checkbox("Metrics", &wnd_->show_metrics);
+            }
+
             ImGui::EndMenu();
         }
-        if (ImGui::BeginMenu("Help", true)) {
-            ImGui::MenuItem("UI help", nullptr, &wnd_->show_ui_help);
-            ImGui::MenuItem("Viewer help", nullptr, &wnd_->show_shortcuts_help);
+        if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE_O " Help", true)) {
+            ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI help", nullptr, &wnd_->show_ui_help);
+            ImGui::MenuItem(ICON_FA_KEYBOARD_O " Viewer help", nullptr, &wnd_->show_shortcuts_help);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -151,8 +162,11 @@ void UIController::fps_overlay_widget() {
 }
 
 void UIController::info_widget(Scene *scene) {
-    ImGui::SetNextWindowPos({900, 20}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize({300, 750}, ImGuiCond_FirstUseEver);
+    int width, height;
+    glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
+    const float desired_width = 300;
+    ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_Always);
+    ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_Always);
     ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
@@ -182,7 +196,7 @@ void UIController::playback_control_widget(Scene *scene) {
     auto &io = ImGui::GetIO();
     auto width = io.DisplaySize.x;
     ImGui::SetNextWindowPos({0, io.DisplaySize.y - 20 - 2 * ImGui::GetStyle().WindowPadding.y});
-    ImGui::SetNextWindowSize({width, 100});
+    ImGui::SetNextWindowSize({width, 30});
     static const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
                               | ImGuiWindowFlags_NoMove
                               | ImGuiWindowFlags_NoSavedSettings;

@@ -60,7 +60,7 @@ Then run viewer before strategy and it should start draw frames
 Project sources distibuted under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), thirdparties distributed under their own licences
 
 ## Credits
-Project builded using many libraries
+Project created with help of many great libraries:
  - [glad](https://github.com/Dav1dde/glad) for loading OpenGL functions
  - [glm](https://glm.g-truc.net/0.9.8/index.html) math library for OpenGL
  - [glfw](http://www.glfw.org/) for creating window and crossplatform context handling
@@ -69,4 +69,8 @@ Project builded using many libraries
  - [csimplesocket](https://github.com/DFHack/clsocket) for network interaction
  - [stb_image](https://github.com/nothings/stb) for images processing
  - [loguru](https://github.com/emilk/loguru) for logging support
+
+Resources: 
+ - [fontawesome](http://fontawesome.io/) icon font, embedded inside text in many UI elements
+ - Application icon by [Laura Reen](https://www.iconfinder.com/laurareen)  
  
