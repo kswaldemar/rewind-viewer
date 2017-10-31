@@ -57,12 +57,9 @@ Scene::Scene(ResourceManager *res)
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, attr_->uniform_buf);
 
-    GLuint block_index = glGetUniformBlockIndex(color_sh_.id(), "Matrix");
-    glUniformBlockBinding(color_sh_.id(), block_index, 0);
-    block_index = glGetUniformBlockIndex(circle_sh_.id(), "Matrix");
-    glUniformBlockBinding(circle_sh_.id(), block_index, 0);
-    block_index = glGetUniformBlockIndex(lines_sh_.id(), "Matrix");
-    glUniformBlockBinding(lines_sh_.id(), block_index, 0);
+    color_sh_.bind_uniform_block("Matrix", 0);
+    circle_sh_.bind_uniform_block("Matrix", 0);
+    lines_sh_.bind_uniform_block("Matrix", 0);
 }
 
 Scene::~Scene() = default;
@@ -161,9 +158,8 @@ void Scene::render_grid() {
 void Scene::render_circle(const pod::Circle &circle) {
     glBindVertexArray(attr_->rect_vao);
 
-    glm::mat4 model;
     auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
-    model = glm::translate(model, vcenter);
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
     circle_sh_.set_float("radius", circle.radius);
     circle_sh_.set_vec3("center", vcenter);
@@ -174,11 +170,10 @@ void Scene::render_circle(const pod::Circle &circle) {
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
-    color_sh_.set_vec3("color", rect.color);
-    glm::mat4 model;
-    model = glm::translate(model, glm::vec3{rect.center.x, rect.center.y, 0.1f});
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 0.1f});
     model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 0.0f});
     color_sh_.set_mat4("model", model);
+    color_sh_.set_vec3("color", rect.color);
 
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -193,36 +188,17 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         //Plain float format: vec3 color, vec2 pos
-
-        //Pos
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), cg::offset<float>(3));
-        glEnableVertexAttribArray(0);
-
-        //Color to 1 pos
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+        glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
         glBindVertexArray(0);
     }
 
     glBindVertexArray(attr_->lines_vao);
-    std::vector<float> points;
-    for (const auto &line : lines) {
-        points.push_back(line.color.r);
-        points.push_back(line.color.g);
-        points.push_back(line.color.b);
-        points.push_back(line.x1);
-        points.push_back(line.y1);
-
-        points.push_back(line.color.r);
-        points.push_back(line.color.g);
-        points.push_back(line.color.b);
-        points.push_back(line.x2);
-        points.push_back(line.y2);
-    }
-
-    glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(float), points.data(), GL_DYNAMIC_DRAW);
-    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(points.size() / 5));
+    glBufferData(GL_ARRAY_BUFFER, lines.size() * sizeof(pod::Line), lines.data(), GL_DYNAMIC_DRAW);
+    glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lines.size() * 2));
 }
 
 void Scene::set_frame_index(int idx) {

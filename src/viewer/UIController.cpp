@@ -76,12 +76,12 @@ void UIController::next_frame(Scene *scene) {
         ImGui::ShowMetricsWindow(&wnd_->show_metrics);
     }
     if (wnd_->show_ui_help) {
-        ImGui::Begin(ICON_FA_INFO_CIRCLE " UI Help", &wnd_->show_ui_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin(ICON_FA_INFO_CIRCLE " UI guide", &wnd_->show_ui_help, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::ShowUserGuide();
         ImGui::End();
     }
     if (wnd_->show_shortcuts_help) {
-        ImGui::Begin(ICON_FA_KEYBOARD_O " Viewer Help", &wnd_->show_shortcuts_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin(ICON_FA_KEYBOARD_O " Controls help", &wnd_->show_shortcuts_help, ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
         ImGui::BulletText("Space to play/stop frame playback");
@@ -138,8 +138,8 @@ void UIController::main_menu_bar() {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE_O " Help", true)) {
-            ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI help", nullptr, &wnd_->show_ui_help);
-            ImGui::MenuItem(ICON_FA_KEYBOARD_O " Viewer help", nullptr, &wnd_->show_shortcuts_help);
+            ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI guide", nullptr, &wnd_->show_ui_help);
+            ImGui::MenuItem(ICON_FA_KEYBOARD_O " Controls", nullptr, &wnd_->show_shortcuts_help);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();

@@ -7,6 +7,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <stdexcept>
+#include <common/logger.h>
 
 namespace {
 
@@ -35,7 +36,7 @@ bool validate_shader(GLuint shader) {
         GLchar buf[512];
         GLsizei len;
         glGetShaderInfoLog(shader, 512, &len, buf);
-        fprintf(stderr, "Error::Compile shader:: %*s", len, buf);
+        LOG_ERROR("Compile shader:: %*s", len, buf);
         return false;
     }
     return true;
@@ -48,7 +49,7 @@ bool validate_program(GLuint program) {
         GLchar buf[512];
         GLsizei len;
         glGetShaderInfoLog(program, 512, &len, buf);
-        fprintf(stderr, "Error::Link shader program:: %*s", len, buf);
+        LOG_ERROR("Error::Link shader program:: %*s", len, buf);
         return false;
     }
     return true;
@@ -60,7 +61,7 @@ GLuint create_shader(GLenum type, const std::string &source) {
     glShaderSource(shader, 1, &source_ptr, nullptr);
     glCompileShader(shader);
     if (!validate_shader(shader)) {
-        fprintf(stderr, "Shader type: %s\n", (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment"));
+        LOG_ERROR("Validation error, shader type: %s\n", (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment"));
         throw std::runtime_error("Compile shader");
     }
     return shader;
@@ -100,10 +101,14 @@ void Shader::use() {
     glUseProgram(program_);
 }
 
+GLuint Shader::id() const {
+    return program_;
+}
+
 GLint Shader::uniform(const std::string &name) {
     GLint loc = glGetUniformLocation(program_, name.c_str());
     if (loc == -1) {
-        fprintf(stderr, "Warning::No such uniform::%s", name.c_str());
+        LOG_WARN("No such uniform:: %s", name.c_str());
     }
     return loc;
 }
@@ -124,6 +129,12 @@ void Shader::set_float(const std::string &name, float val) {
     glUniform1f(uniform(name), val);
 }
 
-GLuint Shader::id() const {
-    return program_;
+void Shader::bind_uniform_block(const std::string &name, GLuint binding_point) {
+    auto index = glGetUniformBlockIndex(program_, name.c_str());
+    if (index == GL_INVALID_INDEX) {
+        LOG_WARN("No such uniform block:: %s", name.c_str());
+    } else {
+        glUniformBlockBinding(program_, index, binding_point);
+    }
+
 }

@@ -29,7 +29,6 @@ set(Headers
     common/logger.h
     imgui_impl/style.h
     viewer/Frame.h
-    viewer/Primitives.h
     net/PrimitiveType.h
 )
 

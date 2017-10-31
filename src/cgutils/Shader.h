@@ -19,6 +19,8 @@ public:
 
     void use();
 
+    GLuint id() const;
+
     GLint uniform(const std::string &name);
 
     void set_mat4(const std::string &name, const glm::mat4 &v);
@@ -26,7 +28,7 @@ public:
     void set_vec3(const std::string &name, const glm::vec3 &v);
     void set_float(const std::string &name, float val);
 
-    GLuint id() const;
+    void bind_uniform_block(const std::string &name, GLuint binding_point);
 
 private:
     GLuint program_ = 0;
