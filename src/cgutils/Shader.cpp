@@ -121,6 +121,10 @@ void Shader::set_vec3(const std::string &name, const glm::vec3 &v) {
     glUniform3f(uniform(name), v.x, v.y, v.z);
 }
 
+void Shader::set_vec2(const std::string &name, const glm::vec2 &v) {
+    glUniform2f(uniform(name), v.x, v.y);
+}
+
 void Shader::set_mat4(const std::string &name, float *pv) {
     glUniformMatrix4fv(uniform(name), 1, GL_FALSE, pv);
 }
@@ -137,4 +141,8 @@ void Shader::bind_uniform_block(const std::string &name, GLuint binding_point) {
         glUniformBlockBinding(program_, index, binding_point);
     }
 
+}
+
+void Shader::set_int(const std::string &name, GLint val) {
+    glUniform1i(uniform(name), val);
 }

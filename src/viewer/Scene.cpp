@@ -16,6 +16,8 @@ struct Scene::render_attrs_t {
     //Lines designed to dynamic draw
     GLuint lines_vao = 0;
     GLuint uniform_buf;
+
+    GLuint grass_tex = 0;
     glm::mat4 grid_model;
 };
 
@@ -24,29 +26,45 @@ Scene::Scene(ResourceManager *res)
     , color_sh_ ("resources/shaders/simple.vert", "resources/shaders/uniform_color.frag")
     , circle_sh_("resources/shaders/circle.vert", "resources/shaders/circle.frag")
     , lines_sh_ ("resources/shaders/lines.vert",  "resources/shaders/lines.frag")
+    , textured_sh_ ("resources/shaders/simple.vert",  "resources/shaders/textured.frag")
 {
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
     attr_->grid_model = glm::scale(glm::mat4{}, {opt_.grid_dim.x, opt_.grid_dim.y, 0.0f});
 
+    //Load some textures
+    attr_->grass_tex = mgr_->load_texture("resources/textures/grass_seamless.jpg", false, GL_REPEAT, GL_REPEAT);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
+
     //Preload rectangle to memory for further drawing
     attr_->rect_vao = mgr_->gen_vertex_array();
     GLuint vbo = mgr_->gen_buffer();
+    //@formatter:off
     const float points[] = {
-        -1.0f, -1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,
-
-        -1.0f,  1.0f, 0.0f,
-        1.0f, -1.0f, 0.0f,
-        1.0f,  1.0f, 0.0f,
+        -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
+         1.0f, -1.0f, 0.0f,   1.0f, 0.0f,
+        -1.0f,  1.0f, 0.0f,   0.0f, 1.0f,
+         1.0f,  1.0f, 0.0f,   1.0f, 1.0f,
     };
+    //@formatter:on
+    const uint8_t indicies[] = {
+        0, 1, 2,
+        2, 1, 3,
+    };
+    GLuint ebo = mgr_->gen_buffer();
 
     glBindVertexArray(attr_->rect_vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
+
+    const GLsizei stride = 5 * sizeof(float);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, nullptr);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(3));
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
     //Uniform buffer
@@ -60,6 +78,7 @@ Scene::Scene(ResourceManager *res)
     color_sh_.bind_uniform_block("Matrix", 0);
     circle_sh_.bind_uniform_block("Matrix", 0);
     lines_sh_.bind_uniform_block("Matrix", 0);
+    textured_sh_.bind_uniform_block("Matrix", 0);
 }
 
 Scene::~Scene() = default;
@@ -73,6 +92,16 @@ void Scene::render(const glm::mat4 &proj_view) {
     color_sh_.set_mat4("model", attr_->grid_model);
     color_sh_.set_vec3("color", opt_.grid_color);
     render_grid();
+
+    textured_sh_.use();
+    textured_sh_.set_int("tex_smp", 0);
+    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, -1.0f});
+    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    textured_sh_.set_mat4("model", model);
+    textured_sh_.set_vec2("tex_scale", {10, 10});
+    textured_sh_.set_vec3("color", glm::vec3(0.6));
+    glBindVertexArray(attr_->rect_vao);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 
     if (!frames_.empty()) {
         const Frame *frame = frames_[cur_frame_idx_].get();
@@ -170,7 +199,7 @@ void Scene::render_circle(const pod::Circle &circle) {
     circle_sh_.set_mat4("model", model);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
@@ -180,7 +209,7 @@ void Scene::render_rectangle(const pod::Rectangle &rect) {
     color_sh_.set_vec3("color", rect.color);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 }
 
 void Scene::render_lines(const std::vector<pod::Line> &lines) {
@@ -216,7 +245,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     circle_sh_.set_mat4("model", model);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 
     //It is kind of magic
 
@@ -226,7 +255,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     //color_sh_.use();
     //color_sh_.set_mat4("model", model);
     //color_sh_.set_vec3("color", {0.1, 0.1, 0.1});
-    //glDrawArrays(GL_TRIANGLES, 0, 6);
+    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 
     float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
     model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
@@ -238,7 +267,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     color_sh_.use();
     color_sh_.set_mat4("model", model);
     color_sh_.set_vec3("color", color * m);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
 }
 
 void Scene::set_frame_index(int idx) {

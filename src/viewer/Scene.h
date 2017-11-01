@@ -63,6 +63,7 @@ private:
     Shader color_sh_;
     Shader circle_sh_;
     Shader lines_sh_;
+    Shader textured_sh_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;
