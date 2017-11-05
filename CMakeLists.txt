@@ -4,7 +4,6 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 #3rdparites
 add_subdirectory(3rdparty/glad)
-add_subdirectory(3rdparty/imgui)
 add_subdirectory(3rdparty/stb_image)
 add_subdirectory(3rdparty/csimplesocket)
 add_subdirectory(3rdparty/json)
@@ -31,6 +30,8 @@ endif()
 
 set(GLM_TEST_ENABLE OFF)
 add_subdirectory(3rdparty/glm)
+add_subdirectory(3rdparty/imgui) # Depends from glm
+
 
 #Project
 add_subdirectory(src)
