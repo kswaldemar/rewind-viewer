@@ -90,7 +90,7 @@ GLFWwindow *setup_window() {
 }
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
-    Camera cam({0.0f, 0.0f}, 1000);
+    Camera cam({730.0f, 445.0f}, 1000);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     ResourceManager res;

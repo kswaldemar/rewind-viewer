@@ -4,7 +4,7 @@
     - [ ] Detect click on unit
     - [ ] Show detailed info somewhere
     - [ ] Draw cooldown (maybe another line under hp bar)
-    - [ ] Draw hp bars
+    - [x] Draw hp bars
         - [ ] Optionally hide full
  - [ ] Sector primitive
  - [ ] Ability to set z coordinates (like drawing priority) for primitives

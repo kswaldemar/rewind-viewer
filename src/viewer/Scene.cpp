@@ -48,17 +48,12 @@ Scene::Scene(ResourceManager *res)
          1.0f,  1.0f, 0.0f,   1.0f, 1.0f,
     };
     //@formatter:on
-    const uint8_t indicies[] = {
-        0, 1, 2,
-        2, 1, 3,
-    };
+
     GLuint ebo = mgr_->gen_buffer();
 
     glBindVertexArray(attr_->rect_vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indicies), indicies, GL_STATIC_DRAW);
 
     const GLsizei stride = 5 * sizeof(float);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, nullptr);
@@ -101,12 +96,28 @@ void Scene::render(const glm::mat4 &proj_view) {
     textured_sh_.set_vec2("tex_scale", {10, 10});
     textured_sh_.set_vec3("color", glm::vec3(0.6));
     glBindVertexArray(attr_->rect_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     if (!frames_.empty()) {
         const Frame *frame = frames_[cur_frame_idx_].get();
         render_frame(*frame);
     }
+
+    //circle_sh_.use();
+    //pod::Circle c;
+    //c.color = glm::vec3(1.0, 0.0, 0.0);
+    //c.radius = 10;
+    //c.center = {200, 200};
+    //render_circle(c);
+    //
+    //pod::Unit u;
+    //u.color = {0.2, 0.4, 0.8};
+    //u.radius = 100;
+    //u.center = {400, 400};
+    //u.max_hp = 100;
+    //u.hp = 64;
+    //
+    //render_unit(u);
 }
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
@@ -134,9 +145,11 @@ void Scene::render_frame(const Frame &frame) {
         render_lines(frame.lines);
     }
 
+    glLineWidth(2); //Bold outlining
     for (const auto &unit : frame.units) {
         render_unit(unit);
     }
+    glLineWidth(1);
 
 #ifndef NDEBUG
     ImGui::LabelText("Circles", "%zu", frame.circles.size());
@@ -193,13 +206,13 @@ void Scene::render_circle(const pod::Circle &circle) {
     auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
-    circle_sh_.set_float("radius", circle.radius);
+    circle_sh_.set_float("radius2", circle.radius * circle.radius);
     circle_sh_.set_vec3("center", vcenter);
     circle_sh_.set_vec3("color", circle.color);
     circle_sh_.set_mat4("model", model);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
@@ -235,28 +248,20 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
 }
 
 void Scene::render_unit(const pod::Unit &unit) {
+    //Circle
     auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     model = glm::scale(model, glm::vec3{unit.radius, unit.radius, 0.0f});
     circle_sh_.use();
-    circle_sh_.set_float("radius", unit.radius);
+    circle_sh_.set_float("radius2", unit.radius * unit.radius);
     circle_sh_.set_vec3("center", vcenter);
     circle_sh_.set_vec3("color", unit.color);
     circle_sh_.set_mat4("model", model);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    //It is kind of magic
-
-    //model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z});
-    //model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.08, 1.0), 0.0f});
-    //model = glm::translate(model, {1.0f, 0.0f, 0.0f});
-    //color_sh_.use();
-    //color_sh_.set_mat4("model", model);
-    //color_sh_.set_vec3("color", {0.1, 0.1, 0.1});
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
-
+    //HP bar
     float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
     model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
     model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
@@ -267,7 +272,17 @@ void Scene::render_unit(const pod::Unit &unit) {
     color_sh_.use();
     color_sh_.set_mat4("model", model);
     color_sh_.set_vec3("color", color * m);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    //Hp bar outlining
+    model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+    model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
+    model = glm::translate(model, {1.0f, 0.0f, 0.0f});
+    color_sh_.use();
+    color_sh_.set_mat4("model", model);
+    color_sh_.set_vec3("color", glm::vec3(0.0f));
+    const uint8_t indicies[] = {0, 1, 3, 2};
+    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
 }
 
 void Scene::set_frame_index(int idx) {
