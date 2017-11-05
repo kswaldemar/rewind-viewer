@@ -190,6 +190,7 @@ void UIController::info_widget(Scene *scene) {
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
             ImGui::Checkbox("Show full life bars", &scene->opt_.show_full_hp_bars);
             ImGui::Checkbox("Show detailed unit info on hover", &scene->opt_.show_detailed_info_on_hover);
+            ImGui::Checkbox("World origin on top left", &camera_->opt_.origin_on_top_left);
         }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {

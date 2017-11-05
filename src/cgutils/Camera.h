@@ -27,6 +27,7 @@ private:
 
     struct settings_t {
         float viewport_size;
+        bool origin_on_top_left = true;
     };
 
     glm::mat4 pr_view_;
