@@ -54,6 +54,7 @@ private:
         const uint16_t grid_cells_count = 10;
         const glm::vec2 grid_dim = {4000.0f, 4000.0f};
         glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
+        bool show_full_hp_bars = false;
     };
 
     ResourceManager *mgr_;

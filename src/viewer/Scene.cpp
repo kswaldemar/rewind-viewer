@@ -273,27 +273,31 @@ void Scene::render_unit(const pod::Unit &unit) {
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    //HP bar
-    float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
-    model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
-    model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
-    model = glm::translate(model, {1.0f, 0.0f, 0.0f});
-    float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
-    glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
-    auto m = 1.0f / std::max(color.r, color.g);
-    shaders_->color.use();
-    shaders_->color.set_mat4("model", model);
-    shaders_->color.set_vec3("color", color * m);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
+        //HP bar
+        float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
+        model = glm::translate(glm::mat4(1.0f),
+                               {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+        model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
+        model = glm::translate(model, {1.0f, 0.0f, 0.0f});
+        float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
+        glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
+        auto m = 1.0f / std::max(color.r, color.g);
+        shaders_->color.use();
+        shaders_->color.set_mat4("model", model);
+        shaders_->color.set_vec3("color", color * m);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    //Hp bar outlining
-    model = glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
-    model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
-    model = glm::translate(model, {1.0f, 0.0f, 0.0f});
-    shaders_->color.set_mat4("model", model);
-    shaders_->color.set_vec3("color", glm::vec3(0.0f));
-    const uint8_t indicies[] = {0, 1, 3, 2};
-    glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
+        //Hp bar outlining
+        model =
+            glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+        model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
+        model = glm::translate(model, {1.0f, 0.0f, 0.0f});
+        shaders_->color.set_mat4("model", model);
+        shaders_->color.set_vec3("color", glm::vec3(0.0f));
+        const uint8_t indicies[] = {0, 1, 3, 2};
+        glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
+    }
 }
 
 void Scene::set_frame_index(int idx) {

@@ -181,6 +181,9 @@ void UIController::info_widget(Scene *scene) {
             ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
             ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt_.grid_color));
         }
+        if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
+            ImGui::Checkbox("Show full life bars", &scene->opt_.show_full_hp_bars);
+        }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {
         ImGui::BeginChild("FrameMsg", {0, 0}, true);
