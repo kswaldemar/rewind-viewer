@@ -40,6 +40,8 @@ UIController::UIController(Camera *camera)
     icons_config.MergeMode = true;
     icons_config.PixelSnapH = true;
     io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf", 14.0f, &icons_config, icons_range);
+    //Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
+    ImGui_ImplGlfwGL3_CreateDeviceObjects();
 }
 
 UIController::~UIController() {
