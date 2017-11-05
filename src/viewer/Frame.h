@@ -3,6 +3,7 @@
 //
 
 #pragma once
+
 #include <cstdint>
 
 #include <glm/glm.hpp>
@@ -21,6 +22,10 @@ struct Unit;
  *  - contains user message to draw in message window
  */
 struct Frame {
+    enum class UnitType {
+        undefined = 0,
+        helicopter,
+    };
     std::vector<pod::Circle> circles;
     std::vector<pod::Rectangle> rectangles;
     std::vector<pod::Line> lines;
@@ -57,6 +62,8 @@ struct Rectangle : Colored {
 struct Unit : Circle {
     int hp;
     int max_hp;
+    Frame::UnitType utype = Frame::UnitType::undefined;
+    float course = 0;
 };
 
 
@@ -71,7 +78,7 @@ inline void from_json(const nlohmann::json &j, Colored &p) {
 }
 
 inline void from_json(const nlohmann::json &j, Line &p) {
-    from_json(j, static_cast<Colored&>(p));
+    from_json(j, static_cast<Colored &>(p));
     p.surprise = p.color;
 
     p.x1 = j["x1"].get<float>();
@@ -81,7 +88,7 @@ inline void from_json(const nlohmann::json &j, Line &p) {
 }
 
 inline void from_json(const nlohmann::json &j, Circle &p) {
-    from_json(j, static_cast<Colored&>(p));
+    from_json(j, static_cast<Colored &>(p));
 
     p.radius = j["r"].get<float>();
     p.center.x = j["x"].get<float>();
@@ -89,7 +96,7 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
 }
 
 inline void from_json(const nlohmann::json &j, Rectangle &p) {
-    from_json(j, static_cast<Colored&>(p));
+    from_json(j, static_cast<Colored &>(p));
     float x1 = j["x1"].get<float>();
     float y1 = j["y1"].get<float>();
     float x2 = j["x2"].get<float>();
@@ -119,6 +126,18 @@ inline void from_json(const nlohmann::json &j, Unit &p) {
     }
     p.hp = j["hp"].get<int>();
     p.max_hp = j["max_hp"].get<int>();
+
+    //Optional values
+    const auto it = j.find("unit_type");
+    if (it != j.end()) {
+        p.utype = static_cast<Frame::UnitType>(it->get<int>());
+    }
+
+    //Course, needed to rotate texture, angle in radians [0, 2 * pi) counter clockwise
+    const auto it2 = j.find("course");
+    if (it2 != j.end()) {
+        p.course = it2->get<float>();
+    }
 }
 
 

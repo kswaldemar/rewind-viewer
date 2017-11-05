@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cgutils/ResourceManager.h>
-#include <cgutils/Shader.h>
 #include <cgutils/Camera.h>
 
 #include <viewer/Frame.h>
@@ -25,7 +24,6 @@
 class Scene {
 public:
     friend class UIController;
-
     explicit Scene(ResourceManager *res);
     ~Scene();
 
@@ -60,10 +58,8 @@ private:
 
     ResourceManager *mgr_;
 
-    Shader color_sh_;
-    Shader circle_sh_;
-    Shader lines_sh_;
-    Shader textured_sh_;
+    struct shaders_t;
+    std::unique_ptr<shaders_t> shaders_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;
@@ -72,4 +68,5 @@ private:
     std::vector<std::unique_ptr<Frame>> frames_;
     int cur_frame_idx_ = 0;
 
+    std::map<Frame::UnitType, GLuint> unit2tex_;
 };
