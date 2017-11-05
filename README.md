@@ -39,7 +39,7 @@ cmake --build .
 ```
 Windows:
 ```
-mkdir buld && cd build
+mkdir build && cd build
 cmake ..
 cmake --build . --config Release
 ```
