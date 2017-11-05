@@ -11,7 +11,7 @@ Fast Russain AI Cup championship match viewer with rewinding support written in 
 Viewer has several advantages in comparison of local-runner with drawing plugin:
  - All figures is drawn using your video adapter, so no more problems with slow drawing
  - Rewinding - ability to navigate between game tick
- - Pause navigation - zoom and navigate in any game state
+ - In Pause navigation - zoom and navigate in any game state
  - Handy mouse navigation
 
 Obvious drawbacks:
@@ -43,11 +43,10 @@ mkdir buld && cd build
 cmake ..
 cmake --build . --config Release
 ```
-*Note*: You need compiler with c++14 support.
+*Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows. 
 
-**Note**: Folder `resources` should be located together with executable. 
-So you need manualy copy `resources` to build folder, or
-copy executable to project root directory.
+**Note**: Viewer should be launched from same folder, where `resources` is located. 
+So you need to manualy copy `resources` to build folder, or copy executable to project root directory.
 
 ## Strategy integration
 You need special client to be able send messages in viewer. See [example C++ client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/c%2B%2B/RewindClient.h) for information about json based message
