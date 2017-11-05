@@ -8,6 +8,14 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+namespace {
+
+bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
+    auto d = wmouse - unit.center;
+    return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
+}
+
+} // anonymous namespace
 
 struct Scene::render_attrs_t {
     GLuint grid_vao = 0;
@@ -124,6 +132,28 @@ void Scene::render(const glm::mat4 &proj_view) {
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
     //Very careful with that call from other thread
     frames_.emplace_back(std::move(frame));
+}
+
+void Scene::show_detailed_info(const glm::vec2 &mouse) const {
+    if (!opt_.show_detailed_info_on_hover || frames_.empty()) {
+        return;
+    }
+
+    const Frame &frame = *frames_[cur_frame_idx_].get();
+    for (const auto &unit : frame.units) {
+        if (hittest(mouse, unit)) {
+            ImGui::BeginTooltip();
+            ImGui::Text(
+                "HP: %d / %d"
+                //"\nCooldown: %d"
+                "\nPosition: %0.3lf, %0.3lf",
+                unit.hp, unit.max_hp,
+                //0,
+                unit.center.x, unit.center.y
+            );
+            ImGui::EndTooltip();
+        }
+    }
 }
 
 void Scene::render_frame(const Frame &frame) {
@@ -289,8 +319,8 @@ void Scene::render_unit(const pod::Unit &unit) {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         //Hp bar outlining
-        model =
-            glm::translate(glm::mat4(1.0f), {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+        model = glm::translate(glm::mat4(1.0f),
+                               {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
         model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         shaders_->color.set_mat4("model", model);

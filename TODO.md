@@ -1,11 +1,9 @@
 # To version 1.2
- - [ ] Textures support (units, buttons, terrain)
- - [ ] Unit primitive
-    - [ ] Detect click on unit
-    - [ ] Show detailed info somewhere
-    - [ ] Draw cooldown (maybe another line under hp bar)
+ - [x] Textures support (units, buttons, terrain)
+ - [x] Unit primitive
+    - [x] Show detailed info somewhere
     - [x] Draw hp bars
-        - [ ] Optionally hide full
+        - [x] Optionally hide full
  - [ ] Sector primitive
  - [ ] Ability to set z coordinates (like drawing priority) for primitives
 

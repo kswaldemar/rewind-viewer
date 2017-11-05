@@ -10,7 +10,7 @@ uniform vec3 center;
 uniform vec3 color;
 uniform float radius2;
 uniform sampler2D tex_smp;
-uniform int textured; // Whenever use texture or not (0 or 1)
+uniform bool textured; // Whenever use texture or not
 
 const vec3 selected_color = vec3(0.4, 0.8, 0.0);
 
@@ -21,5 +21,5 @@ void main() {
         discard;
     vec3 solid = mix(color, color * 0.3, cur_r2 / radius2);
     vec4 tex = texture(tex_smp, fs_in.uv);
-    frag_color = mix(vec4(solid, 1.0), tex, textured * tex.a);
+    frag_color = mix(vec4(solid, 1.0), tex, (textured ? 1 : 0) * tex.a);
 }

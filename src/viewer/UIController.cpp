@@ -93,6 +93,11 @@ void UIController::next_frame(Scene *scene) {
     //Checking hotkeys
     check_hotkeys();
 
+    //Hittest for detailed unit info
+    if (!ImGui::GetIO().WantCaptureMouse) {
+        scene->show_detailed_info(camera_->screen2world(ImGui::GetIO().MousePos));
+    }
+
     //Background color
     glClearColor(clear_color_.r, clear_color_.g, clear_color_.b, 1.0f);
 }
@@ -150,7 +155,7 @@ void UIController::fps_overlay_widget() {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
     const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
                        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-    if (ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, ImVec2(0, 0), 0.3f, flags)) {
+    if (ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, ImVec2{0, 0}, 0.3, flags)) {
         ImGui::BeginGroup();
         ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS %.1f", ImGui::GetIO().Framerate);
         ImGui::SameLine();
@@ -158,7 +163,6 @@ void UIController::fps_overlay_widget() {
         ImGui::EndGroup();
         ImGui::End();
     }
-
 }
 
 void UIController::info_widget(Scene *scene) {
@@ -183,6 +187,7 @@ void UIController::info_widget(Scene *scene) {
         }
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
             ImGui::Checkbox("Show full life bars", &scene->opt_.show_full_hp_bars);
+            ImGui::Checkbox("Show detailed unit info on hover", &scene->opt_.show_detailed_info_on_hover);
         }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {

@@ -20,6 +20,8 @@ public:
 
     void update();
 
+    glm::vec2 screen2world(const glm::vec2 &coord) const;
+
 private:
     void update_matrix();
 

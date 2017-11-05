@@ -42,20 +42,24 @@ public:
     ///Called from network listener when next frame is ready
     void add_frame(std::unique_ptr<Frame> &&frame);
 
+    ///Show detailed info in tooltip if mouse hover unit
+    void show_detailed_info(const glm::vec2 &mouse) const;
+
 private:
+    struct settings_t {
+        const uint16_t grid_cells_count = 10;
+        const glm::vec2 grid_dim = {4000.0f, 4000.0f};
+        glm::vec3 grid_color = {0.115f, 0.124f, 0.157f};
+        bool show_full_hp_bars = false;
+        bool show_detailed_info_on_hover = true;
+    };
+
     void render_frame(const Frame &frame);
     void render_grid();
     void render_circle(const pod::Circle &circle);
     void render_rectangle(const pod::Rectangle &rect);
     void render_lines(const std::vector<pod::Line> &lines);
     void render_unit(const pod::Unit &unit);
-
-    struct settings_t {
-        const uint16_t grid_cells_count = 10;
-        const glm::vec2 grid_dim = {4000.0f, 4000.0f};
-        glm::vec3 grid_color = {0.8f, 0.9f, 0.9f};
-        bool show_full_hp_bars = false;
-    };
 
     ResourceManager *mgr_;
 
