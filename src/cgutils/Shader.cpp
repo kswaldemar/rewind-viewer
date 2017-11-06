@@ -4,10 +4,15 @@
 
 #include "Shader.h"
 
+#include <common/logger.h>
+
 #include <glm/gtc/type_ptr.hpp>
 
 #include <stdexcept>
-#include <common/logger.h>
+
+#ifdef __APPLE__
+#include <errno.h>
+#endif
 
 namespace {
 

@@ -3,6 +3,11 @@
 #include <net/PrimitiveType.h>
 #include <common/logger.h>
 
+#ifdef __APPLE__
+#include <errno.h>
+#endif
+
+
 NetListener::NetListener(Scene *scene, const std::string &listen_host, uint16_t listen_port)
     : scene_(scene) {
     socket_ = std::make_unique<CPassiveSocket>(CPassiveSocket::SocketTypeTcp);
