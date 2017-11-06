@@ -45,7 +45,7 @@ cmake --build . --config Release
 ```
 *Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows. 
 
-**Note**: Viewer should be launched from same folder, where `resources` is located. 
+:warning: **Note**: Viewer should be launched from same folder, where `resources` is located. 
 So you need to manualy copy `resources` to build folder, or copy executable to project root directory.
 
 ## Strategy integration
