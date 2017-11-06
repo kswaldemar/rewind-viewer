@@ -28,15 +28,19 @@ int main(int argc, char **argv) {
     // Init GLFW
     LOG_INFO("Init GLFW")
     if (glfwInit() != GL_TRUE) {
-        LOG_ERROR("Failed to initialize GLFW");
+        LOG_FATAL("Failed to initialize GLFW");
         return -1;
     }
 
     auto window = setup_window();
+    if (!window) {
+        LOG_FATAL("Cannot setup window");
+        return -3;
+    }
 
     LOG_INFO("Load OpenGL functions")
     if (!gladLoadGL()) {
-        LOG_ERROR("Failed to load opengl");
+        LOG_FATAL("Failed to load opengl");
         return -2;
     }
 
@@ -66,6 +70,10 @@ int main(int argc, char **argv) {
 }
 
 GLFWwindow *setup_window() {
+    glfwSetErrorCallback([](int error, const char *description) {
+        LOG_ERROR("GLFW error(%d): %s", error, description);
+    });
+
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -79,6 +87,9 @@ GLFWwindow *setup_window() {
 
     LOG_INFO("Create main window")
     GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
+    if (!window) {
+        return nullptr;
+    }
 
     int width;
     int height;
