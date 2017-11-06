@@ -111,8 +111,12 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     //Start network listening
     LOG_INFO("Start networking thread")
     NetListener net(&scene, "127.0.0.1", 7000);
-    std::thread network_thread([&net]{
-        net.run();
+    std::thread network_thread([&net] {
+        try {
+            net.run();
+        } catch (const std::exception &ex) {
+            LOG_ERROR("NetListener Exception:: %s", ex.what());
+        }
     });
     network_thread.detach();
 
@@ -124,10 +128,12 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //Updates
-        ui.next_frame(&scene);
+        ui.next_frame(&scene, net.connection_status());
         cam.update();
 
         if (ui.close_requested()) {
+            net.stop();
+            LOG_INFO("Exit from application");
             glfwSetWindowShouldClose(window, true);
         }
 

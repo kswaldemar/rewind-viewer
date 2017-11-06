@@ -27,7 +27,7 @@ public:
     /**
      * Call ImGui next frame and clear up OpenGl background
      */
-    void next_frame(Scene *scene);
+    void next_frame(Scene *scene, NetListener::ConStatus client_status);
     void frame_end();
 
     bool close_requested();
@@ -37,7 +37,7 @@ private:
 
     void main_menu_bar();
 
-    void fps_overlay_widget();
+    void fps_overlay_widget(NetListener::ConStatus net_status);
     void info_widget(Scene *scene);
     void playback_control_widget(Scene *scene);
 

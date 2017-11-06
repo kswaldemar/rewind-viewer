@@ -49,19 +49,15 @@ UIController::~UIController() {
     ImGui_ImplGlfwGL3_Shutdown();
 }
 
-void UIController::next_frame(Scene *scene) {
+void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status) {
     // Start new frame
     ImGui_ImplGlfwGL3_NewFrame();
 
     //Update windows status
     main_menu_bar();
 
-    if (ImGui::BeginMainMenuBar()) {
-        ImGui::EndMainMenuBar();
-    }
-
     if (wnd_->show_fps_overlay) {
-        fps_overlay_widget();
+        fps_overlay_widget(client_status);
     }
     if (wnd_->show_info) {
         info_widget(scene);
@@ -83,7 +79,9 @@ void UIController::next_frame(Scene *scene) {
         ImGui::End();
     }
     if (wnd_->show_shortcuts_help) {
-        ImGui::Begin(ICON_FA_KEYBOARD_O " Controls help", &wnd_->show_shortcuts_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin(ICON_FA_KEYBOARD_O " Controls help",
+                     &wnd_->show_shortcuts_help,
+                     ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
         ImGui::BulletText("Space to play/stop frame playback");
@@ -153,7 +151,7 @@ void UIController::main_menu_bar() {
     }
 }
 
-void UIController::fps_overlay_widget() {
+void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
     const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
                        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
@@ -163,6 +161,24 @@ void UIController::fps_overlay_widget() {
         ImGui::SameLine();
         ImGui::Text("[%.1f ms]", 1000.0f / ImGui::GetIO().Framerate);
         ImGui::EndGroup();
+        std::string strstatus;
+        ImVec4 color;
+        static const float intensity = 1.0;
+        switch (net_status) {
+            case NetListener::ConStatus::WAIT:
+                strstatus = "WAITING";
+                color = {intensity, intensity, 0.0, 1.0};
+                break;
+            case NetListener::ConStatus::ESTABLISHED:
+                strstatus = "CONNECTED";
+                color = {0.0, intensity, 0.0, 1.0};
+                break;
+            case NetListener::ConStatus::CLOSED:
+                strstatus = "CLOSED";
+                color = {intensity, 0.0, 0.0, 1.0};
+                break;
+        }
+        ImGui::TextColored(color, ICON_FA_PLUG " %s", strstatus.c_str());
         ImGui::End();
     }
 }

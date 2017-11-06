@@ -33,16 +33,19 @@ void NetListener::run() {
     client_ = socket_->Accept();
     if (!client_) {
         status_ = ConStatus::CLOSED;
-        char buf[100];
-        snprintf(buf, sizeof(buf), "Accept on socket returned NULL. errno=%d", errno);
+        char buf[256];
+        snprintf(buf, sizeof(buf), "Accept on socket returned NULL. errno=%d; %s", errno, strerror(errno));
         throw std::runtime_error(buf);
     } else {
-        LOG_INFO("NetListener:: Got connection from %s:%d", client_->GetClientAddr(), client_->GetClientPort());
+        LOG_INFO("NetListener:: Got connection from %s:%u", client_->GetClientAddr(), client_->GetClientPort());
     }
     status_ = ConStatus::ESTABLISHED;
     std::string prev_block;
-    while (true) {
+    while (!stop_) {
         const int32_t nbytes = client_->Receive(1024);
+        if (stop_) {
+            break;
+        }
         if (nbytes > 0) {
             auto data = client_->GetData();
             data[nbytes] = '\0';
@@ -78,6 +81,13 @@ void NetListener::run() {
     }
 }
 
+void NetListener::stop() {
+    if (status_ != ConStatus::CLOSED) {
+        LOG_INFO("Stopping network listening")
+    }
+    stop_ = true;
+}
+
 void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end) {
     using namespace nlohmann;
     try {
@@ -94,7 +104,9 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 break;
             case PrimitiveType::end:
                 LOG_DEBUG("NetClient::End");
-                scene_->add_frame(std::move(frame_));
+                if (!stop_) {
+                    scene_->add_frame(std::move(frame_));
+                }
                 frame_ = nullptr;
                 break;
             case PrimitiveType::circle:
