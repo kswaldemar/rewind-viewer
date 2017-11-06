@@ -37,7 +37,7 @@ void NetListener::run() {
         snprintf(buf, sizeof(buf), "Accept on socket returned NULL. errno=%d; %s", errno, strerror(errno));
         throw std::runtime_error(buf);
     } else {
-        LOG_INFO("NetListener:: Got connection from %s:%u", client_->GetClientAddr(), client_->GetClientPort());
+        LOG_INFO("NetListener:: Got connection from %s:%d", client_->GetClientAddr(), client_->GetClientPort());
     }
     status_ = ConStatus::ESTABLISHED;
     std::string prev_block;
