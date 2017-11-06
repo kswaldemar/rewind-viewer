@@ -7,7 +7,7 @@ out VS_OUT {
     vec3 coord;
 } vs_out;
 
-layout (std140) uniform Matrix {
+layout (std140) uniform MatrixBlock {
     mat4 proj_view;
 };
 uniform mat4 model;

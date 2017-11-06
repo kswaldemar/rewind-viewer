@@ -6,9 +6,10 @@ out VS_OUT {
     vec2 uv;
 } vs_out;
 
-layout (std140) uniform Matrix {
+layout (std140) uniform MatrixBlock {
     mat4 proj_view;
 };
+
 uniform mat4 model;
 
 void main() {

@@ -102,10 +102,10 @@ Scene::Scene(ResourceManager *res)
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, attr_->uniform_buf);
 
     LOG_INFO("Bind Uniform buffer to shaders")
-    shaders_->color.bind_uniform_block("Matrix", 0);
-    shaders_->circle.bind_uniform_block("Matrix", 0);
-    shaders_->lines.bind_uniform_block("Matrix", 0);
-    shaders_->textured.bind_uniform_block("Matrix", 0);
+    shaders_->color.bind_uniform_block("MatrixBlock", 0);
+    shaders_->circle.bind_uniform_block("MatrixBlock", 0);
+    shaders_->lines.bind_uniform_block("MatrixBlock", 0);
+    shaders_->textured.bind_uniform_block("MatrixBlock", 0);
 }
 
 Scene::~Scene() = default;

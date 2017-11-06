@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
     }
 
     LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+    LOG_INFO("Driver %s, Renderer %s", glGetString(GL_VENDOR), glGetString(GL_RENDERER));
 
 #ifdef OPENGL_DEBUG
 #  if (GL_ARB_debug_output)

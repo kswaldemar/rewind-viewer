@@ -8,7 +8,7 @@ out VS_OUT {
 
 out vec3 color;
 
-layout (std140) uniform Matrix {
+layout (std140) uniform MatrixBlock {
     mat4 proj_view;
 };
 
