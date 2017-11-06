@@ -1,3 +1,4 @@
+build
 cmake-build-*
 .idea
 
@@ -35,5 +36,3 @@ cmake-build-*
 *.exe
 *.out
 *.app
-
-build
