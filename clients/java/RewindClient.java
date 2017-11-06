@@ -6,20 +6,25 @@ import java.net.Socket;
 
 
 /**
- * Java client for Rewind viewer. Put this file to
+ * Java client for Rewind viewer. Put this file to the same default package where Strategy/MyStrategy/Runner and other
+ * files are extracted.
  *
  * Sample usage:
  * <pre>
  * {@code
- * @Override
- * public void move(Wizard self, World world, Game game, Move move) {
- *  initializeTick(self, world, game, move);
- *  for (Wizard w : world.getWizards()) {
- *      RewindClient.Side side = w.getFaction() == self.getFaction() ? RewindClient.Side.OUR : RewindClient.Side.ENEMY;
- *      rewindClient.livingUnit(w.getId(), w.getX(), w.getY(), w.getRadius(), w.getLife(), w.getMaxLife(), side);
+ *
+ *  private final RewindClient rewindClient = new RewindClient();
+ *
+ *  @Override
+ *  public void move(Wizard self, World world, Game game, Move move) {
+ *      initializeTick(self, world, game, move);
+ *      for (Wizard w : world.getWizards()) {
+ *          RewindClient.Side side = w.getFaction() == self.getFaction() ? RewindClient.Side.OUR : RewindClient.Side.ENEMY;
+ *          rewindClient.livingUnit(w.getId(), w.getX(), w.getY(), w.getRadius(), w.getLife(), w.getMaxLife(), side);
+ *      }
+ *      ...
+ *      rewindClient.endFrame();
  *  }
- *  ...
- *  rewindClient.endFrame();
  * }
  * </pre>
  *
@@ -29,7 +34,7 @@ public class RewindClient {
     private final Socket socket;
     private final OutputStream outputStream;
 
-    enum Side {
+    public enum Side {
         OUR(-1),
         NEUTRAL(0),
         ENEMY(1);
@@ -82,7 +87,7 @@ public class RewindClient {
 
     public RewindClient(String host, int port) {
         try {
-            socket = new Socket("127.0.0.1", 7000);
+            socket = new Socket(host, port);
             socket.setTcpNoDelay(true);
             outputStream = socket.getOutputStream();
         } catch (IOException e) {
@@ -94,7 +99,7 @@ public class RewindClient {
         this("127.0.0.1", 7000);
     }
 
-    void send(String buf) {
+    private void send(String buf) {
         try {
             outputStream.write(buf.getBytes());
             outputStream.flush();
