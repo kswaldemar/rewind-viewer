@@ -24,7 +24,9 @@ struct Unit;
 struct Frame {
     enum class UnitType {
         undefined = 0,
-        helicopter,
+        helicopter = 1,
+        tank = 2,
+        fighter = 3,
     };
     std::vector<pod::Circle> circles;
     std::vector<pod::Rectangle> rectangles;

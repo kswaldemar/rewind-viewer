@@ -67,6 +67,8 @@ Scene::Scene(ResourceManager *res)
     //Unit textures
     LOG_INFO("Load unit textures")
     unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
+    unit2tex_[Frame::UnitType::tank] = mgr_->load_texture("resources/textures/tank.png", false);
+    unit2tex_[Frame::UnitType::fighter] = mgr_->load_texture("resources/textures/fighter.png", false);
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
