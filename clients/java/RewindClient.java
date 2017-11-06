@@ -4,11 +4,10 @@ import java.io.OutputStream;
 import java.net.Socket;
 
 
-
 /**
  * Java client for Rewind viewer. Put this file to the same default package where Strategy/MyStrategy/Runner and other
  * files are extracted.
- *
+ * <p>
  * Sample usage:
  * <pre>
  * {@code
@@ -27,7 +26,6 @@ import java.net.Socket;
  *  }
  * }
  * </pre>
- *
  */
 public class RewindClient {
 
@@ -39,7 +37,10 @@ public class RewindClient {
         NEUTRAL(0),
         ENEMY(1);
         final int side;
-        Side(int side) { this.side = side; }
+
+        Side(int side) {
+            this.side = side;
+        }
     }
 
     /**
@@ -66,19 +67,39 @@ public class RewindClient {
         livingUnit(x, y, r, hp, maxHp, side, 0, 0);
     }
 
+    void close() {
+        try {
+            outputStream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
-     * @param x - x pos of the unit
-     * @param y - y pos of the unit
-     * @param r - radius of the unit
-     * @param hp - current health
-     * @param maxHp - max possible health
-     * @param side - owner of the unit
-     * @param course rotation of the unit - angle in radians [0, 2 * pi) counter clockwise
+     * Pass arbitrary user message to be stored in frame
+     * Message content displayed in separate window inside viewer
+     * Can be used several times per frame
+     *
+     * @param msg .
+     */
+    public void message(String msg) {
+        String s = "{\"type\": \"message\", \"message\" : \"" + msg + " \")";
+        send(s);
+    }
+
+    /**
+     * @param x        - x pos of the unit
+     * @param y        - y pos of the unit
+     * @param r        - radius of the unit
+     * @param hp       - current health
+     * @param maxHp    - max possible health
+     * @param side     - owner of the unit
+     * @param course   rotation of the unit - angle in radians [0, 2 * pi) counter clockwise
      * @param unitType - id of unit type (see UnitType enum: https://github.com/kswaldemar/rewind-viewer/blob/master/src/viewer/Frame.h)
      *                 to set texture
      */
     void livingUnit(double x, double y, double r, int hp, int maxHp,
-                     Side side, double course, int unitType) {
+                    Side side, double course, int unitType) {
         send(String.format(
                 "{\"type\": \"unit\", \"x\": %f, \"y\": %f, \"r\": %f, \"hp\": %d, \"max_hp\": %d, \"enemy\": %d, \"unit_type\":%d, \"course\": %.3f}",
                 x, y, r, hp, maxHp, side.side, unitType, course));
@@ -90,7 +111,7 @@ public class RewindClient {
             socket.setTcpNoDelay(true);
             outputStream = socket.getOutputStream();
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
