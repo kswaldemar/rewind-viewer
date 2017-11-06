@@ -61,13 +61,12 @@ public class RewindClient {
         send(String.format("{\"type\": \"line\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d}", x1, y1, x2, y2, color.getRGB()));
     }
 
-    void livingUnit(long id, double x, double y, double r, int hp, int maxHp,
+    void livingUnit(double x, double y, double r, int hp, int maxHp,
                     Side side) {
-        livingUnit(id, x, y, r, hp, maxHp, side, 0, 0);
+        livingUnit(x, y, r, hp, maxHp, side, 0, 0);
     }
 
     /**
-     * @param id - id of the unit
      * @param x - x pos of the unit
      * @param y - y pos of the unit
      * @param r - radius of the unit
@@ -78,7 +77,7 @@ public class RewindClient {
      * @param unitType - id of unit type (see UnitType enum: https://github.com/kswaldemar/rewind-viewer/blob/master/src/viewer/Frame.h)
      *                 to set texture
      */
-    void livingUnit(long id, double x, double y, double r, int hp, int maxHp,
+    void livingUnit(double x, double y, double r, int hp, int maxHp,
                      Side side, double course, int unitType) {
         send(String.format(
                 "{\"type\": \"unit\", \"x\": %f, \"y\": %f, \"r\": %f, \"hp\": %d, \"max_hp\": %d, \"enemy\": %d, \"unit_type\":%d, \"course\": %.3f}",
