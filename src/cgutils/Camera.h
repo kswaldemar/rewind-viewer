@@ -22,12 +22,15 @@ public:
 
     glm::vec2 screen2world(const glm::vec2 &coord) const;
 
+    ///1 if directed up, -1 if directed down
+    int y_axes_invert() const;
+
 private:
     void update_matrix();
 
     struct settings_t {
         float viewport_size;
-        bool origin_on_top_left = true;
+        bool origin_on_top_left = false;
     };
 
     glm::mat4 pr_view_;

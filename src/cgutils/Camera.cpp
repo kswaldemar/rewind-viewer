@@ -51,10 +51,7 @@ void Camera::update() {
 
             glm::vec2 delta = io.MouseDelta;
             delta.x = -opt_.viewport_size * (delta.x / width);
-            delta.y = opt_.viewport_size * (delta.y / height);
-            if (opt_.origin_on_top_left) {
-                delta.y = -delta.y;
-            }
+            delta.y = opt_.viewport_size * (delta.y / height) * y_axes_invert();
             pos_ += delta;
         }
 
@@ -72,10 +69,13 @@ glm::vec2 Camera::screen2world(const glm::vec2 &coord) const {
     const float y_half_view = half_view * height / min_size;
 
     const double proj_x = cg::lerp(coord.x, 0, width, -x_half_view, x_half_view);
-    const int invert = opt_.origin_on_top_left ? -1 : 1;
-    const double proj_y = cg::lerp(coord.y, height, 0, -y_half_view * invert, y_half_view * invert);
+    const double proj_y = cg::lerp(coord.y, height, 0, -y_half_view, y_half_view);
 
-    return pos_ + glm::vec2{proj_x, proj_y};
+    return pos_ + glm::vec2{proj_x, proj_y * y_axes_invert()};
+}
+
+int Camera::y_axes_invert() const {
+    return opt_.origin_on_top_left ? -1 : 1;
 }
 
 void Camera::update_matrix() {
@@ -87,9 +87,7 @@ void Camera::update_matrix() {
     const float x_half_view = half_view * width / min_size;
     const float y_half_view = half_view * height / min_size;
 
-    const int invert = opt_.origin_on_top_left ? -1 : 1;
-
     pr_view_ = glm::ortho(pos_.x - x_half_view, pos_.x + x_half_view,
-                          pos_.y - y_half_view * invert, pos_.y + y_half_view * invert,
+                          pos_.y - y_half_view * y_axes_invert(), pos_.y + y_half_view * y_axes_invert(),
                           -10.0f, 10.0f);
 }

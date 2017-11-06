@@ -27,7 +27,7 @@ public:
     explicit Scene(ResourceManager *res);
     ~Scene();
 
-    void render(const glm::mat4 &proj_view);
+    void render(const glm::mat4 &proj_view, int y_axes_invert);
 
     ///Set frame to draw now, index should be in range [0, frames_count)
     void set_frame_index(int idx);
@@ -74,4 +74,7 @@ private:
     int cur_frame_idx_ = 0;
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
+
+    ///From camera, to properly draw hp bars above units
+    int y_axes_invert_;
 };

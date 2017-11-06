@@ -81,12 +81,19 @@ GLuint create_shader_program(GLuint vert_shader, GLuint frag_shader) {
 } // anonymous namespace
 
 Shader::Shader(const std::string &vertex_shader_path, const std::string &fragment_shader_path) {
+    LOG_INFO("Start compiling shader: vertex=%s, fragment=%s",
+             vertex_shader_path.c_str(), fragment_shader_path.c_str());
+    LOG_INFO("Load Vertex shader");
     const auto vs_src = load_file(vertex_shader_path);
+    LOG_INFO("Load Fragment shader");
     const auto fs_src = load_file(fragment_shader_path);
 
+    LOG_INFO("Compile Vertex shader");
     auto v_shader = create_shader(GL_VERTEX_SHADER, vs_src);
+    LOG_INFO("Compile Fragment shader");
     auto f_shader = create_shader(GL_FRAGMENT_SHADER, fs_src);
 
+    LOG_INFO("Link shader program");
     program_ = create_shader_program(v_shader, f_shader);
 
     glDeleteShader(v_shader);

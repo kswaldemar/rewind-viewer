@@ -26,6 +26,7 @@ int main(int argc, char **argv) {
     loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_INFO);
 
     // Init GLFW
+    LOG_INFO("Init GLFW")
     if (glfwInit() != GL_TRUE) {
         LOG_ERROR("Failed to initialize GLFW");
         return -1;
@@ -33,6 +34,7 @@ int main(int argc, char **argv) {
 
     auto window = setup_window();
 
+    LOG_INFO("Load OpenGL functions")
     if (!gladLoadGL()) {
         LOG_ERROR("Failed to load opengl");
         return -2;
@@ -49,8 +51,10 @@ int main(int argc, char **argv) {
 #  endif
 #endif
 
+    LOG_INFO("Setup vertical sync to 60fps")
     glfwSwapInterval(1);
     try {
+        LOG_INFO("Start main draw loop")
         prepare_and_run_game_loop(window);
     } catch (const std::exception &e) {
         LOG_ERROR("Exception:: %s", e.what());
@@ -72,6 +76,7 @@ GLFWwindow *setup_window() {
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #endif
 
+    LOG_INFO("Create main window")
     GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
 
     int width;
@@ -79,6 +84,7 @@ GLFWwindow *setup_window() {
     int nr_channels;
     auto icon_data = stbi_load("resources/icon.png", &width, &height, &nr_channels, 0);
     GLFWimage icon{width, height, icon_data};
+    LOG_INFO("Setup application icon")
     glfwSetWindowIcon(window, 1, &icon);
 
     glfwMakeContextCurrent(window);
@@ -90,14 +96,19 @@ GLFWwindow *setup_window() {
 }
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
+    LOG_INFO("Create camera")
     Camera cam({730.0f, 445.0f}, 1000);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
+    LOG_INFO("Create Resource manager")
     ResourceManager res;
+    LOG_INFO("Create Scene")
     Scene scene(&res);
+    LOG_INFO("Create GUI controller")
     UIController ui(&cam);
 
     //Start network listening
+    LOG_INFO("Start networking thread")
     NetListener net(&scene, "127.0.0.1", 7000);
     std::thread network_thread([&net]{
         net.run();
@@ -108,6 +119,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glfwGetFramebufferSize(window, &width, &height);
 
     glEnable(GL_DEPTH_TEST);
+    LOG_INFO("Start render loop")
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         //Updates
@@ -119,7 +131,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         }
 
         //Non Ui related drawing
-        scene.render(cam.proj_view());
+        scene.render(cam.proj_view(), cam.y_axes_invert());
 
         // Cleanup opengl state
         glBindVertexArray(0);

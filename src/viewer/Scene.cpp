@@ -7,6 +7,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <common/logger.h>
 
 namespace {
 
@@ -50,20 +51,25 @@ struct Scene::shaders_t {
 
 Scene::Scene(ResourceManager *res)
     : mgr_(res) {
+    LOG_INFO("Initialize needed attributes")
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
     attr_->grid_model = glm::scale(glm::mat4{}, {opt_.grid_dim.x, opt_.grid_dim.y, 0.0f});
 
     //Shaders
+    LOG_INFO("Compile shaders")
     shaders_ = std::make_unique<shaders_t>();
 
     //Load textures
+    LOG_INFO("Load background texture")
     attr_->grass_tex = mgr_->load_texture("resources/textures/grass_seamless.jpg", false, GL_REPEAT, GL_REPEAT);
 
     //Unit textures
+    LOG_INFO("Load unit textures")
     unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
 
     //Preload rectangle to memory for further drawing
+    LOG_INFO("Create rectangle for future rendering")
     attr_->rect_vao = mgr_->gen_vertex_array();
     GLuint vbo = mgr_->gen_buffer();
     //@formatter:off
@@ -87,6 +93,7 @@ Scene::Scene(ResourceManager *res)
     glBindVertexArray(0);
 
     //Uniform buffer
+    LOG_INFO("Create Uniform buffer")
     attr_->uniform_buf = mgr_->gen_buffer();
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
     glBufferData(GL_UNIFORM_BUFFER, 64, nullptr, GL_DYNAMIC_DRAW);
@@ -94,6 +101,7 @@ Scene::Scene(ResourceManager *res)
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, attr_->uniform_buf);
 
+    LOG_INFO("Bind Uniform buffer to shaders")
     shaders_->color.bind_uniform_block("Matrix", 0);
     shaders_->circle.bind_uniform_block("Matrix", 0);
     shaders_->lines.bind_uniform_block("Matrix", 0);
@@ -102,7 +110,9 @@ Scene::Scene(ResourceManager *res)
 
 Scene::~Scene() = default;
 
-void Scene::render(const glm::mat4 &proj_view) {
+void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
+    y_axes_invert_ = y_axes_invert;
+
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(proj_view), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -306,8 +316,8 @@ void Scene::render_unit(const pod::Unit &unit) {
     if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
         //HP bar
         float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
-        model = glm::translate(glm::mat4(1.0f),
-                               {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+        glm::vec3 bar_shift{vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1 * y_axes_invert_, vcenter.z + 0.1};
+        model = glm::translate(glm::mat4(1.0f), bar_shift);
         model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
@@ -319,8 +329,7 @@ void Scene::render_unit(const pod::Unit &unit) {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         //Hp bar outlining
-        model = glm::translate(glm::mat4(1.0f),
-                               {vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1, vcenter.z + 0.1});
+        model = glm::translate(glm::mat4(1.0f), bar_shift);
         model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         shaders_->color.set_mat4("model", model);
