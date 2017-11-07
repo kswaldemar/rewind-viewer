@@ -29,7 +29,7 @@ struct Frame {
         fighter = 3,
     };
 
-    enum class TerrainMod {
+    enum class AreaType {
         unknown = 0,
         forest,
         swamp,
@@ -81,7 +81,7 @@ struct AreaDesc {
     //Cell coordinates
     int x;
     int y;
-    Frame::TerrainMod type;
+    Frame::AreaType type;
 };
 
 
@@ -161,7 +161,7 @@ inline void from_json(const nlohmann::json &j, Unit &p) {
 inline void from_json(const nlohmann::json &j, AreaDesc &p) {
     p.x = j["x"].get<int>();
     p.y = j["y"].get<int>();
-    p.type = static_cast<Frame::TerrainMod>(j["area_type"].get<int>());
+    p.type = static_cast<Frame::AreaType>(j["area_type"].get<int>());
 }
 
 

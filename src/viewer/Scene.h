@@ -79,7 +79,7 @@ private:
     int cur_frame_idx_ = 0;
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
-    std::map<Frame::TerrainMod, GLuint> terrain2tex_;
+    std::map<Frame::AreaType, GLuint> terrain2tex_;
 
     ///From camera, to properly draw hp bars above units
     int y_axes_invert_;

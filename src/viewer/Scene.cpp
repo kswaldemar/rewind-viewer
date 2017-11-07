@@ -71,13 +71,13 @@ Scene::Scene(ResourceManager *res)
     unit2tex_[Frame::UnitType::fighter] = mgr_->load_texture("resources/textures/fighter.png", false);
 
     //AreaDesc textures
-    terrain2tex_[Frame::TerrainMod::forest] = mgr_->load_texture("resources/textures/forest.png",
+    terrain2tex_[Frame::AreaType::forest] = mgr_->load_texture("resources/textures/forest.png",
                                                                  true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::TerrainMod::swamp] = mgr_->load_texture("resources/textures/swamp.png",
+    terrain2tex_[Frame::AreaType::swamp] = mgr_->load_texture("resources/textures/swamp.png",
                                                                 true, GL_REPEAT, GL_REPEAT);
-    terrain2tex_[Frame::TerrainMod::cloud] = mgr_->load_texture("resources/textures/clouds.png",
+    terrain2tex_[Frame::AreaType::cloud] = mgr_->load_texture("resources/textures/clouds.png",
                                                                 true, GL_REPEAT, GL_REPEAT);
-    terrain2tex_[Frame::TerrainMod::rain] = mgr_->load_texture("resources/textures/rain.png",
+    terrain2tex_[Frame::AreaType::rain] = mgr_->load_texture("resources/textures/rain.png",
                                                                true, GL_REPEAT, GL_REPEAT);
 
     //Preload rectangle to memory for further drawing
@@ -199,7 +199,7 @@ void Scene::render_terrain() {
     glBindVertexArray(attr_->rect_vao);
     for (const auto &tm : terrains_) {
         float z = -0.1f;
-        if (tm.type == Frame::TerrainMod::rain || tm.type == Frame::TerrainMod::cloud) {
+        if (tm.type == Frame::AreaType::rain || tm.type == Frame::AreaType::cloud) {
             z += 0.05f;
         }
 
