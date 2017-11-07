@@ -2,12 +2,12 @@
 
 #include <cgutils/utils.h>
 #include <cgutils/Shader.h>
+#include <common/logger.h>
 
 #include <imgui.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <common/logger.h>
 
 namespace {
 
@@ -122,8 +122,18 @@ Scene::Scene(ResourceManager *res)
 
 Scene::~Scene() = default;
 
-void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
+void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
+    //Update world origin position
     y_axes_invert_ = y_axes_invert;
+
+    //Update current frame
+    {
+        std::lock_guard<std::mutex> f(frames_mutex_);
+        frames_count_ = static_cast<int>(frames_.size());
+        if (cur_frame_idx_ >= 0 && cur_frame_idx_ < frames_count_) {
+            active_frame_ = frames_[cur_frame_idx_].get();
+        }
+    }
 
     //Update projection matrix
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
@@ -158,7 +168,7 @@ void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
 }
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
-    //Very careful with that call from other thread
+    std::lock_guard<std::mutex> f(frames_mutex_);
     frames_.emplace_back(std::move(frame));
 }
 
@@ -387,7 +397,7 @@ void Scene::render_unit(const pod::Unit &unit) {
 }
 
 void Scene::set_frame_index(int idx) {
-    if (idx >= 0 && idx < get_frames_count() && idx != cur_frame_idx_) {
+    if (idx >= 0 && idx < frames_count_ && idx != cur_frame_idx_) {
         cur_frame_idx_ = idx;
     }
 }
@@ -397,15 +407,12 @@ int Scene::get_frame_index() {
 }
 
 int Scene::get_frames_count() {
-    return static_cast<int>(frames_.size());
+    return frames_count_;
 }
 
 const char *Scene::get_frame_user_message() {
-    if (cur_frame_idx_ >= 0 && cur_frame_idx_ < static_cast<int>(frames_.size())) {
-        const auto &frame = frames_[cur_frame_idx_];
-        if (!frame->user_message.empty()) {
-            return frame->user_message.c_str();
-        }
+    if (active_frame_) {
+        return active_frame_->user_message.c_str();
     }
     return "";
 }

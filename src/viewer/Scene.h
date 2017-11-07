@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <mutex>
 
 /**
  * Represent whole game state.
@@ -27,7 +28,7 @@ public:
     explicit Scene(ResourceManager *res);
     ~Scene();
 
-    void render(const glm::mat4 &proj_view, int y_axes_invert);
+    void update_and_render(const glm::mat4 &proj_view, int y_axes_invert);
 
     ///Set frame to draw now, index should be in range [0, frames_count)
     void set_frame_index(int idx);
@@ -75,8 +76,11 @@ private:
     std::unique_ptr<render_attrs_t> attr_;
     settings_t opt_;
 
+    std::mutex frames_mutex_;
     std::vector<std::unique_ptr<Frame>> frames_;
     int cur_frame_idx_ = 0;
+    int frames_count_ = 0;
+    Frame *active_frame_ = nullptr;
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
     std::map<Frame::AreaType, GLuint> terrain2tex_;
