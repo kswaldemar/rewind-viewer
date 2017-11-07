@@ -140,8 +140,8 @@ void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
     shaders_->textured.use();
-    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 0.0f});
-    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 1.0f});
+    model = glm::translate(model, {1.0f, 1.0f, -0.2f});
     shaders_->textured.set_mat4("model", model);
     shaders_->textured.set_vec2("tex_scale", glm::vec2(opt_.grid_cells_count));
     glBindVertexArray(attr_->rect_vao);
@@ -198,9 +198,9 @@ void Scene::render_terrain() {
     shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0f, y_axes_invert_));
     glBindVertexArray(attr_->rect_vao);
     for (const auto &tm : terrains_) {
-        float z = 0.1f;
+        float z = -0.1f;
         if (tm.type == Frame::TerrainMod::rain || tm.type == Frame::TerrainMod::cloud) {
-            z = 0.2f;
+            z += 0.05f;
         }
 
         auto model = glm::translate(glm::mat4(1.0), {cell_dim.x * tm.x, cell_dim.y * tm.y, z});
@@ -263,19 +263,19 @@ void Scene::render_grid() {
         for (float shift : coord_line) {
             grid.push_back(shift);
             grid.push_back(0.0);
-            grid.push_back(0.9);
+            grid.push_back(0.0);
 
             grid.push_back(shift);
             grid.push_back(1.0);
-            grid.push_back(0.9);
+            grid.push_back(0.0);
 
             grid.push_back(0);
             grid.push_back(shift);
-            grid.push_back(0.9);
+            grid.push_back(0.0);
 
             grid.push_back(1.0);
             grid.push_back(shift);
-            grid.push_back(0.9);
+            grid.push_back(0.0);
         }
         attr_->grid_vertex_count = static_cast<GLsizei>(grid.size());
 
@@ -292,9 +292,9 @@ void Scene::render_grid() {
 }
 
 void Scene::render_circle(const pod::Circle &circle) {
-    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 1.0f};
+    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
-    model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
+    model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 1.0f});
     shaders_->circle.set_float("radius2", circle.radius * circle.radius);
     shaders_->circle.set_vec3("center", vcenter);
     shaders_->circle.set_vec3("color", circle.color);
@@ -305,8 +305,8 @@ void Scene::render_circle(const pod::Circle &circle) {
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 1.0f});
-    model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 0.0f});
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 0.1f});
+    model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 1.0f});
     shaders_->color.set_mat4("model", model);
     shaders_->color.set_vec3("color", rect.color);
 
@@ -342,7 +342,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     shaders_->circle.set_float("radius2", unit.radius * unit.radius);
     shaders_->circle.set_vec3("color", unit.color);
 
-    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 1.0f};
+    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     if (unit.utype != Frame::UnitType::undefined) {
         shaders_->circle.set_int("textured", 1);
@@ -363,7 +363,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
         //HP bar
         float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
-        glm::vec3 bar_shift{vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1 * y_axes_invert_, vcenter.z + 0.1};
+        glm::vec3 bar_shift{vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1 * y_axes_invert_, vcenter.z + 0.01};
         model = glm::translate(glm::mat4(1.0f), bar_shift);
         model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 0.2), 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
