@@ -48,7 +48,7 @@ public:
 
     ///Should be send on end of move function
     ///all turn primitives can be rendered after that point
-    void endFrame() {
+    void end_frame() {
         send(R"({"type":"end"})");
     }
 
@@ -83,6 +83,15 @@ public:
             R"("course": %.3lf})";
         send(format(fmt, x, y, r, hp, max_hp, enemy, utype, course));
     }
+
+    ///Weather or terrain description in specific cell
+    ///See Frame.h AreaType for available terrain and weather types
+    void area_description(int cell_x, int cell_y, int area_type) {
+        static const char *fmt =
+            R"({"type": "area", "x": %d, "y": %d, "area_type": %d})";
+        send(format(fmt, cell_x, cell_y, area_type));
+    }
+
 
     ///Pass arbitrary user message to be stored in frame
     ///Message content displayed in separate window inside viewer
