@@ -24,7 +24,7 @@
  */
 
 public class RewindClient {
-  public static let instance = RewindClient(host: "127.0.0.1", port: 7000)
+  public static let instance = RewindClient(host: "127.0.0.1", port: 7000)!
   
   public enum Color: UInt32 {
     case red   = 0xFF0000
@@ -76,6 +76,6 @@ public class RewindClient {
   }
   
   private func send(_ str: String) {
-    tc.write(string: str)
+    tc.write(bytes: str.utf8.map{ Byte(bitPattern: $0) })
   }
 }
