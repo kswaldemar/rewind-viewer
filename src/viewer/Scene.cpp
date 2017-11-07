@@ -122,18 +122,18 @@ void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
     shaders_->color.use();
     shaders_->color.set_mat4("model", attr_->grid_model);
     shaders_->color.set_vec3("color", opt_.grid_color);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
     render_grid();
 
-    shaders_->textured.use();
-    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, -1.0f});
-    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
-    shaders_->textured.set_mat4("model", model);
-    shaders_->textured.set_vec2("tex_scale", {10, 10});
-    shaders_->textured.set_vec3("color", glm::vec3(0.6));
-    glBindVertexArray(attr_->rect_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
+    //shaders_->textured.use();
+    //auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, -1.0f});
+    //model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    //shaders_->textured.set_mat4("model", model);
+    //shaders_->textured.set_vec2("tex_scale", {32, 32});
+    //shaders_->textured.set_vec3("color", glm::vec3(0.6));
+    //glBindVertexArray(attr_->rect_vao);
+    //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     if (!frames_.empty()) {
         const Frame *frame = frames_[cur_frame_idx_].get();
@@ -320,7 +320,7 @@ void Scene::render_unit(const pod::Unit &unit) {
         float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
         glm::vec3 bar_shift{vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1 * y_axes_invert_, vcenter.z + 0.1};
         model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
+        model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 0.2), 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
         glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
@@ -332,7 +332,7 @@ void Scene::render_unit(const pod::Unit &unit) {
 
         //Hp bar outlining
         model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
+        model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 0.2), 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         shaders_->color.set_mat4("model", model);
         shaders_->color.set_vec3("color", glm::vec3(0.0f));
@@ -357,7 +357,10 @@ int Scene::get_frames_count() {
 
 const char *Scene::get_frame_user_message() {
     if (cur_frame_idx_ >= 0 && cur_frame_idx_ < static_cast<int>(frames_.size())) {
-        return frames_[cur_frame_idx_]->user_message.c_str();
+        const auto &frame = frames_[cur_frame_idx_];
+        if (!frame->user_message.empty()) {
+            return frame->user_message.c_str();
+        }
     }
     return "";
 }

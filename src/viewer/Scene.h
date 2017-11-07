@@ -47,9 +47,9 @@ public:
 
 private:
     struct settings_t {
-        const uint16_t grid_cells_count = 10;
-        const glm::vec2 grid_dim = {4000.0f, 4000.0f};
-        glm::vec3 grid_color = {0.115f, 0.124f, 0.157f};
+        const uint16_t grid_cells_count = 32;
+        const glm::vec2 grid_dim = {1024.0f, 1024.0f};
+        glm::vec3 grid_color = {0.321f, 0.336f, 0.392f};
         bool show_full_hp_bars = false;
         bool show_detailed_info_on_hover = true;
     };

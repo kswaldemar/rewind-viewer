@@ -21,5 +21,7 @@ void main() {
         discard;
     vec3 solid = mix(color, color * 0.3, cur_r2 / radius2);
     vec4 tex = texture(tex_smp, fs_in.uv);
-    frag_color = mix(vec4(solid, 1.0), tex, (textured ? 1 : 0) * tex.a);
+    if (textured && tex.a < 0.1)
+        discard;
+    frag_color = mix(vec4(solid, 1.0), tex, (textured ? 0.5 : 0) * tex.a);
 }
