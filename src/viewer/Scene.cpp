@@ -311,7 +311,7 @@ void Scene::render_rectangle(const pod::Rectangle &rect) {
     shaders_->color.set_vec3("color", rect.color);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Scene::render_lines(const std::vector<pod::Line> &lines) {
