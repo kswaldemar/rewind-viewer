@@ -28,6 +28,15 @@ struct Frame {
         tank = 2,
         fighter = 3,
     };
+
+    enum class TerrainMod {
+        unknown = 0,
+        forest,
+        swamp,
+        rain,
+        cloud,
+    };
+
     std::vector<pod::Circle> circles;
     std::vector<pod::Rectangle> rectangles;
     std::vector<pod::Line> lines;
@@ -66,6 +75,13 @@ struct Unit : Circle {
     int max_hp;
     Frame::UnitType utype = Frame::UnitType::undefined;
     float course = 0;
+};
+
+struct AreaDesc {
+    //Cell coordinates
+    int x;
+    int y;
+    Frame::TerrainMod type;
 };
 
 
@@ -140,6 +156,12 @@ inline void from_json(const nlohmann::json &j, Unit &p) {
     if (it2 != j.end()) {
         p.course = it2->get<float>();
     }
+}
+
+inline void from_json(const nlohmann::json &j, AreaDesc &p) {
+    p.x = j["x"].get<int>();
+    p.y = j["y"].get<int>();
+    p.type = static_cast<Frame::TerrainMod>(j["area_type"].get<int>());
 }
 
 

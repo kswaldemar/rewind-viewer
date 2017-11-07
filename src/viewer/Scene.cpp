@@ -62,13 +62,23 @@ Scene::Scene(ResourceManager *res)
 
     //Load textures
     LOG_INFO("Load background texture")
-    attr_->grass_tex = mgr_->load_texture("resources/textures/grass_seamless.jpg", false, GL_REPEAT, GL_REPEAT);
+    attr_->grass_tex = mgr_->load_texture("resources/textures/grass.png", false, GL_REPEAT, GL_REPEAT);
 
     //Unit textures
     LOG_INFO("Load unit textures")
     unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
     unit2tex_[Frame::UnitType::tank] = mgr_->load_texture("resources/textures/tank.png", false);
     unit2tex_[Frame::UnitType::fighter] = mgr_->load_texture("resources/textures/fighter.png", false);
+
+    //AreaDesc textures
+    terrain2tex_[Frame::TerrainMod::forest] = mgr_->load_texture("resources/textures/forest.png",
+                                                                 true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::TerrainMod::swamp] = mgr_->load_texture("resources/textures/swamp.png",
+                                                                true, GL_REPEAT, GL_REPEAT);
+    terrain2tex_[Frame::TerrainMod::cloud] = mgr_->load_texture("resources/textures/clouds.png",
+                                                                true, GL_REPEAT, GL_REPEAT);
+    terrain2tex_[Frame::TerrainMod::rain] = mgr_->load_texture("resources/textures/rain.png",
+                                                               true, GL_REPEAT, GL_REPEAT);
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -115,26 +125,32 @@ Scene::~Scene() = default;
 void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
     y_axes_invert_ = y_axes_invert;
 
+    //Update projection matrix
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(proj_view), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    //Grid
     shaders_->color.use();
     shaders_->color.set_mat4("model", attr_->grid_model);
     shaders_->color.set_vec3("color", opt_.grid_color);
     render_grid();
 
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
-    //shaders_->textured.use();
-    //auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, -1.0f});
-    //model = glm::translate(model, {1.0f, 1.0f, 0.0f});
-    //shaders_->textured.set_mat4("model", model);
-    //shaders_->textured.set_vec2("tex_scale", {32, 32});
-    //shaders_->textured.set_vec3("color", glm::vec3(0.6));
-    //glBindVertexArray(attr_->rect_vao);
-    //glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    //Main grass texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
+    shaders_->textured.use();
+    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 0.0f});
+    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    shaders_->textured.set_mat4("model", model);
+    shaders_->textured.set_vec2("tex_scale", glm::vec2(opt_.grid_cells_count));
+    glBindVertexArray(attr_->rect_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+    //AreaDesc
+    render_terrain();
+
+    //Frame
     if (!frames_.empty()) {
         const Frame *frame = frames_[cur_frame_idx_].get();
         render_frame(*frame);
@@ -144,6 +160,10 @@ void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
     //Very careful with that call from other thread
     frames_.emplace_back(std::move(frame));
+}
+
+void Scene::add_area_description(pod::AreaDesc area) {
+    terrains_.emplace_back(area);
 }
 
 void Scene::show_detailed_info(const glm::vec2 &mouse) const {
@@ -157,14 +177,39 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
             ImGui::BeginTooltip();
             ImGui::Text(
                 "HP: %d / %d"
-                //"\nCooldown: %d"
+                "\nCourse: %0.2f"
                 "\nPosition: %0.3lf, %0.3lf",
                 unit.hp, unit.max_hp,
-                //0,
+                glm::degrees(unit.course),
                 unit.center.x, unit.center.y
             );
             ImGui::EndTooltip();
         }
+    }
+}
+
+void Scene::render_terrain() {
+    if (terrains_.empty()) {
+        return;
+    }
+
+    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
+    shaders_->textured.use();
+    shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0f, y_axes_invert_));
+    glBindVertexArray(attr_->rect_vao);
+    for (const auto &tm : terrains_) {
+        float z = 0.1f;
+        if (tm.type == Frame::TerrainMod::rain || tm.type == Frame::TerrainMod::cloud) {
+            z = 0.2f;
+        }
+
+        auto model = glm::translate(glm::mat4(1.0), {cell_dim.x * tm.x, cell_dim.y * tm.y, z});
+        model = glm::scale(model, glm::vec3(cell_dim * 0.5f, 0.0f));
+        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->textured.set_mat4("model", model);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, terrain2tex_[tm.type]);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 }
 
@@ -218,19 +263,19 @@ void Scene::render_grid() {
         for (float shift : coord_line) {
             grid.push_back(shift);
             grid.push_back(0.0);
-            grid.push_back(0.0);
+            grid.push_back(0.9);
 
             grid.push_back(shift);
             grid.push_back(1.0);
-            grid.push_back(0.0);
+            grid.push_back(0.9);
 
             grid.push_back(0);
             grid.push_back(shift);
-            grid.push_back(0.0);
+            grid.push_back(0.9);
 
             grid.push_back(1.0);
             grid.push_back(shift);
-            grid.push_back(0.0);
+            grid.push_back(0.9);
         }
         attr_->grid_vertex_count = static_cast<GLsizei>(grid.size());
 
@@ -247,7 +292,7 @@ void Scene::render_grid() {
 }
 
 void Scene::render_circle(const pod::Circle &circle) {
-    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
+    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 1.0f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
     shaders_->circle.set_float("radius2", circle.radius * circle.radius);
@@ -260,7 +305,7 @@ void Scene::render_circle(const pod::Circle &circle) {
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 0.1f});
+    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 1.0f});
     model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 0.0f});
     shaders_->color.set_mat4("model", model);
     shaders_->color.set_vec3("color", rect.color);
@@ -297,7 +342,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     shaders_->circle.set_float("radius2", unit.radius * unit.radius);
     shaders_->circle.set_vec3("color", unit.color);
 
-    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
+    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 1.0f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     if (unit.utype != Frame::UnitType::undefined) {
         shaders_->circle.set_int("textured", 1);

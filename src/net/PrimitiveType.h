@@ -13,7 +13,8 @@
     X(rectangle) \
     X(line) \
     X(message) \
-    X(unit)
+    X(unit) \
+    X(area) \
 
 enum class PrimitiveType {
 #define X(type) type,

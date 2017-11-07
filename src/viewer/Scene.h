@@ -42,6 +42,10 @@ public:
     ///Called from network listener when next frame is ready
     void add_frame(std::unique_ptr<Frame> &&frame);
 
+    ///Setup terrain properties. By default plain grass in every cell
+    ///Not located in frame, because we need to specify terrain properties only once per game
+    void add_area_description(pod::AreaDesc area);
+
     ///Show detailed info in tooltip if mouse hover unit
     void show_detailed_info(const glm::vec2 &mouse) const;
 
@@ -54,6 +58,7 @@ private:
         bool show_detailed_info_on_hover = true;
     };
 
+    void render_terrain();
     void render_frame(const Frame &frame);
     void render_grid();
     void render_circle(const pod::Circle &circle);
@@ -74,7 +79,10 @@ private:
     int cur_frame_idx_ = 0;
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
+    std::map<Frame::TerrainMod, GLuint> terrain2tex_;
 
     ///From camera, to properly draw hp bars above units
     int y_axes_invert_;
+
+    std::vector<pod::AreaDesc> terrains_;
 };

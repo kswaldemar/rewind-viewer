@@ -135,6 +135,8 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glfwGetFramebufferSize(window, &width, &height);
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LOG_INFO("Start render loop")
     while (!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -145,6 +147,8 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         if (ui.close_requested()) {
             net.stop();
             LOG_INFO("Exit from application");
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(100ms);
             glfwSetWindowShouldClose(window, true);
         }
 
