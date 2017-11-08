@@ -24,7 +24,7 @@
  */
 
 public class RewindClient {
-  public static let instance = RewindClient(host: "127.0.0.1", port: 7000)!
+  public static let instance = RewindClient(host: "127.0.0.1", port: 9111)!
   
   public enum Color: UInt32 {
     case red   = 0xFF0000

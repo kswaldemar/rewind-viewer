@@ -8,7 +8,7 @@ class RewindClient():
         self.socket.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, True)
         if host is None:
             host = "127.0.0.1"
-            port = 7000
+            port = 9111
         self.socket.connect((host, port))
         
     def close(self):

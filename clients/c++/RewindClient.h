@@ -41,7 +41,7 @@ public:
     ///Singleton
     static RewindClient& instance() {
         static std::string HOST = "127.0.0.1";
-        static uint16_t PORT = 7000;
+        static uint16_t PORT = 9111;
         static RewindClient inst(HOST, PORT);
         return inst;
     }
