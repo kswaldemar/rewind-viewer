@@ -76,11 +76,11 @@ Scene::Scene(ResourceManager *res)
     terrain2tex_[Frame::AreaType::forest] = mgr_->load_texture("resources/textures/forest.png",
                                                                  true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
     terrain2tex_[Frame::AreaType::swamp] = mgr_->load_texture("resources/textures/swamp.png",
-                                                                true, GL_REPEAT, GL_REPEAT);
+                                                                true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
     terrain2tex_[Frame::AreaType::cloud] = mgr_->load_texture("resources/textures/clouds.png",
-                                                                true, GL_REPEAT, GL_REPEAT);
+                                                                true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
     terrain2tex_[Frame::AreaType::rain] = mgr_->load_texture("resources/textures/rain.png",
-                                                               true, GL_REPEAT, GL_REPEAT);
+                                                               true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -143,10 +143,13 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //Grid
-    shaders_->color.use();
-    shaders_->color.set_mat4("model", attr_->grid_model);
-    shaders_->color.set_vec3("color", opt_.grid_color);
-    render_grid();
+    if (opt_.draw_grid) {
+        //TODO: Render garbage lines if disabled by default
+        shaders_->color.use();
+        shaders_->color.set_mat4("model", attr_->grid_model);
+        shaders_->color.set_vec3("color", opt_.grid_color);
+        render_grid();
+    }
 
     //Main grass texture
     glActiveTexture(GL_TEXTURE0);
@@ -179,6 +182,7 @@ void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
 }
 
 void Scene::add_area_description(pod::AreaDesc area) {
+    std::lock_guard<std::mutex> f(terrain_mutex_);
     terrains_.emplace_back(area);
 }
 
@@ -205,6 +209,7 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
 }
 
 void Scene::render_terrain() {
+    std::lock_guard<std::mutex> f(terrain_mutex_);
     if (terrains_.empty()) {
         return;
     }
@@ -257,13 +262,6 @@ void Scene::render_frame(const Frame &frame) {
     }
     glEnable(GL_DEPTH_TEST);
     glLineWidth(1);
-
-#ifndef NDEBUG
-    ImGui::LabelText("Circles", "%zu", frame.circles.size());
-    ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
-    ImGui::LabelText("Lines", "%zu", frame.lines.size());
-    ImGui::LabelText("Units", "%zu", frame.units.size());
-#endif
 }
 
 void Scene::render_grid() {
@@ -303,10 +301,11 @@ void Scene::render_grid() {
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(0);
+        glBindVertexArray(0);
     }
-
     glBindVertexArray(attr_->grid_vao);
     glDrawArrays(GL_LINES, 0, attr_->grid_vertex_count);
+    //glBindVertexArray(0);
 }
 
 void Scene::render_circle(const pod::Circle &circle) {

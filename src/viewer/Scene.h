@@ -57,6 +57,7 @@ private:
         glm::vec3 grid_color = {0.321f, 0.336f, 0.392f};
         bool show_full_hp_bars = false;
         bool show_detailed_info_on_hover = true;
+        bool draw_grid = true;
     };
 
     void render_terrain();
@@ -88,5 +89,6 @@ private:
     ///From camera, to properly draw hp bars above units
     int y_axes_invert_;
 
+    std::mutex terrain_mutex_;
     std::vector<pod::AreaDesc> terrains_;
 };

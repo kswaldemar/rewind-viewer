@@ -22,7 +22,7 @@ void prepare_and_run_game_loop(GLFWwindow *window);
 
 int main(int argc, char **argv) {
     loguru::init(argc, argv);
-    loguru::add_file("rewindviewer-debug.log", loguru::Truncate, loguru::Verbosity_MAX);
+    loguru::add_file("rewindviewer-debug.log", loguru::Truncate, 7);
     loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_INFO);
 
     // Init GLFW
@@ -155,7 +155,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         glBindVertexArray(0);
         glUseProgram(0);
 
-        // Render UI
+        //// Render UI
         ui.frame_end();
 
         // Swap buffers
