@@ -60,5 +60,13 @@ class RewindClient():
             'unit_type': unit_type
         })
 
+    def area_description(self, cell_x, cell_y, desc_id):
+        self._send({
+            'type': 'area', 
+            'x':cell_x,
+            'y':cell_y,
+            'area_type': desc_id
+        })
+
     def end_frame(self):
         self._send({'type': 'end'})
