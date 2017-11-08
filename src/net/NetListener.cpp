@@ -98,6 +98,8 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
             frame_ = std::make_unique<Frame>();
         }
 
+        static std::vector<pod::AreaDesc> areas;
+
         switch (type) {
             case PrimitiveType::begin:
                 LOG_DEBUG("NetClient::Begin");
@@ -106,6 +108,15 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 LOG_DEBUG("NetClient::End");
                 if (!stop_) {
                     scene_->add_frame(std::move(frame_));
+                    if (!areas.empty()) {
+                        std::sort(areas.begin(), areas.end(), [](const pod::AreaDesc &lhs, const pod::AreaDesc &rhs) {
+                            return lhs.type < rhs.type;
+                        });
+                        for (auto area : areas) {
+                            scene_->add_area_description(area);
+                        }
+                        areas.clear();
+                    }
                 }
                 frame_ = nullptr;
                 break;
@@ -133,7 +144,7 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 break;
             case PrimitiveType::area:
                 LOG_DEBUG("NetClient::Area");
-                scene_->add_area_description(j);
+                areas.emplace_back(j);
                 break;
         }
     } catch (const std::exception &e) {
