@@ -66,8 +66,10 @@ Scene::Scene(ResourceManager *res)
 
     //Unit textures
     LOG_INFO("Load unit textures")
-    unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
     unit2tex_[Frame::UnitType::tank] = mgr_->load_texture("resources/textures/tank.png", false);
+    unit2tex_[Frame::UnitType::ifv] = mgr_->load_texture("resources/textures/ifv.png", false);
+    unit2tex_[Frame::UnitType::arrv] = mgr_->load_texture("resources/textures/arrv.png", false);
+    unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
     unit2tex_[Frame::UnitType::fighter] = mgr_->load_texture("resources/textures/fighter.png", false);
 
     //AreaDesc textures
@@ -169,6 +171,10 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
     std::lock_guard<std::mutex> f(frames_mutex_);
+    //Sort units for proper draw order
+    std::sort(frame->units.begin(), frame->units.end(), [](const pod::Unit &lhs, const pod::Unit &rhs) {
+        return lhs.utype < rhs.utype;
+    });
     frames_.emplace_back(std::move(frame));
 }
 
@@ -245,9 +251,11 @@ void Scene::render_frame(const Frame &frame) {
     }
 
     glLineWidth(2); //Bold outlining
+    glDisable(GL_DEPTH_TEST);
     for (const auto &unit : frame.units) {
         render_unit(unit);
     }
+    glEnable(GL_DEPTH_TEST);
     glLineWidth(1);
 
 #ifndef NDEBUG

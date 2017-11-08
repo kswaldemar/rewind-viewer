@@ -24,9 +24,11 @@ struct Unit;
 struct Frame {
     enum class UnitType {
         undefined = 0,
-        helicopter = 1,
-        tank = 2,
-        fighter = 3,
+        tank = 1,
+        ifv = 2,
+        arrv = 3,
+        helicopter = 4,
+        fighter = 5,
     };
 
     enum class AreaType {

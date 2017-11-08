@@ -121,7 +121,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
 
     //Start network listening
     LOG_INFO("Start networking thread")
-    NetListener net(&scene, "127.0.0.1", 7000);
+    NetListener net(&scene, "127.0.0.1", 9111);
     std::thread network_thread([&net] {
         try {
             net.run();
@@ -145,10 +145,6 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         cam.update();
 
         if (ui.close_requested()) {
-            net.stop();
-            LOG_INFO("Exit from application");
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(100ms);
             glfwSetWindowShouldClose(window, true);
         }
 
@@ -166,4 +162,9 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    net.stop();
+    LOG_INFO("Exit from application");
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(100ms);
 }
