@@ -76,12 +76,15 @@ public:
     ///enemy - 3 state variable: 1 - for enemy; -1 - for friend; 0 - neutral.
     ///course - parameter needed only to properly rotate textures (it unused by untextured units)
     ///unit_type - define used texture, value 0 means 'no texture'. For supported textures see enum UnitType in Frame.h
-    void living_unit(double x, double y, double r, int hp, int max_hp,
+    void living_unit(double x, double y, double r,
+                     int hp, int max_hp,
+                     int cooldown, int max_cooldown,
+                     bool selected,
                      int enemy, double course = 0, int utype = 0) {
         static const char *fmt =
             R"({"type": "unit", "x": %lf, "y": %lf, "r": %lf, "hp": %d, "max_hp": %d, "enemy": %d, "unit_type":%d, )"
-            R"("course": %.3lf})";
-        send(format(fmt, x, y, r, hp, max_hp, enemy, utype, course));
+            R"("rem_cooldown": %d, "cooldown": %d, "selected":%d, "course": %.3lf})";
+        send(format(fmt, x, y, r, hp, max_hp, enemy, utype, cooldown, max_cooldown, selected, course));
     }
 
     ///Weather or terrain description in specific cell
