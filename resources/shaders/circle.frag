@@ -12,8 +12,6 @@ uniform float radius2;
 uniform sampler2D tex_smp;
 uniform bool textured; // Whenever use texture or not
 
-const vec3 selected_color = vec3(0.4, 0.8, 0.0);
-
 const float circle_alpha = 0.6; //outer unit circle alpha
 const float texture_coloring = 0.3; //how much add color to texture, 0 - use texture as is
 

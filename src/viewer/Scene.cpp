@@ -16,6 +16,12 @@ bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
     return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
 }
 
+const std::map<int, const char *> side2str = {
+    {-1, "Ally"},
+    {0,  "Neutral"},
+    {1,  "Enemy"},
+};
+
 } // anonymous namespace
 
 struct Scene::render_attrs_t {
@@ -66,21 +72,21 @@ Scene::Scene(ResourceManager *res)
 
     //Unit textures
     LOG_INFO("Load unit textures")
-    unit2tex_[Frame::UnitType::tank] = mgr_->load_texture("resources/textures/tank.png", false);
-    unit2tex_[Frame::UnitType::ifv] = mgr_->load_texture("resources/textures/ifv.png", false);
-    unit2tex_[Frame::UnitType::arrv] = mgr_->load_texture("resources/textures/arrv.png", false);
-    unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
-    unit2tex_[Frame::UnitType::fighter] = mgr_->load_texture("resources/textures/fighter.png", false);
+    unit2tex_[Frame::UnitType::TANK] = mgr_->load_texture("resources/textures/tank.png", false);
+    unit2tex_[Frame::UnitType::IFV] = mgr_->load_texture("resources/textures/ifv.png", false);
+    unit2tex_[Frame::UnitType::ARRV] = mgr_->load_texture("resources/textures/arrv.png", false);
+    unit2tex_[Frame::UnitType::HELICOPTER] = mgr_->load_texture("resources/textures/helicopter.png", false);
+    unit2tex_[Frame::UnitType::FIGHTER] = mgr_->load_texture("resources/textures/fighter.png", false);
 
     //AreaDesc textures
-    terrain2tex_[Frame::AreaType::forest] = mgr_->load_texture("resources/textures/forest.png",
-                                                                 true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::AreaType::swamp] = mgr_->load_texture("resources/textures/swamp.png",
-                                                                true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::AreaType::cloud] = mgr_->load_texture("resources/textures/clouds.png",
-                                                                true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::AreaType::rain] = mgr_->load_texture("resources/textures/rain.png",
+    terrain2tex_[Frame::AreaType::FOREST] = mgr_->load_texture("resources/textures/forest.png",
                                                                true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::AreaType::SWAMP] = mgr_->load_texture("resources/textures/swamp.png",
+                                                              true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::AreaType::CLOUD] = mgr_->load_texture("resources/textures/clouds.png",
+                                                              true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::AreaType::RAIN] = mgr_->load_texture("resources/textures/rain.png",
+                                                             true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -144,7 +150,7 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
 
     //Grid
     if (opt_.draw_grid) {
-        //TODO: Render garbage lines if disabled by default
+        //TODO: Rendering garbage lines if disabled by default
         shaders_->color.use();
         shaders_->color.set_mat4("model", attr_->grid_model);
         shaders_->color.set_vec3("color", opt_.grid_color);
@@ -196,12 +202,17 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
         if (hittest(mouse, unit)) {
             ImGui::BeginTooltip();
             ImGui::Text(
-                "HP: %d / %d"
-                "\nCourse: %0.2f"
-                "\nPosition: %0.3lf, %0.3lf",
+                "%s %s:"
+                    "\nHP: %d / %d"
+                    "\nPosition: %0.3lf, %0.3lf"
+                    "\nCooldown: %d (%d)"
+                    "\nSelected: %s",
+                side2str.at(unit.enemy),
+                Frame::unit_name(unit.utype),
                 unit.hp, unit.max_hp,
-                glm::degrees(unit.course),
-                unit.center.x, unit.center.y
+                unit.center.x, unit.center.y,
+                unit.rem_cooldown, unit.cooldown,
+                unit.selected ? "yes" : "no"
             );
             ImGui::EndTooltip();
         }
@@ -220,7 +231,7 @@ void Scene::render_terrain() {
     glBindVertexArray(attr_->rect_vao);
     for (const auto &tm : terrains_) {
         float z = -0.1f;
-        if (tm.type == Frame::AreaType::rain || tm.type == Frame::AreaType::cloud) {
+        if (tm.type == Frame::AreaType::RAIN || tm.type == Frame::AreaType::CLOUD) {
             z += 0.05f;
         }
 
@@ -357,11 +368,19 @@ void Scene::render_unit(const pod::Unit &unit) {
     //Circle
     shaders_->circle.use();
     shaders_->circle.set_float("radius2", unit.radius * unit.radius);
-    shaders_->circle.set_vec3("color", unit.color);
+    if (unit.selected) {
+        shaders_->circle.set_vec3("color", opt_.selected_unit_color);
+    } else if (unit.enemy == 1) {
+        shaders_->circle.set_vec3("color", opt_.enemy_unit_color);
+    } else if (unit.enemy == -1) {
+        shaders_->circle.set_vec3("color", opt_.ally_unit_color);
+    } else {
+        shaders_->circle.set_vec3("color", opt_.neutral_unit_color);
+    }
 
     auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
-    if (unit.utype != Frame::UnitType::undefined) {
+    if (unit.utype != Frame::UnitType::UNKNOWN) {
         shaders_->circle.set_int("textured", 1);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, unit2tex_[unit.utype]);
@@ -377,12 +396,15 @@ void Scene::render_unit(const pod::Unit &unit) {
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+    const glm::vec3 bar_shift{vcenter.x - unit.radius,
+                              vcenter.y + unit.radius * 1.15 * y_axes_invert_,
+                              vcenter.z + 0.01};
+    const float hp_bar_height = std::max(unit.radius * 0.10f, 0.1f);
     if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
         //HP bar
         float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
-        glm::vec3 bar_shift{vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1 * y_axes_invert_, vcenter.z + 0.01};
         model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 0.2), 0.0f});
+        model = glm::scale(model, {hp_length, hp_bar_height, 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
         glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
@@ -394,12 +416,22 @@ void Scene::render_unit(const pod::Unit &unit) {
 
         //Hp bar outlining
         model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 0.2), 0.0f});
+        model = glm::scale(model, {unit.radius, hp_bar_height, 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         shaders_->color.set_mat4("model", model);
         shaders_->color.set_vec3("color", glm::vec3(0.0f));
         const uint8_t indicies[] = {0, 1, 3, 2};
         glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
+    }
+    if (opt_.show_cooldown_bars && unit.cooldown > 0) {
+        model = glm::translate(glm::mat4(1.0f),
+                               {bar_shift.x, bar_shift.y - hp_bar_height, bar_shift.z});
+        const double cooldown_fraction = cg::lerp(unit.rem_cooldown, 0, unit.cooldown, 0, unit.radius);
+        model = glm::scale(model, {cooldown_fraction, hp_bar_height * 0.5f, 0.0f});
+        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->color.set_mat4("model", model);
+        shaders_->color.set_vec3("color", glm::vec3(0.5));
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 }
 

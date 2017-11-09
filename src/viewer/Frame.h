@@ -23,21 +23,33 @@ struct Unit;
  */
 struct Frame {
     enum class UnitType {
-        undefined = 0,
-        tank = 1,
-        ifv = 2,
-        arrv = 3,
-        helicopter = 4,
-        fighter = 5,
+        UNKNOWN = 0,
+        TANK = 1,
+        IFV = 2,
+        ARRV = 3,
+        HELICOPTER = 4,
+        FIGHTER = 5,
     };
 
     enum class AreaType {
-        unknown = 0,
-        forest,
-        swamp,
-        rain,
-        cloud,
+        UNKNOWN = 0,
+        FOREST,
+        SWAMP,
+        RAIN,
+        CLOUD,
     };
+
+    static const char *unit_name(UnitType type) {
+        static const std::map<UnitType, const char *> type2name{
+            {UnitType::UNKNOWN,    "Unknown"},
+            {UnitType::TANK,       "Tank"},
+            {UnitType::IFV,        "Ifv"},
+            {UnitType::ARRV,       "Arrv"},
+            {UnitType::HELICOPTER, "Helicopter"},
+            {UnitType::FIGHTER,    "Fighter"},
+        };
+        return type2name.at(type);
+    }
 
     std::vector<pod::Circle> circles;
     std::vector<pod::Rectangle> rectangles;
@@ -72,11 +84,17 @@ struct Rectangle : Colored {
     float h;
 };
 
-struct Unit : Circle {
+struct Unit {
+    glm::vec2 center;
+    float radius;
     int hp;
     int max_hp;
-    Frame::UnitType utype = Frame::UnitType::undefined;
-    float course = 0;
+    int rem_cooldown; //remaining cooldown ticks
+    int cooldown; //maximum cooldown
+    Frame::UnitType utype;
+    float course;
+    bool selected;
+    int enemy; //-1 for ally, 0 for neutral, 1 for enemy
 };
 
 struct AreaDesc {
@@ -90,6 +108,17 @@ struct AreaDesc {
 /*
  * Json deserialisation
  */
+///Helper function
+template<typename T>
+inline T value_or_default(const nlohmann::json &j, const std::string &name, T def_val) {
+    const auto it = j.find(name);
+    if (it != j.end()) {
+        return it->get<T>();
+    }
+    return def_val;
+}
+
+
 inline void from_json(const nlohmann::json &j, Colored &p) {
     auto color = j["color"].get<uint32_t>();
     p.color.r = ((color & 0xFF0000) >> 16) / 256.0f;
@@ -133,30 +162,23 @@ inline void from_json(const nlohmann::json &j, Unit &p) {
     p.center.x = j["x"].get<float>();
     p.center.y = j["y"].get<float>();
 
-    static const glm::vec3 our_color{0.0f, 0.0f, 1.0f};
-    static const glm::vec3 enemy_color{1.0f, 0.0f, 0.0f};
-    static const glm::vec3 neutral_color{0.5f, 0.5f, 0.0f};
-    int is_enemy = j["enemy"].get<int>();
-    if (is_enemy == 1) {
-        p.color = enemy_color;
-    } else if (is_enemy == -1) {
-        p.color = our_color;
-    } else {
-        p.color = neutral_color;
-    }
+    p.enemy = j["enemy"].get<int>();
     p.hp = j["hp"].get<int>();
     p.max_hp = j["max_hp"].get<int>();
 
     //Optional values
-    const auto it = j.find("unit_type");
+    p.utype = static_cast<Frame::UnitType>(
+        value_or_default(j, "unit_type", static_cast<int>(Frame::UnitType::UNKNOWN))
+    );
+    p.course = value_or_default(j, "course", 0.0f);
+    p.selected = value_or_default(j, "selected", false);
+    auto it = j.find("rem_cooldown");
     if (it != j.end()) {
-        p.utype = static_cast<Frame::UnitType>(it->get<int>());
-    }
-
-    //Course, needed to rotate texture, angle in radians [0, 2 * pi) counter clockwise
-    const auto it2 = j.find("course");
-    if (it2 != j.end()) {
-        p.course = it2->get<float>();
+        p.rem_cooldown = it->get<int>();
+        p.cooldown = j["cooldown"].get<int>();
+    } else {
+        p.rem_cooldown = 0;
+        p.cooldown = 0;
     }
 }
 
