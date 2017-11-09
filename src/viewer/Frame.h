@@ -171,7 +171,7 @@ inline void from_json(const nlohmann::json &j, Unit &p) {
         value_or_default(j, "unit_type", static_cast<int>(Frame::UnitType::UNKNOWN))
     );
     p.course = value_or_default(j, "course", 0.0f);
-    p.selected = value_or_default(j, "selected", false);
+    p.selected = static_cast<bool>(value_or_default(j, "selected", 0));
     auto it = j.find("rem_cooldown");
     if (it != j.end()) {
         p.rem_cooldown = it->get<int>();

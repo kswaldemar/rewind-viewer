@@ -63,7 +63,7 @@ private:
         const glm::vec3 ally_unit_color{0.0f, 0.0f, 1.0f};
         const glm::vec3 enemy_unit_color{1.0f, 0.0f, 0.0f};
         const glm::vec3 neutral_unit_color{0.5f, 0.5f, 0.5f};
-        const glm::vec3 selected_unit_color{0.5f, 1.0f, 0.0f};
+        const glm::vec3 selected_unit_color{0.5f, 0.5f, 0.0f};
     };
 
     void render_terrain();

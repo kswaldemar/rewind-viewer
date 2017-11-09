@@ -182,6 +182,9 @@ void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
     std::lock_guard<std::mutex> f(frames_mutex_);
     //Sort units for proper draw order
     std::sort(frame->units.begin(), frame->units.end(), [](const pod::Unit &lhs, const pod::Unit &rhs) {
+        if (lhs.utype == rhs.utype) {
+            return lhs.enemy < rhs.enemy;
+        }
         return lhs.utype < rhs.utype;
     });
     frames_.emplace_back(std::move(frame));
@@ -267,11 +270,11 @@ void Scene::render_frame(const Frame &frame) {
     }
 
     glLineWidth(2); //Bold outlining
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
     for (const auto &unit : frame.units) {
         render_unit(unit);
     }
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
     glLineWidth(1);
 }
 
@@ -378,7 +381,21 @@ void Scene::render_unit(const pod::Unit &unit) {
         shaders_->circle.set_vec3("color", opt_.neutral_unit_color);
     }
 
-    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
+    const float base_z_value = 0.1f;
+    const float aerial_z_value = 0.11f;
+    const float hp_bar_z_value = 0.12f;
+    const float cd_bar_z_value = 0.13f;
+
+    float z_value = base_z_value;
+    if (unit.utype == Frame::UnitType::FIGHTER || unit.utype == Frame::UnitType::HELICOPTER) {
+        z_value = aerial_z_value;
+    }
+    if (unit.enemy == 1) {
+        //Enemies above us
+        z_value += 0.005;
+    }
+
+    auto vcenter = glm::vec3{unit.center.x, unit.center.y, z_value};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     if (unit.utype != Frame::UnitType::UNKNOWN) {
         shaders_->circle.set_int("textured", 1);
@@ -398,7 +415,7 @@ void Scene::render_unit(const pod::Unit &unit) {
 
     const glm::vec3 bar_shift{vcenter.x - unit.radius,
                               vcenter.y + unit.radius * 1.15 * y_axes_invert_,
-                              vcenter.z + 0.01};
+                              hp_bar_z_value};
     const float hp_bar_height = std::max(unit.radius * 0.10f, 0.1f);
     if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
         //HP bar
@@ -423,12 +440,13 @@ void Scene::render_unit(const pod::Unit &unit) {
         const uint8_t indicies[] = {0, 1, 3, 2};
         glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
     }
-    if (opt_.show_cooldown_bars && unit.cooldown > 0) {
+    if (opt_.show_cooldown_bars && unit.rem_cooldown > 0) {
         model = glm::translate(glm::mat4(1.0f),
-                               {bar_shift.x, bar_shift.y - hp_bar_height, bar_shift.z});
-        const double cooldown_fraction = cg::lerp(unit.rem_cooldown, 0, unit.cooldown, 0, unit.radius);
+                               {bar_shift.x, bar_shift.y - hp_bar_height, cd_bar_z_value});
+        const double cooldown_fraction = cg::lerp(unit.rem_cooldown, unit.cooldown, 0, 0, unit.radius);
         model = glm::scale(model, {cooldown_fraction, hp_bar_height * 0.5f, 0.0f});
         model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->color.use();
         shaders_->color.set_mat4("model", model);
         shaders_->color.set_vec3("color", glm::vec3(0.5));
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
