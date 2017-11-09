@@ -19,8 +19,9 @@ Obvious drawbacks:
 send all data (like buildings, units etc.) and you can draw only data visible by your strategy
  - In theory high memory usage, because it need to store all drawing primitives for rewinding support
 
-**Note**: Currently viewer reached 1.0 version and still in active development. 
-You may find updated files and more primitives support (maybe potential fields, etc.) during championship.
+:information_source: Currently viewer reached 1.2 version and developments is on hold.
+There definetely will be building support after round 1 and fog of war support right after round 2.
+Minor bugfixes and optimization may come during championship, but not so much.
 
 ## Build
 
