@@ -41,14 +41,14 @@ public:
     ///Singleton
     static RewindClient& instance() {
         static std::string HOST = "127.0.0.1";
-        static uint16_t PORT = 7000;
+        static uint16_t PORT = 9111;
         static RewindClient inst(HOST, PORT);
         return inst;
     }
 
     ///Should be send on end of move function
     ///all turn primitives can be rendered after that point
-    void endFrame() {
+    void end_frame() {
         send(R"({"type":"end"})");
     }
 
@@ -76,13 +76,25 @@ public:
     ///enemy - 3 state variable: 1 - for enemy; -1 - for friend; 0 - neutral.
     ///course - parameter needed only to properly rotate textures (it unused by untextured units)
     ///unit_type - define used texture, value 0 means 'no texture'. For supported textures see enum UnitType in Frame.h
-    void living_unit(double x, double y, double r, int hp, int max_hp,
+    void living_unit(double x, double y, double r,
+                     int hp, int max_hp,
+                     int cooldown, int max_cooldown,
+                     bool selected,
                      int enemy, double course = 0, int utype = 0) {
         static const char *fmt =
             R"({"type": "unit", "x": %lf, "y": %lf, "r": %lf, "hp": %d, "max_hp": %d, "enemy": %d, "unit_type":%d, )"
-            R"("course": %.3lf})";
-        send(format(fmt, x, y, r, hp, max_hp, enemy, utype, course));
+            R"("rem_cooldown": %d, "cooldown": %d, "selected":%d, "course": %.3lf})";
+        send(format(fmt, x, y, r, hp, max_hp, enemy, utype, cooldown, max_cooldown, selected, course));
     }
+
+    ///Weather or terrain description in specific cell
+    ///See Frame.h AreaType for available terrain and weather types
+    void area_description(int cell_x, int cell_y, int area_type) {
+        static const char *fmt =
+            R"({"type": "area", "x": %d, "y": %d, "area_type": %d})";
+        send(format(fmt, cell_x, cell_y, area_type));
+    }
+
 
     ///Pass arbitrary user message to be stored in frame
     ///Message content displayed in separate window inside viewer

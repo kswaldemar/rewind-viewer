@@ -54,5 +54,5 @@ private:
 
     const uint16_t fast_skip_speed_ = 20; //In ticks per frame
 
-    glm::vec3 clear_color_ = {0.447, 0.565, 0.604};
+    glm::vec3 clear_color_ = {0.673, 0.764, 0.794};
 };

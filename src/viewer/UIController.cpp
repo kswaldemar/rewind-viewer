@@ -93,6 +93,15 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     //Checking hotkeys
     check_hotkeys();
 
+    //Information for debug purpose
+    if (developer_mode_ && scene->active_frame_) {
+        const auto &frame = *scene->active_frame_;
+        ImGui::LabelText("Circles", "%zu", frame.circles.size());
+        ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
+        ImGui::LabelText("Lines", "%zu", frame.lines.size());
+        ImGui::LabelText("Units", "%zu", frame.units.size());
+    }
+
     //Hittest for detailed unit info
     if (!ImGui::GetIO().WantCaptureMouse) {
         scene->show_detailed_info(camera_->screen2world(ImGui::GetIO().MousePos));
@@ -207,6 +216,7 @@ void UIController::info_widget(Scene *scene) {
             ImGui::Checkbox("Show full life bars", &scene->opt_.show_full_hp_bars);
             ImGui::Checkbox("Show detailed unit info on hover", &scene->opt_.show_detailed_info_on_hover);
             ImGui::Checkbox("World origin on top left", &camera_->opt_.origin_on_top_left);
+            ImGui::Checkbox("Draw grid", &scene->opt_.draw_grid);
         }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {

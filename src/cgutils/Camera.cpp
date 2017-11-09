@@ -89,5 +89,5 @@ void Camera::update_matrix() {
 
     pr_view_ = glm::ortho(pos_.x - x_half_view, pos_.x + x_half_view,
                           pos_.y - y_half_view * y_axes_invert(), pos_.y + y_half_view * y_axes_invert(),
-                          -10.0f, 10.0f);
+                          -1.0f, 1.0f);
 }

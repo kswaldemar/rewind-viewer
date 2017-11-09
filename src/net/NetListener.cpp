@@ -49,7 +49,7 @@ void NetListener::run() {
         if (nbytes > 0) {
             auto data = client_->GetData();
             data[nbytes] = '\0';
-            LOG_V2("NetClient:: Message %d bytes, '%s'", nbytes, data);
+            LOG_V9("NetClient:: Message %d bytes, '%s'", nbytes, data);
             //Strategy can send several messages in one block
             const uint8_t *beg = data;
             const uint8_t *block_end = data + nbytes;
@@ -98,38 +98,53 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
             frame_ = std::make_unique<Frame>();
         }
 
+        static std::vector<pod::AreaDesc> areas;
+
         switch (type) {
             case PrimitiveType::begin:
-                LOG_DEBUG("NetClient::Begin");
+                LOG_V8("NetClient::Begin");
                 break;
             case PrimitiveType::end:
-                LOG_DEBUG("NetClient::End");
+                LOG_V8("NetClient::End");
                 if (!stop_) {
                     scene_->add_frame(std::move(frame_));
+                    if (!areas.empty()) {
+                        std::sort(areas.begin(), areas.end(), [](const pod::AreaDesc &lhs, const pod::AreaDesc &rhs) {
+                            return lhs.type < rhs.type;
+                        });
+                        for (auto area : areas) {
+                            scene_->add_area_description(area);
+                        }
+                        areas.clear();
+                    }
                 }
                 frame_ = nullptr;
                 break;
             case PrimitiveType::circle:
-                LOG_DEBUG("NetClient::Circle detected");
+                LOG_V8("NetClient::Circle detected");
                 frame_->circles.emplace_back(j);
                 break;
             case PrimitiveType::rectangle:
-                LOG_DEBUG("NetClient::Rectangle detected");
+                LOG_V8("NetClient::Rectangle detected");
                 frame_->rectangles.emplace_back(j);
                 break;
             case PrimitiveType::line:
-                LOG_DEBUG("NetClient::Line detected");
+                LOG_V8("NetClient::Line detected");
                 frame_->lines.emplace_back(j);
                 break;
             case PrimitiveType::message:
-                LOG_DEBUG("NetClient::Message");
+                LOG_V8("NetClient::Message");
                 frame_->user_message = j["message"];
                 break;
             case PrimitiveType::types_count:
                 break;
             case PrimitiveType::unit:
-                LOG_DEBUG("NetClient::Unit");
+                LOG_V8("NetClient::Unit");
                 frame_->units.emplace_back(j);
+                break;
+            case PrimitiveType::area:
+                LOG_V8("NetClient::Area");
+                areas.emplace_back(j);
                 break;
         }
     } catch (const std::exception &e) {

@@ -12,6 +12,7 @@
 #include <glm/glm.hpp>
 
 #include <memory>
+#include <mutex>
 
 /**
  * Represent whole game state.
@@ -27,7 +28,7 @@ public:
     explicit Scene(ResourceManager *res);
     ~Scene();
 
-    void render(const glm::mat4 &proj_view, int y_axes_invert);
+    void update_and_render(const glm::mat4 &proj_view, int y_axes_invert);
 
     ///Set frame to draw now, index should be in range [0, frames_count)
     void set_frame_index(int idx);
@@ -42,18 +43,30 @@ public:
     ///Called from network listener when next frame is ready
     void add_frame(std::unique_ptr<Frame> &&frame);
 
+    ///Setup terrain properties. By default plain grass in every cell
+    ///Not located in frame, because we need to specify terrain properties only once per game
+    void add_area_description(pod::AreaDesc area);
+
     ///Show detailed info in tooltip if mouse hover unit
     void show_detailed_info(const glm::vec2 &mouse) const;
 
 private:
     struct settings_t {
-        const uint16_t grid_cells_count = 10;
-        const glm::vec2 grid_dim = {4000.0f, 4000.0f};
-        glm::vec3 grid_color = {0.115f, 0.124f, 0.157f};
+        const uint16_t grid_cells_count = 32;
+        const glm::vec2 grid_dim = {1024.0f, 1024.0f};
+        glm::vec3 grid_color = {0.321f, 0.336f, 0.392f};
         bool show_full_hp_bars = false;
+        bool show_cooldown_bars = true;
         bool show_detailed_info_on_hover = true;
+        bool draw_grid = true;
+
+        const glm::vec3 ally_unit_color{0.0f, 0.0f, 1.0f};
+        const glm::vec3 enemy_unit_color{1.0f, 0.0f, 0.0f};
+        const glm::vec3 neutral_unit_color{0.5f, 0.5f, 0.5f};
+        const glm::vec3 selected_unit_color{0.5f, 0.5f, 0.0f};
     };
 
+    void render_terrain();
     void render_frame(const Frame &frame);
     void render_grid();
     void render_circle(const pod::Circle &circle);
@@ -70,11 +83,18 @@ private:
     std::unique_ptr<render_attrs_t> attr_;
     settings_t opt_;
 
+    std::mutex frames_mutex_;
     std::vector<std::unique_ptr<Frame>> frames_;
     int cur_frame_idx_ = 0;
+    int frames_count_ = 0;
+    Frame *active_frame_ = nullptr;
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
+    std::map<Frame::AreaType, GLuint> terrain2tex_;
 
     ///From camera, to properly draw hp bars above units
     int y_axes_invert_;
+
+    std::mutex terrain_mutex_;
+    std::vector<pod::AreaDesc> terrains_;
 };

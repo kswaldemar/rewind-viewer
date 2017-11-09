@@ -2,12 +2,12 @@
 
 #include <cgutils/utils.h>
 #include <cgutils/Shader.h>
+#include <common/logger.h>
 
 #include <imgui.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <common/logger.h>
 
 namespace {
 
@@ -15,6 +15,12 @@ bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
     auto d = wmouse - unit.center;
     return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
 }
+
+const std::map<int, const char *> side2str = {
+    {-1, "Ally"},
+    {0,  "Neutral"},
+    {1,  "Enemy"},
+};
 
 } // anonymous namespace
 
@@ -62,11 +68,25 @@ Scene::Scene(ResourceManager *res)
 
     //Load textures
     LOG_INFO("Load background texture")
-    attr_->grass_tex = mgr_->load_texture("resources/textures/grass_seamless.jpg", false, GL_REPEAT, GL_REPEAT);
+    attr_->grass_tex = mgr_->load_texture("resources/textures/grass.png", false, GL_REPEAT, GL_REPEAT);
 
     //Unit textures
     LOG_INFO("Load unit textures")
-    unit2tex_[Frame::UnitType::helicopter] = mgr_->load_texture("resources/textures/helicopter.png", false);
+    unit2tex_[Frame::UnitType::TANK] = mgr_->load_texture("resources/textures/tank.png", false);
+    unit2tex_[Frame::UnitType::IFV] = mgr_->load_texture("resources/textures/ifv.png", false);
+    unit2tex_[Frame::UnitType::ARRV] = mgr_->load_texture("resources/textures/arrv.png", false);
+    unit2tex_[Frame::UnitType::HELICOPTER] = mgr_->load_texture("resources/textures/helicopter.png", false);
+    unit2tex_[Frame::UnitType::FIGHTER] = mgr_->load_texture("resources/textures/fighter.png", false);
+
+    //AreaDesc textures
+    terrain2tex_[Frame::AreaType::FOREST] = mgr_->load_texture("resources/textures/forest.png",
+                                                               true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::AreaType::SWAMP] = mgr_->load_texture("resources/textures/swamp.png",
+                                                              true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::AreaType::CLOUD] = mgr_->load_texture("resources/textures/clouds.png",
+                                                              true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    terrain2tex_[Frame::AreaType::RAIN] = mgr_->load_texture("resources/textures/rain.png",
+                                                             true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -110,29 +130,48 @@ Scene::Scene(ResourceManager *res)
 
 Scene::~Scene() = default;
 
-void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
+void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
+    //Update world origin position
     y_axes_invert_ = y_axes_invert;
 
+    //Update current frame
+    {
+        std::lock_guard<std::mutex> f(frames_mutex_);
+        frames_count_ = static_cast<int>(frames_.size());
+        if (cur_frame_idx_ >= 0 && cur_frame_idx_ < frames_count_) {
+            active_frame_ = frames_[cur_frame_idx_].get();
+        }
+    }
+
+    //Update projection matrix
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(proj_view), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    shaders_->color.use();
-    shaders_->color.set_mat4("model", attr_->grid_model);
-    shaders_->color.set_vec3("color", opt_.grid_color);
+    //Grid
+    if (opt_.draw_grid) {
+        //TODO: Rendering garbage lines if disabled by default
+        shaders_->color.use();
+        shaders_->color.set_mat4("model", attr_->grid_model);
+        shaders_->color.set_vec3("color", opt_.grid_color);
+        render_grid();
+    }
+
+    //Main grass texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
-    render_grid();
-
     shaders_->textured.use();
-    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, -1.0f});
-    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 1.0f});
+    model = glm::translate(model, {1.0f, 1.0f, -0.2f});
     shaders_->textured.set_mat4("model", model);
-    shaders_->textured.set_vec2("tex_scale", {10, 10});
-    shaders_->textured.set_vec3("color", glm::vec3(0.6));
+    shaders_->textured.set_vec2("tex_scale", glm::vec2(opt_.grid_cells_count));
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+    //AreaDesc
+    render_terrain();
+
+    //Frame
     if (!frames_.empty()) {
         const Frame *frame = frames_[cur_frame_idx_].get();
         render_frame(*frame);
@@ -140,8 +179,20 @@ void Scene::render(const glm::mat4 &proj_view, int y_axes_invert) {
 }
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
-    //Very careful with that call from other thread
+    std::lock_guard<std::mutex> f(frames_mutex_);
+    //Sort units for proper draw order
+    std::sort(frame->units.begin(), frame->units.end(), [](const pod::Unit &lhs, const pod::Unit &rhs) {
+        if (lhs.utype == rhs.utype) {
+            return lhs.enemy < rhs.enemy;
+        }
+        return lhs.utype < rhs.utype;
+    });
     frames_.emplace_back(std::move(frame));
+}
+
+void Scene::add_area_description(pod::AreaDesc area) {
+    std::lock_guard<std::mutex> f(terrain_mutex_);
+    terrains_.emplace_back(area);
 }
 
 void Scene::show_detailed_info(const glm::vec2 &mouse) const {
@@ -154,15 +205,46 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
         if (hittest(mouse, unit)) {
             ImGui::BeginTooltip();
             ImGui::Text(
-                "HP: %d / %d"
-                //"\nCooldown: %d"
-                "\nPosition: %0.3lf, %0.3lf",
+                "%s %s:"
+                    "\nHP: %d / %d"
+                    "\nPosition: %0.3lf, %0.3lf"
+                    "\nCooldown: %d (%d)"
+                    "\nSelected: %s",
+                side2str.at(unit.enemy),
+                Frame::unit_name(unit.utype),
                 unit.hp, unit.max_hp,
-                //0,
-                unit.center.x, unit.center.y
+                unit.center.x, unit.center.y,
+                unit.rem_cooldown, unit.cooldown,
+                unit.selected ? "yes" : "no"
             );
             ImGui::EndTooltip();
         }
+    }
+}
+
+void Scene::render_terrain() {
+    std::lock_guard<std::mutex> f(terrain_mutex_);
+    if (terrains_.empty()) {
+        return;
+    }
+
+    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
+    shaders_->textured.use();
+    shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0f, y_axes_invert_));
+    glBindVertexArray(attr_->rect_vao);
+    for (const auto &tm : terrains_) {
+        float z = -0.1f;
+        if (tm.type == Frame::AreaType::RAIN || tm.type == Frame::AreaType::CLOUD) {
+            z += 0.05f;
+        }
+
+        auto model = glm::translate(glm::mat4(1.0), {cell_dim.x * tm.x, cell_dim.y * tm.y, z});
+        model = glm::scale(model, glm::vec3(cell_dim * 0.5f, 0.0f));
+        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->textured.set_mat4("model", model);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, terrain2tex_[tm.type]);
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 }
 
@@ -188,17 +270,12 @@ void Scene::render_frame(const Frame &frame) {
     }
 
     glLineWidth(2); //Bold outlining
+    //glDisable(GL_DEPTH_TEST);
     for (const auto &unit : frame.units) {
         render_unit(unit);
     }
+    //glEnable(GL_DEPTH_TEST);
     glLineWidth(1);
-
-#ifndef NDEBUG
-    ImGui::LabelText("Circles", "%zu", frame.circles.size());
-    ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
-    ImGui::LabelText("Lines", "%zu", frame.lines.size());
-    ImGui::LabelText("Units", "%zu", frame.units.size());
-#endif
 }
 
 void Scene::render_grid() {
@@ -238,16 +315,17 @@ void Scene::render_grid() {
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
         glEnableVertexAttribArray(0);
+        glBindVertexArray(0);
     }
-
     glBindVertexArray(attr_->grid_vao);
     glDrawArrays(GL_LINES, 0, attr_->grid_vertex_count);
+    //glBindVertexArray(0);
 }
 
 void Scene::render_circle(const pod::Circle &circle) {
     auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
-    model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 0.0f});
+    model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 1.0f});
     shaders_->circle.set_float("radius2", circle.radius * circle.radius);
     shaders_->circle.set_vec3("center", vcenter);
     shaders_->circle.set_vec3("color", circle.color);
@@ -259,12 +337,12 @@ void Scene::render_circle(const pod::Circle &circle) {
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
     glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 0.1f});
-    model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 0.0f});
+    model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 1.0f});
     shaders_->color.set_mat4("model", model);
     shaders_->color.set_vec3("color", rect.color);
 
     glBindVertexArray(attr_->rect_vao);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Scene::render_lines(const std::vector<pod::Line> &lines) {
@@ -293,11 +371,33 @@ void Scene::render_unit(const pod::Unit &unit) {
     //Circle
     shaders_->circle.use();
     shaders_->circle.set_float("radius2", unit.radius * unit.radius);
-    shaders_->circle.set_vec3("color", unit.color);
+    if (unit.selected) {
+        shaders_->circle.set_vec3("color", opt_.selected_unit_color);
+    } else if (unit.enemy == 1) {
+        shaders_->circle.set_vec3("color", opt_.enemy_unit_color);
+    } else if (unit.enemy == -1) {
+        shaders_->circle.set_vec3("color", opt_.ally_unit_color);
+    } else {
+        shaders_->circle.set_vec3("color", opt_.neutral_unit_color);
+    }
 
-    auto vcenter = glm::vec3{unit.center.x, unit.center.y, 0.1f};
+    const float base_z_value = 0.1f;
+    const float aerial_z_value = 0.11f;
+    const float hp_bar_z_value = 0.12f;
+    const float cd_bar_z_value = 0.13f;
+
+    float z_value = base_z_value;
+    if (unit.utype == Frame::UnitType::FIGHTER || unit.utype == Frame::UnitType::HELICOPTER) {
+        z_value = aerial_z_value;
+    }
+    if (unit.enemy == 1) {
+        //Enemies above us
+        z_value += 0.005;
+    }
+
+    auto vcenter = glm::vec3{unit.center.x, unit.center.y, z_value};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
-    if (unit.utype != Frame::UnitType::undefined) {
+    if (unit.utype != Frame::UnitType::UNKNOWN) {
         shaders_->circle.set_int("textured", 1);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, unit2tex_[unit.utype]);
@@ -313,12 +413,15 @@ void Scene::render_unit(const pod::Unit &unit) {
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+    const glm::vec3 bar_shift{vcenter.x - unit.radius,
+                              vcenter.y + unit.radius * 1.15 * y_axes_invert_,
+                              hp_bar_z_value};
+    const float hp_bar_height = std::max(unit.radius * 0.10f, 0.1f);
     if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
         //HP bar
         float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
-        glm::vec3 bar_shift{vcenter.x - unit.radius, vcenter.y + unit.radius * 1.1 * y_axes_invert_, vcenter.z + 0.1};
         model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {hp_length, std::max(unit.radius * 0.06, 1.0), 0.0f});
+        model = glm::scale(model, {hp_length, hp_bar_height, 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
         glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
@@ -330,17 +433,28 @@ void Scene::render_unit(const pod::Unit &unit) {
 
         //Hp bar outlining
         model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {unit.radius, std::max(unit.radius * 0.06, 1.0), 0.0f});
+        model = glm::scale(model, {unit.radius, hp_bar_height, 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         shaders_->color.set_mat4("model", model);
         shaders_->color.set_vec3("color", glm::vec3(0.0f));
         const uint8_t indicies[] = {0, 1, 3, 2};
         glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
     }
+    if (opt_.show_cooldown_bars && unit.rem_cooldown > 0) {
+        model = glm::translate(glm::mat4(1.0f),
+                               {bar_shift.x, bar_shift.y - hp_bar_height, cd_bar_z_value});
+        const double cooldown_fraction = cg::lerp(unit.rem_cooldown, unit.cooldown, 0, 0, unit.radius);
+        model = glm::scale(model, {cooldown_fraction, hp_bar_height * 0.5f, 0.0f});
+        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->color.use();
+        shaders_->color.set_mat4("model", model);
+        shaders_->color.set_vec3("color", glm::vec3(0.5));
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    }
 }
 
 void Scene::set_frame_index(int idx) {
-    if (idx >= 0 && idx < get_frames_count() && idx != cur_frame_idx_) {
+    if (idx >= 0 && idx < frames_count_ && idx != cur_frame_idx_) {
         cur_frame_idx_ = idx;
     }
 }
@@ -350,12 +464,12 @@ int Scene::get_frame_index() {
 }
 
 int Scene::get_frames_count() {
-    return static_cast<int>(frames_.size());
+    return frames_count_;
 }
 
 const char *Scene::get_frame_user_message() {
-    if (cur_frame_idx_ >= 0 && cur_frame_idx_ < static_cast<int>(frames_.size())) {
-        return frames_[cur_frame_idx_]->user_message.c_str();
+    if (active_frame_) {
+        return active_frame_->user_message.c_str();
     }
     return "";
 }

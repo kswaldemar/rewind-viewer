@@ -116,7 +116,7 @@ public class RewindClient {
     }
 
     public RewindClient() {
-        this("127.0.0.1", 7000);
+        this("127.0.0.1", 9111);
     }
 
     private void send(String buf) {

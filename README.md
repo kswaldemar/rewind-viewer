@@ -4,8 +4,11 @@
 [![C++ standard](https://img.shields.io/badge/C++-14-blue.svg?style=flat-square)](https://isocpp.org/)
 [![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green.svg?style=flat-square)](https://www.khronos.org/opengl/)
 [![RAIC](https://img.shields.io/badge/Russian%20AI%20Cup-2017-yellow.svg?style=flat-square)](http://russianaicup.ru/)
+[![Build status](https://travis-ci.org/kswaldemar/rewind-viewer.svg?branch=master)](https://travis-ci.org/kswaldemar/rewind-viewer)
 
 Fast Russain AI Cup championship match viewer with rewinding support written in OpenGL
+
+![That it is look like](./resources/kdpv.png)
 
 ## Design
 Viewer has several advantages in comparison of local-runner with drawing plugin:
@@ -19,12 +22,11 @@ Obvious drawbacks:
 send all data (like buildings, units etc.) and you can draw only data visible by your strategy
  - In theory high memory usage, because it need to store all drawing primitives for rewinding support
 
-**Note**: Currently viewer reached 1.0 version and still in active development. 
-You may find updated files and more primitives support (maybe potential fields, etc.) during championship.
+:information_source: Currently viewer reached 1.2 version and developments is on hold.
+There definetely will be building support after round 1 and fog of war support right after round 2.
+Minor bugfixes and optimization may come during championship, but not so much.
 
 ## Build
-
-[![Build status](https://travis-ci.org/kswaldemar/rewind-viewer.svg?branch=master)](https://travis-ci.org/kswaldemar/rewind-viewer)
 
 Clone repository with submodules:
 ```
@@ -45,7 +47,7 @@ cmake --build . --config Release
 ```
 *Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows. 
 
-**Note**: Viewer should be launched from same folder, where `resources` is located. 
+:warning: **Note**: Viewer should be launched from same folder, where `resources` is located. 
 So you need to manualy copy `resources` to build folder, or copy executable to project root directory.
 
 ## Strategy integration
