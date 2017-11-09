@@ -21,7 +21,13 @@ void main() {
     if (cur_r2 > radius2)
         discard;
     vec3 solid = mix(color, color * 0.3, cur_r2 / radius2);
-    vec4 tex = texture(tex_smp, fs_in.uv);
-    vec4 colored_tex = mix(tex, vec4(solid, 1.0), texture_coloring);
-    frag_color = mix(vec4(solid, circle_alpha), colored_tex, (textured ? 1.0 : 0) * tex.a);
+
+    if (textured) {
+        vec4 tex = texture(tex_smp, fs_in.uv);
+        vec4 colored_tex = mix(tex, vec4(solid, 1.0), texture_coloring);
+        frag_color = mix(vec4(solid, circle_alpha), colored_tex, tex.a);
+    } else {
+        frag_color = vec4(color, 1.0f);
+    }
+
 }
