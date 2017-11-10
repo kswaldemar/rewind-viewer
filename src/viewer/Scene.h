@@ -50,7 +50,7 @@ public:
     ///Show detailed info in tooltip if mouse hover unit
     void show_detailed_info(const glm::vec2 &mouse) const;
 
-private:
+protected:
     struct settings_t {
         const uint16_t grid_cells_count = 32;
         const glm::vec2 grid_dim = {1024.0f, 1024.0f};
@@ -58,14 +58,16 @@ private:
         bool show_full_hp_bars = false;
         bool show_cooldown_bars = true;
         bool show_detailed_info_on_hover = true;
-        bool draw_grid = true;
+        bool show_grid = true;
 
         const glm::vec3 ally_unit_color{0.0f, 0.0f, 1.0f};
         const glm::vec3 enemy_unit_color{1.0f, 0.0f, 0.0f};
         const glm::vec3 neutral_unit_color{0.5f, 0.5f, 0.5f};
         const glm::vec3 selected_unit_color{0.5f, 0.5f, 0.0f};
     };
+    settings_t &opt();
 
+private:
     void render_terrain();
     void render_frame(const Frame &frame);
     void render_grid();

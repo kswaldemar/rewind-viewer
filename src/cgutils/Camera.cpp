@@ -78,6 +78,10 @@ int Camera::y_axes_invert() const {
     return opt_.origin_on_top_left ? -1 : 1;
 }
 
+Camera::settings_t &Camera::opt() {
+    return opt_;
+}
+
 void Camera::update_matrix() {
     int width, height;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);

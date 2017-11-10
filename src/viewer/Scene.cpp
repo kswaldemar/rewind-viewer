@@ -72,21 +72,23 @@ Scene::Scene(ResourceManager *res)
 
     //Unit textures
     LOG_INFO("Load unit textures")
-    unit2tex_[Frame::UnitType::TANK] = mgr_->load_texture("resources/textures/tank.png", false);
-    unit2tex_[Frame::UnitType::IFV] = mgr_->load_texture("resources/textures/ifv.png", false);
-    unit2tex_[Frame::UnitType::ARRV] = mgr_->load_texture("resources/textures/arrv.png", false);
-    unit2tex_[Frame::UnitType::HELICOPTER] = mgr_->load_texture("resources/textures/helicopter.png", false);
-    unit2tex_[Frame::UnitType::FIGHTER] = mgr_->load_texture("resources/textures/fighter.png", false);
+    auto load_unit_tex = [this](const std::string &path) {
+        return mgr_->load_texture(path, true, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
+    };
+    unit2tex_[Frame::UnitType::TANK] = load_unit_tex("resources/textures/tank.png");
+    unit2tex_[Frame::UnitType::IFV] = load_unit_tex("resources/textures/ifv.png");
+    unit2tex_[Frame::UnitType::ARRV] = load_unit_tex("resources/textures/arrv.png");
+    unit2tex_[Frame::UnitType::HELICOPTER] = load_unit_tex("resources/textures/helicopter.png");
+    unit2tex_[Frame::UnitType::FIGHTER] = load_unit_tex("resources/textures/fighter.png");
 
     //AreaDesc textures
-    terrain2tex_[Frame::AreaType::FOREST] = mgr_->load_texture("resources/textures/forest.png",
-                                                               true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::AreaType::SWAMP] = mgr_->load_texture("resources/textures/swamp.png",
-                                                              true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::AreaType::CLOUD] = mgr_->load_texture("resources/textures/clouds.png",
-                                                              true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    terrain2tex_[Frame::AreaType::RAIN] = mgr_->load_texture("resources/textures/rain.png",
-                                                             true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    auto load_area_tex = [this](const std::string &path) {
+        return mgr_->load_texture(path, true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
+    };
+    terrain2tex_[Frame::AreaType::FOREST] = load_area_tex("resources/textures/forest.png");
+    terrain2tex_[Frame::AreaType::SWAMP] = load_area_tex("resources/textures/swamp.png");
+    terrain2tex_[Frame::AreaType::CLOUD] = load_area_tex("resources/textures/clouds.png");
+    terrain2tex_[Frame::AreaType::RAIN] = load_area_tex("resources/textures/rain.png");
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -149,7 +151,7 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     //Grid
-    if (opt_.draw_grid) {
+    if (opt_.show_grid) {
         //TODO: Rendering garbage lines if disabled by default
         shaders_->color.use();
         shaders_->color.set_mat4("model", attr_->grid_model);
@@ -172,9 +174,8 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     render_terrain();
 
     //Frame
-    if (!frames_.empty()) {
-        const Frame *frame = frames_[cur_frame_idx_].get();
-        render_frame(*frame);
+    if (active_frame_ != nullptr) {
+        render_frame(*active_frame_);
     }
 }
 
@@ -474,5 +475,6 @@ const char *Scene::get_frame_user_message() {
     return "";
 }
 
-
-
+Scene::settings_t &Scene::opt() {
+    return opt_;
+}

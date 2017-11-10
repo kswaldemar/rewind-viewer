@@ -19,6 +19,7 @@ struct UIController::wnd_t {
     bool show_ui_help = false;
     bool show_shortcuts_help = false;
     bool show_metrics = false;
+    bool show_mouse_pos_tooltip = false;
 };
 
 UIController::UIController(Camera *camera)
@@ -84,14 +85,40 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
                      ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
-        ImGui::BulletText("Space to play/stop frame playback");
-        ImGui::BulletText("Left, right arrow to manually change frames");
-        ImGui::BulletText("Esc to close application");
+        ImGui::BulletText("Space - play/stop frame playback");
+        ImGui::BulletText("Left, right arrow - manually change frames");
+        ImGui::BulletText("Esc - close application");
+        ImGui::BulletText("Ctrl+g - go to tick");
+        ImGui::BulletText("g - switch grid draw state on/off");
+        ImGui::BulletText("p - show tooltip with cursor world coordinates");
         ImGui::End();
     }
 
+    const auto &io = ImGui::GetIO();
+    if (!io.WantCaptureMouse && wnd_->show_mouse_pos_tooltip) {
+        ImGui::BeginTooltip();
+        auto wmouse_pos = camera_->screen2world(io.MousePos);
+        ImGui::Text("(%.3f, %.3f)", wmouse_pos.x, wmouse_pos.y);
+        ImGui::EndTooltip();
+    }
+
     //Checking hotkeys
-    check_hotkeys();
+    if (!io.WantTextInput) {
+        if (key_pressed_once(GLFW_KEY_SPACE)) {
+            autoplay_scene_ = !autoplay_scene_;
+        }
+        if (key_pressed_once(GLFW_KEY_G) && !io.KeyCtrl) {
+            scene->opt().show_grid = !scene->opt().show_grid;
+        }
+        if (key_pressed_once(GLFW_KEY_P)) {
+            wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
+        }
+        if (io.KeysDown[GLFW_KEY_D] && io.KeyCtrl) {
+            developer_mode_ = true;
+        }
+    }
+
+    request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
 
     //Information for debug purpose
     if (developer_mode_ && scene->active_frame_) {
@@ -117,25 +144,6 @@ void UIController::frame_end() {
 
 bool UIController::close_requested() {
     return request_exit_;
-}
-
-void UIController::check_hotkeys() {
-    const auto &io = ImGui::GetIO();
-    if (!io.WantTextInput) {
-        if (io.KeysDown[GLFW_KEY_SPACE]) {
-            if (!space_pressed_) {
-                space_pressed_ = true;
-                autoplay_scene_ = !autoplay_scene_;
-            }
-        } else {
-            space_pressed_ = false;
-        }
-        if (io.KeysDown[GLFW_KEY_D] && io.KeyCtrl) {
-            developer_mode_ = true;
-        }
-    }
-
-    request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
 }
 
 void UIController::main_menu_bar() {
@@ -204,19 +212,19 @@ void UIController::info_widget(Scene *scene) {
         if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
-            ImGui::InputFloat("Viewport size", &camera_->opt_.viewport_size, 50.0, 1000.0, 0);
+            ImGui::InputFloat("Viewport size", &camera_->opt().viewport_size, 50.0, 1000.0, 0);
             ImGui::PopItemWidth();
         }
         if (ImGui::CollapsingHeader(ICON_FA_EYEDROPPER " Colors", flags)) {
             ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
-            ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt_.grid_color));
+            ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt().grid_color));
         }
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
-            ImGui::Checkbox("Show full life bars", &scene->opt_.show_full_hp_bars);
-            ImGui::Checkbox("Show detailed unit info on hover", &scene->opt_.show_detailed_info_on_hover);
-            ImGui::Checkbox("World origin on top left", &camera_->opt_.origin_on_top_left);
-            ImGui::Checkbox("Draw grid", &scene->opt_.draw_grid);
+            ImGui::Checkbox("Show full life bars", &scene->opt().show_full_hp_bars);
+            ImGui::Checkbox("Show detailed unit info on hover", &scene->opt().show_detailed_info_on_hover);
+            ImGui::Checkbox("World origin on top left", &camera_->opt().origin_on_top_left);
+            ImGui::Checkbox("Draw grid", &scene->opt().show_grid);
         }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {
@@ -243,9 +251,8 @@ void UIController::playback_control_widget(Scene *scene) {
         int tick = scene->get_frame_index();
 
         if (!io.WantTextInput) {
-            if (io.KeysDown[GLFW_KEY_LEFT] || io.KeysDown[GLFW_KEY_RIGHT]) {
-                tick += io.KeysDown[GLFW_KEY_RIGHT] ? 1 : -1;
-            }
+            tick -= io.KeysDown[GLFW_KEY_LEFT];
+            tick += io.KeysDown[GLFW_KEY_RIGHT];
         }
 
         ImGui::Button(ICON_FA_FAST_BACKWARD "##fastprev", button_size);
@@ -279,20 +286,37 @@ void UIController::playback_control_widget(Scene *scene) {
 
         tick += autoplay_scene_;
 
-        //Make tick 1-indexed to better user view
         const auto frames_cnt = scene->get_frames_count();
-        tick = std::min(tick + 1, frames_cnt);
-
-        float ftick = tick;
-        ImGui::PushItemWidth(-1);
-        if (ImGui::TickBar("##empty", &ftick, 1, frames_cnt, {0.0f, 0.0f})) {
-            tick = static_cast<int>(ftick);
+        if (frames_cnt > 0) {
+            tick = std::min(tick, frames_cnt);
+            float ftick = tick;
+            ImGui::PushItemWidth(-1);
+            if (io.KeyCtrl && io.KeysDown[GLFW_KEY_G]) {
+                ImGui::SetKeyboardFocusHere();
+            }
+            if (ImGui::TickBar("##empty", &ftick, 0, frames_cnt, {0.0f, 0.0f})) {
+                tick = static_cast<int>(ftick);
+            }
+            ImGui::PopItemWidth();
+            scene->set_frame_index(tick);
+        } else {
+            ImGui::Text("Frame list empty");
         }
-        ImGui::PopItemWidth();
-
-        scene->set_frame_index(tick - 1);
 
         ImGui::EndGroup();
         ImGui::End();
     }
+}
+
+bool UIController::key_pressed_once(int key_desc) {
+    const auto &io = ImGui::GetIO();
+    if (io.KeysDown[key_desc]) {
+        if (!key_pressed_[key_desc]) {
+            key_pressed_[key_desc] = true;
+            return true;
+        }
+    } else {
+        key_pressed_[key_desc] = false;
+    }
+    return false;
 }

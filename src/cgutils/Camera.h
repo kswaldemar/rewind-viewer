@@ -25,18 +25,19 @@ public:
     ///1 if directed up, -1 if directed down
     int y_axes_invert() const;
 
-private:
-    void update_matrix();
-
+protected:
     struct settings_t {
         float viewport_size;
         bool origin_on_top_left = true;
     };
+    settings_t &opt();
 
-    glm::mat4 pr_view_;
-    glm::vec2 pos_;
+private:
+    void update_matrix();
 
     settings_t opt_;
+    glm::mat4 pr_view_;
+    glm::vec2 pos_;
 };
 
 

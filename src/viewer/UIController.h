@@ -33,13 +33,14 @@ public:
     bool close_requested();
 
 private:
-    void check_hotkeys();
 
     void main_menu_bar();
 
     void fps_overlay_widget(NetListener::ConStatus net_status);
     void info_widget(Scene *scene);
     void playback_control_widget(Scene *scene);
+
+    bool key_pressed_once(int key_desc);
 
     ///Handling flags whenever window should be drawed or not etc.
     struct wnd_t;
@@ -49,10 +50,12 @@ private:
 
     bool request_exit_ = false;
     bool autoplay_scene_ = true;
-    bool space_pressed_ = false;
     bool developer_mode_ = false;
 
     const uint16_t fast_skip_speed_ = 20; //In ticks per frame
 
     glm::vec3 clear_color_ = {0.673, 0.764, 0.794};
+
+    ///Last remembered state
+    bool key_pressed_[512];
 };

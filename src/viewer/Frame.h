@@ -152,9 +152,9 @@ inline void from_json(const nlohmann::json &j, Rectangle &p) {
     float y2 = j["y2"].get<float>();
 
     p.w = x2 - x1;
-    p.h = y1 - y2;
+    p.h = y2 - y1;
     p.center.x = x1 + p.w * 0.5f;
-    p.center.y = y2 + p.h * 0.5f;
+    p.center.y = y1 + p.h * 0.5f;
 }
 
 inline void from_json(const nlohmann::json &j, Unit &p) {
