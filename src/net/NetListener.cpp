@@ -134,7 +134,7 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 break;
             case PrimitiveType::message:
                 LOG_V8("NetClient::Message");
-                frame_->user_message += j["message"];
+                frame_->user_message += j["message"].get<std::string>();
                 break;
             case PrimitiveType::types_count:
                 break;
