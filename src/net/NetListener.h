@@ -41,11 +41,14 @@ public:
 
 private:
     void process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end);
+    void serve_connection(CActiveSocket *client);
 
     Scene *scene_;
     std::unique_ptr<CPassiveSocket> socket_;
-    CActiveSocket *client_ = nullptr;
     ConStatus status_;
+
+    std::string host_;
+    uint16_t port_;
 
     std::unique_ptr<Frame> frame_ = nullptr;
     bool stop_ = false;

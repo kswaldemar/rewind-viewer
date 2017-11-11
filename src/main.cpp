@@ -134,7 +134,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LOG_INFO("Start render loop")

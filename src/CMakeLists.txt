@@ -24,15 +24,7 @@ set(Sources
     net/NetListener.cpp
 )
 
-set(Headers
-    cgutils/utils.h
-    common/logger.h
-    imgui_impl/style.h
-    viewer/Frame.h
-    net/PrimitiveType.h
-)
-
-add_executable(${PROJECT_NAME} ${Sources} ${Headers})
+add_executable(${PROJECT_NAME} ${Sources})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
 
 target_link_libraries(${PROJECT_NAME}

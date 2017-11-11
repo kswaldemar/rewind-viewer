@@ -50,26 +50,35 @@ public:
     ///Show detailed info in tooltip if mouse hover unit
     void show_detailed_info(const glm::vec2 &mouse) const;
 
+    ///Remove all frames and terrain
+    void clear_data();
+
+    ///True if has at least one frame
+    bool has_data() const;
+
 protected:
     struct settings_t {
         const uint16_t grid_cells_count = 32;
         const glm::vec2 grid_dim = {1024.0f, 1024.0f};
-        glm::vec3 grid_color = {0.321f, 0.336f, 0.392f};
+        glm::vec4 grid_color = {0.321f, 0.336f, 0.392f, 1.0f};
         bool show_full_hp_bars = false;
         bool show_cooldown_bars = true;
         bool show_detailed_info_on_hover = true;
         bool show_grid = true;
 
-        const glm::vec3 ally_unit_color{0.0f, 0.0f, 1.0f};
-        const glm::vec3 enemy_unit_color{1.0f, 0.0f, 0.0f};
-        const glm::vec3 neutral_unit_color{0.5f, 0.5f, 0.5f};
-        const glm::vec3 selected_unit_color{0.5f, 0.5f, 0.0f};
+        const float unit_circle_alpha = 0.6f;
+        const glm::vec4 ally_unit_color{0.0f, 0.0f, 1.0f, unit_circle_alpha};
+        const glm::vec4 enemy_unit_color{1.0f, 0.0f, 0.0f, unit_circle_alpha};
+        const glm::vec4 neutral_unit_color{0.5f, 0.5f, 0.5f, unit_circle_alpha};
+        const glm::vec4 selected_unit_color{0.5f, 0.5f, 0.0f, unit_circle_alpha};
+
+        std::array<bool, static_cast<size_t>(Frame::LAYERS_COUNT)> enabled_layers;
     };
     settings_t &opt();
 
 private:
     void render_terrain();
-    void render_frame(const Frame &frame);
+    void render_frame_layer(const Frame::primitives_t &slice);
     void render_grid();
     void render_circle(const pod::Circle &circle);
     void render_rectangle(const pod::Rectangle &rect);

@@ -129,12 +129,16 @@ void Shader::set_mat4(const std::string &name, const glm::mat4 &v) {
     glUniformMatrix4fv(uniform(name), 1, GL_FALSE, glm::value_ptr(v));
 }
 
+void Shader::set_vec2(const std::string &name, const glm::vec2 &v) {
+    glUniform2f(uniform(name), v.x, v.y);
+}
+
 void Shader::set_vec3(const std::string &name, const glm::vec3 &v) {
     glUniform3f(uniform(name), v.x, v.y, v.z);
 }
 
-void Shader::set_vec2(const std::string &name, const glm::vec2 &v) {
-    glUniform2f(uniform(name), v.x, v.y);
+void Shader::set_vec4(const std::string &name, const glm::vec4 &v) {
+    glUniform4f(uniform(name), v.x, v.y, v.z, v.w);
 }
 
 void Shader::set_mat4(const std::string &name, float *pv) {

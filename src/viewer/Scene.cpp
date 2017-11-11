@@ -8,6 +8,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <unordered_map>
 
 namespace {
 
@@ -16,7 +17,7 @@ bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
     return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
 }
 
-const std::map<int, const char *> side2str = {
+const std::unordered_map<int, const char *> side2str = {
     {-1, "Ally"},
     {0,  "Neutral"},
     {1,  "Enemy"},
@@ -61,6 +62,9 @@ Scene::Scene(ResourceManager *res)
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
     attr_->grid_model = glm::scale(glm::mat4{}, {opt_.grid_dim.x, opt_.grid_dim.y, 0.0f});
+
+    //Enable all layers by default
+    opt_.enabled_layers.fill(true);
 
     //Shaders
     LOG_INFO("Compile shaders")
@@ -150,15 +154,6 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(proj_view), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //Grid
-    if (opt_.show_grid) {
-        //TODO: Rendering garbage lines if disabled by default
-        shaders_->color.use();
-        shaders_->color.set_mat4("model", attr_->grid_model);
-        shaders_->color.set_vec3("color", opt_.grid_color);
-        render_grid();
-    }
-
     //Main grass texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
@@ -173,16 +168,30 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     //AreaDesc
     render_terrain();
 
+    //Grid
+    if (opt_.show_grid) {
+        //TODO: Rendering garbage lines if disabled by default
+        shaders_->color.use();
+        shaders_->color.set_mat4("model", attr_->grid_model);
+        shaders_->color.set_vec4("color", opt_.grid_color);
+        render_grid();
+    }
+
     //Frame
     if (active_frame_ != nullptr) {
-        render_frame(*active_frame_);
+        for (size_t idx = 0; idx < active_frame_->primitives.size(); ++idx) {
+            if (opt_.enabled_layers[idx]) {
+                render_frame_layer(active_frame_->primitives[idx]);
+            }
+        }
     }
 }
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
     std::lock_guard<std::mutex> f(frames_mutex_);
     //Sort units for proper draw order
-    std::sort(frame->units.begin(), frame->units.end(), [](const pod::Unit &lhs, const pod::Unit &rhs) {
+    auto &units = frame->primitives[Frame::DEFAULT_LAYER].units;
+    std::sort(units.begin(), units.end(), [](const pod::Unit &lhs, const pod::Unit &rhs) {
         if (lhs.utype == rhs.utype) {
             return lhs.enemy < rhs.enemy;
         }
@@ -200,27 +209,45 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
     if (!opt_.show_detailed_info_on_hover || frames_.empty()) {
         return;
     }
-
-    const Frame &frame = *frames_[cur_frame_idx_].get();
-    for (const auto &unit : frame.units) {
-        if (hittest(mouse, unit)) {
-            ImGui::BeginTooltip();
-            ImGui::Text(
-                "%s %s:"
-                    "\nHP: %d / %d"
-                    "\nPosition: %0.3lf, %0.3lf"
-                    "\nCooldown: %d (%d)"
-                    "\nSelected: %s",
-                side2str.at(unit.enemy),
-                Frame::unit_name(unit.utype),
-                unit.hp, unit.max_hp,
-                unit.center.x, unit.center.y,
-                unit.rem_cooldown, unit.cooldown,
-                unit.selected ? "yes" : "no"
-            );
-            ImGui::EndTooltip();
+    if (active_frame_) {
+        for (const auto &unit : active_frame_->primitives[Frame::DEFAULT_LAYER].units) {
+            if (hittest(mouse, unit)) {
+                ImGui::BeginTooltip();
+                ImGui::Text(
+                    "%s %s:"
+                        "\nHP: %d / %d"
+                        "\nPosition: %0.3lf, %0.3lf"
+                        "\nCooldown: %d (%d)"
+                        "\nSelected: %s",
+                    side2str.at(unit.enemy),
+                    Frame::unit_name(unit.utype),
+                    unit.hp, unit.max_hp,
+                    unit.center.x, unit.center.y,
+                    unit.rem_cooldown, unit.cooldown,
+                    unit.selected ? "yes" : "no"
+                );
+                ImGui::EndTooltip();
+            }
         }
     }
+}
+
+void Scene::clear_data() {
+    {
+        std::lock_guard<std::mutex> _(terrain_mutex_);
+        terrains_.clear();
+    }
+    {
+        std::lock_guard<std::mutex> _(frames_mutex_);
+        active_frame_ = nullptr;
+        frames_.clear();
+        frames_count_ = 0;
+        cur_frame_idx_ = 0;
+    }
+}
+
+bool Scene::has_data() const {
+    return frames_count_ > 0;
 }
 
 void Scene::render_terrain() {
@@ -249,34 +276,36 @@ void Scene::render_terrain() {
     }
 }
 
-void Scene::render_frame(const Frame &frame) {
-    if (!frame.circles.empty()) {
+void Scene::render_frame_layer(const Frame::primitives_t &slice) {
+    if (!slice.circles.empty()) {
         shaders_->circle.use();
         shaders_->circle.set_int("textured", 0);
-        for (const auto &obj : frame.circles) {
+        for (const auto &obj : slice.circles) {
             render_circle(obj);
         }
     }
 
-    if (!frame.rectangles.empty()) {
+    if (!slice.rectangles.empty()) {
         shaders_->color.use();
-        for (const auto &obj : frame.rectangles) {
+        for (const auto &obj : slice.rectangles) {
             render_rectangle(obj);
         }
     }
 
-    if (!frame.lines.empty()) {
+    if (!slice.lines.empty()) {
         shaders_->lines.use();
-        render_lines(frame.lines);
+        render_lines(slice.lines);
     }
 
-    glLineWidth(2); //Bold outlining
-    //glDisable(GL_DEPTH_TEST);
-    for (const auto &unit : frame.units) {
-        render_unit(unit);
+    if (!slice.units.empty()) {
+        glLineWidth(2); //Bold outlining
+        glEnable(GL_DEPTH_TEST);
+        for (const auto &unit : slice.units) {
+            render_unit(unit);
+        }
+        glDisable(GL_DEPTH_TEST);
+        glLineWidth(1);
     }
-    //glEnable(GL_DEPTH_TEST);
-    glLineWidth(1);
 }
 
 void Scene::render_grid() {
@@ -324,12 +353,12 @@ void Scene::render_grid() {
 }
 
 void Scene::render_circle(const pod::Circle &circle) {
-    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.1f};
+    auto vcenter = glm::vec3{circle.center.x, circle.center.y, 0.0f};
     glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
     model = glm::scale(model, glm::vec3{circle.radius, circle.radius, 1.0f});
     shaders_->circle.set_float("radius2", circle.radius * circle.radius);
     shaders_->circle.set_vec3("center", vcenter);
-    shaders_->circle.set_vec3("color", circle.color);
+    shaders_->circle.set_vec4("color", circle.color);
     shaders_->circle.set_mat4("model", model);
 
     glBindVertexArray(attr_->rect_vao);
@@ -337,10 +366,11 @@ void Scene::render_circle(const pod::Circle &circle) {
 }
 
 void Scene::render_rectangle(const pod::Rectangle &rect) {
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3{rect.center.x, rect.center.y, 0.1f});
+    glm::mat4 model = glm::translate(glm::mat4(1.0f),
+                                     glm::vec3{rect.center.x, rect.center.y, 0.0f});
     model = glm::scale(model, glm::vec3{rect.w * 0.5, rect.h * 0.5, 1.0f});
     shaders_->color.set_mat4("model", model);
-    shaders_->color.set_vec3("color", rect.color);
+    shaders_->color.set_vec4("color", rect.color);
 
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -354,9 +384,10 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
         glBindVertexArray(attr_->lines_vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        //Plain float format: vec3 color, vec2 pos
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), cg::offset<float>(3));
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), nullptr);
+        //Plain float format: vec3 color, alpha, vec2 pos
+        const size_t stride = 6 * sizeof(float) + 1;
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<const void *>(4 * sizeof(float) + 1));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, nullptr);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
 
@@ -373,21 +404,20 @@ void Scene::render_unit(const pod::Unit &unit) {
     shaders_->circle.use();
     shaders_->circle.set_float("radius2", unit.radius * unit.radius);
     if (unit.selected) {
-        shaders_->circle.set_vec3("color", opt_.selected_unit_color);
+        shaders_->circle.set_vec4("color", opt_.selected_unit_color);
     } else if (unit.enemy == 1) {
-        shaders_->circle.set_vec3("color", opt_.enemy_unit_color);
+        shaders_->circle.set_vec4("color", opt_.enemy_unit_color);
     } else if (unit.enemy == -1) {
-        shaders_->circle.set_vec3("color", opt_.ally_unit_color);
+        shaders_->circle.set_vec4("color", opt_.ally_unit_color);
     } else {
-        shaders_->circle.set_vec3("color", opt_.neutral_unit_color);
+        shaders_->circle.set_vec4("color", opt_.neutral_unit_color);
     }
 
-    const float base_z_value = 0.1f;
     const float aerial_z_value = 0.11f;
     const float hp_bar_z_value = 0.12f;
     const float cd_bar_z_value = 0.13f;
 
-    float z_value = base_z_value;
+    float z_value = 0.0f;
     if (unit.utype == Frame::UnitType::FIGHTER || unit.utype == Frame::UnitType::HELICOPTER) {
         z_value = aerial_z_value;
     }
@@ -429,7 +459,7 @@ void Scene::render_unit(const pod::Unit &unit) {
         auto m = 1.0f / std::max(color.r, color.g);
         shaders_->color.use();
         shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec3("color", color * m);
+        shaders_->color.set_vec4("color", glm::vec4(color * m, 1.0f));
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
         //Hp bar outlining
@@ -437,7 +467,7 @@ void Scene::render_unit(const pod::Unit &unit) {
         model = glm::scale(model, {unit.radius, hp_bar_height, 0.0f});
         model = glm::translate(model, {1.0f, 0.0f, 0.0f});
         shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec3("color", glm::vec3(0.0f));
+        shaders_->color.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
         const uint8_t indicies[] = {0, 1, 3, 2};
         glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
     }
@@ -449,15 +479,13 @@ void Scene::render_unit(const pod::Unit &unit) {
         model = glm::translate(model, {1.0f, 1.0f, 0.0f});
         shaders_->color.use();
         shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec3("color", glm::vec3(0.5));
+        shaders_->color.set_vec4("color", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
 }
 
 void Scene::set_frame_index(int idx) {
-    if (idx >= 0 && idx < frames_count_ && idx != cur_frame_idx_) {
-        cur_frame_idx_ = idx;
-    }
+    cur_frame_idx_ = cg::clamp(idx, 0, frames_count_ - 1);
 }
 
 int Scene::get_frame_index() {

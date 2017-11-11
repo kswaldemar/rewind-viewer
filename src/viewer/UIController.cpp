@@ -54,6 +54,17 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     // Start new frame
     ImGui_ImplGlfwGL3_NewFrame();
 
+    //Clear data option
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("Edit", true)) {
+            if (ImGui::MenuItem(ICON_FA_RECYCLE " Clear frames data", "CTRL+R", false, scene->has_data())) {
+                scene->clear_data();
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
     //Update windows status
     main_menu_bar();
 
@@ -89,8 +100,10 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::BulletText("Left, right arrow - manually change frames");
         ImGui::BulletText("Esc - close application");
         ImGui::BulletText("Ctrl+g - go to tick");
-        ImGui::BulletText("g - switch grid draw state on/off");
-        ImGui::BulletText("p - show tooltip with cursor world coordinates");
+        ImGui::BulletText("g - Toggle grid draw state");
+        ImGui::BulletText("p - Show tooltip with cursor world coordinates");
+        ImGui::BulletText("1-5 - Toggle layers visibility");
+
         ImGui::End();
     }
 
@@ -116,18 +129,18 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (io.KeysDown[GLFW_KEY_D] && io.KeyCtrl) {
             developer_mode_ = true;
         }
+        auto &enabled_layers = scene->opt().enabled_layers;
+        for (size_t layer_idx = 0; layer_idx < enabled_layers.size(); ++layer_idx) {
+            if (key_pressed_once(static_cast<int>(GLFW_KEY_1 + layer_idx))) {
+                enabled_layers[layer_idx] = !enabled_layers[layer_idx];
+            }
+        }
+        if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && io.KeyCtrl) {
+            scene->clear_data();
+        }
     }
 
     request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
-
-    //Information for debug purpose
-    if (developer_mode_ && scene->active_frame_) {
-        const auto &frame = *scene->active_frame_;
-        ImGui::LabelText("Circles", "%zu", frame.circles.size());
-        ImGui::LabelText("Rectangles", "%zu", frame.rectangles.size());
-        ImGui::LabelText("Lines", "%zu", frame.lines.size());
-        ImGui::LabelText("Units", "%zu", frame.units.size());
-    }
 
     //Hittest for detailed unit info
     if (!ImGui::GetIO().WantCaptureMouse) {
@@ -156,7 +169,6 @@ void UIController::main_menu_bar() {
                 ImGui::Checkbox("Style editor", &wnd_->show_style_editor);
                 ImGui::Checkbox("Metrics", &wnd_->show_metrics);
             }
-
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE_O " Help", true)) {
@@ -225,6 +237,22 @@ void UIController::info_widget(Scene *scene) {
             ImGui::Checkbox("Show detailed unit info on hover", &scene->opt().show_detailed_info_on_hover);
             ImGui::Checkbox("World origin on top left", &camera_->opt().origin_on_top_left);
             ImGui::Checkbox("Draw grid", &scene->opt().show_grid);
+            static const ImVec4 button_colors[] = {
+                ImVec4(0.5, 0.5, 0.5, 1.0),
+                ImVec4(0.58, 0.941, 0.429, 1.0)
+            };
+            size_t idx = 0;
+            static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)> captions{
+                {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}
+            };
+            for (bool &enabled : scene->opt().enabled_layers) {
+                if (ImGui::ColorButton(captions[idx], button_colors[enabled], ImGuiColorEditFlags_NoTooltip)) {
+                    enabled = !enabled;
+                }
+                ++idx;
+                ImGui::SameLine();
+            }
+            ImGui::LabelText("##layers", "%s", "Visible layers");
         }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {

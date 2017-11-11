@@ -4,10 +4,13 @@
 
 #pragma once
 
-#include <cstdint>
+#include <cgutils/utils.h>
 
 #include <glm/glm.hpp>
 #include <json.hpp>
+
+#include <cstdint>
+#include <unordered_map>
 
 namespace pod {
 struct Circle;
@@ -22,6 +25,9 @@ struct Unit;
  *  - contains user message to draw in message window
  */
 struct Frame {
+    constexpr static size_t LAYERS_COUNT = 5;
+    constexpr static size_t DEFAULT_LAYER = 2;
+
     enum class UnitType {
         UNKNOWN = 0,
         TANK = 1,
@@ -29,6 +35,7 @@ struct Frame {
         ARRV = 3,
         HELICOPTER = 4,
         FIGHTER = 5,
+        COUNT = 6,
     };
 
     enum class AreaType {
@@ -40,45 +47,45 @@ struct Frame {
     };
 
     static const char *unit_name(UnitType type) {
-        static const std::map<UnitType, const char *> type2name{
-            {UnitType::UNKNOWN,    "Unknown"},
-            {UnitType::TANK,       "Tank"},
-            {UnitType::IFV,        "Ifv"},
-            {UnitType::ARRV,       "Arrv"},
-            {UnitType::HELICOPTER, "Helicopter"},
-            {UnitType::FIGHTER,    "Fighter"},
+        static const std::array<const char *, static_cast<size_t>(UnitType::COUNT)> type2name{
+            {"Unknown", "Tank", "Ifv", "Arrv", "Helicopter", "Fighter"}
         };
-        return type2name.at(type);
+        return type2name.at(static_cast<size_t>(type));
     }
 
-    std::vector<pod::Circle> circles;
-    std::vector<pod::Rectangle> rectangles;
-    std::vector<pod::Line> lines;
-    std::vector<pod::Unit> units;
+    struct primitives_t {
+        std::vector<pod::Circle> circles;
+        std::vector<pod::Rectangle> rectangles;
+        std::vector<pod::Line> lines;
+        std::vector<pod::Unit> units;
+    };
+
+    std::array<primitives_t, LAYERS_COUNT> primitives;
     std::string user_message;
 };
 
 
 namespace pod {
 
-struct Colored {
-    glm::vec3 color;
+struct Color {
+    glm::vec4 color;
 };
 
-struct Line : Colored {
+struct Line : Color {
     float x1;
     float y1;
-    glm::vec3 surprise; //TODO: Need to use geometric shader, to avoid that
+    //TODO: Rewrite it, looks ugly
+    glm::vec4 color2; //Color for second point
     float x2;
     float y2;
-};
+} __attribute__((packed));
 
-struct Circle : Colored {
+struct Circle : Color {
     glm::vec2 center;
     float radius;
 };
 
-struct Rectangle : Colored {
+struct Rectangle : Color {
     glm::vec2 center;
     float w;
     float h;
@@ -119,16 +126,23 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
 }
 
 
-inline void from_json(const nlohmann::json &j, Colored &p) {
+inline void from_json(const nlohmann::json &j, Color &p) {
     auto color = j["color"].get<uint32_t>();
     p.color.r = ((color & 0xFF0000) >> 16) / 256.0f;
     p.color.g = ((color & 0x00FF00) >> 8) / 256.0f;
     p.color.b = ((color & 0x0000FF)) / 256.0f;
+
+    int alpha = ((color & 0xFF000000) >> 24);
+    if (alpha > 0) {
+        p.color.a = alpha / 256.0f;
+    } else {
+        p.color.a = 1.0f;
+    }
 }
 
 inline void from_json(const nlohmann::json &j, Line &p) {
-    from_json(j, static_cast<Colored &>(p));
-    p.surprise = p.color;
+    from_json(j, static_cast<Color &>(p));
+    p.color2 = p.color;
 
     p.x1 = j["x1"].get<float>();
     p.y1 = j["y1"].get<float>();
@@ -137,7 +151,7 @@ inline void from_json(const nlohmann::json &j, Line &p) {
 }
 
 inline void from_json(const nlohmann::json &j, Circle &p) {
-    from_json(j, static_cast<Colored &>(p));
+    from_json(j, static_cast<Color &>(p));
 
     p.radius = j["r"].get<float>();
     p.center.x = j["x"].get<float>();
@@ -145,7 +159,7 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
 }
 
 inline void from_json(const nlohmann::json &j, Rectangle &p) {
-    from_json(j, static_cast<Colored &>(p));
+    from_json(j, static_cast<Color &>(p));
     float x1 = j["x1"].get<float>();
     float y1 = j["y1"].get<float>();
     float x2 = j["x2"].get<float>();
