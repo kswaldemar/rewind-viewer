@@ -3,6 +3,14 @@ import json
 from enum import Enum
 
 
+class AreaType(Enum):
+    UNKNOWN = 0
+    FOREST = 1
+    SWAMP = 2
+    RAIN = 3
+    CLOUD = 4
+
+
 class Side(Enum):
     ALLY = -1
     NEUTRAL = 0
