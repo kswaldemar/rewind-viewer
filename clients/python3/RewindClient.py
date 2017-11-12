@@ -88,12 +88,12 @@ class RewindClient():
             'unit_type': unit_type.value
         })
 
-    def area_description(self, cell_x, cell_y, desc_id):
+    def area_description(self, cell_x, cell_y, area_type=AreaType.UNKNOWN):
         self._send({
             'type': 'area',
             'x': cell_x,
             'y': cell_y,
-            'area_type': desc_id
+            'area_type': area_type.value
         })
 
     def message(self, msg):
