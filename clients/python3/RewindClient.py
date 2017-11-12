@@ -96,5 +96,11 @@ class RewindClient():
             'area_type': desc_id
         })
 
+    def message(self, msg):
+        self._send({
+            'type': 'message',
+            'message': msg
+        })
+
     def end_frame(self):
         self._send({'type': 'end'})
