@@ -3,6 +3,14 @@ import json
 from enum import Enum
 
 
+class AreaType(Enum):
+    UNKNOWN = 0
+    FOREST = 1
+    SWAMP = 2
+    RAIN = 3
+    CLOUD = 4
+
+
 class Side(Enum):
     ALLY = -1
     NEUTRAL = 0
@@ -80,12 +88,18 @@ class RewindClient():
             'unit_type': unit_type.value
         })
 
-    def area_description(self, cell_x, cell_y, desc_id):
+    def area_description(self, cell_x, cell_y, area_type=AreaType.UNKNOWN):
         self._send({
             'type': 'area',
             'x': cell_x,
             'y': cell_y,
-            'area_type': desc_id
+            'area_type': area_type.value
+        })
+
+    def message(self, msg):
+        self._send({
+            'type': 'message',
+            'message': msg
         })
 
     def end_frame(self):
