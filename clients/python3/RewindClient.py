@@ -42,7 +42,7 @@ class RewindClient():
         if self.socket:
             self.socket.sendall(json.dumps(obj).encode('utf-8'))
 
-    def circle(self, x, y, radius, color, layer=2):
+    def circle(self, x, y, radius, color, layer=3):
         self._send({
             'type': 'circle',
             'x': x,
@@ -52,7 +52,7 @@ class RewindClient():
             'layer': layer
         })
 
-    def rectangle(self, x1, y1, x2, y2, color, layer=2):
+    def rectangle(self, x1, y1, x2, y2, color, layer=3):
         self._send({
             'type': 'rectangle',
             'x1': x1,
@@ -63,7 +63,7 @@ class RewindClient():
             'layer': layer
         })
 
-    def line(self, x1, y1, x2, y2, color):
+    def line(self, x1, y1, x2, y2, color, layer=3):
         self._send({
             'type': 'line',
             'x1': x1,
@@ -71,6 +71,7 @@ class RewindClient():
             'x2': x2,
             'y2': y2,
             'color': color,
+            'layer': layer
         })
 
     def living_unit(self, x, y, radius, hp, max_hp, rem_cooldown=0, cooldown=100,
