@@ -385,8 +385,8 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         //Plain float format: vec3 color, alpha, vec2 pos
-        const size_t stride = 6 * sizeof(float) + 1;
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, reinterpret_cast<const void *>(4 * sizeof(float) + 1));
+        const size_t stride = 6 * sizeof(float);
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride, nullptr);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);

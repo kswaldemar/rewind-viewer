@@ -74,8 +74,8 @@ struct Color {
 struct Line : Color {
     float x1;
     float y1;
-    //TODO: Rewrite it, looks ugly
-    glm::vec4 color2; //Color for second point
+    //TODO: Rewrite it without color duplication
+    glm::vec4 color2;
     float x2;
     float y2;
 } __attribute__((packed));

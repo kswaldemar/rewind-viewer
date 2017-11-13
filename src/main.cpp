@@ -94,7 +94,14 @@ GLFWwindow *setup_window() {
     int width;
     int height;
     int nr_channels;
-    auto icon_data = stbi_load("resources/icon.png", &width, &height, &nr_channels, 0);
+    const std::string icon_path = "resources/icon.png";
+    auto icon_data = stbi_load(icon_path.c_str(), &width, &height, &nr_channels, 0);
+    if (!icon_data) {
+        std::string msg = "Cannot find application icon (" + icon_path + "). "
+            "Make sure you launch viewer from directory with 'resources' folder";
+        LOG_ERROR("%s", msg.c_str());
+        return nullptr;
+    }
     GLFWimage icon{width, height, icon_data};
     LOG_INFO("Setup application icon")
     glfwSetWindowIcon(window, 1, &icon);
@@ -134,7 +141,6 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     int width, height;
     glfwGetFramebufferSize(window, &width, &height);
 
-    //glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LOG_INFO("Start render loop")
