@@ -60,7 +60,7 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
         size_t layer = Frame::DEFAULT_LAYER;
         if (layer_it != j.end()) {
             layer = layer_it->get<size_t>();
-            if (layer < 1 || layer >= static_cast<size_t>(Frame::LAYERS_COUNT)) {
+            if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
                 LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
                          layer, static_cast<size_t>(Frame::LAYERS_COUNT));
             }
