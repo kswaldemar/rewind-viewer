@@ -56,7 +56,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
 
     //Clear data option
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu("Edit", true)) {
+        if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Edit", true)) {
             if (ImGui::MenuItem(ICON_FA_RECYCLE " Clear frames data", "CTRL+R", false, scene->has_data())) {
                 scene->clear_data();
             }

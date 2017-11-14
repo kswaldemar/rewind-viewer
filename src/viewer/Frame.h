@@ -71,6 +71,7 @@ struct Color {
     glm::vec4 color;
 };
 
+#pragma pack(1)
 struct Line : Color {
     float x1;
     float y1;
@@ -78,7 +79,8 @@ struct Line : Color {
     glm::vec4 color2;
     float x2;
     float y2;
-} __attribute__((packed));
+};
+#pragma pop
 
 struct Circle : Color {
     glm::vec2 center;

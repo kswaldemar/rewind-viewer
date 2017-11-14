@@ -22,13 +22,11 @@ constexpr void *offset(uint16_t shift) {
 
 template<typename T>
 constexpr inline T clamp(T value, T min_val, T max_val) {
-    if (value < min_val) {
-        return min_val;
-    }
-    if (value > max_val) {
-        return max_val;
-    }
-    return value;
+    return value < min_val 
+           ? min_val 
+           : value > max_val 
+                ? max_val 
+                : value;
 }
 
 constexpr inline double lerp(double v, double v0, double v1, double t0, double t1) {

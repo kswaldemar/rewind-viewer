@@ -349,7 +349,6 @@ void Scene::render_grid() {
     }
     glBindVertexArray(attr_->grid_vao);
     glDrawArrays(GL_LINES, 0, attr_->grid_vertex_count);
-    //glBindVertexArray(0);
 }
 
 void Scene::render_circle(const pod::Circle &circle) {
