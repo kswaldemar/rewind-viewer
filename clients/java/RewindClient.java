@@ -39,6 +39,20 @@ public class RewindClient {
         }
     }
 
+    public enum UnitType {
+        UNKNOWN(0),
+        TANK(1),
+        IFV(2),
+        ARRV(3),
+        HELICOPTER(4),
+        FIGHTER(5);
+        final int unitType;
+
+        UnitType(int unitType) {
+            this.unitType = unitType;
+        }
+    }
+
     /**
      * Should be send on end of move function all turn primitives can be rendered after that point
      */
@@ -46,21 +60,21 @@ public class RewindClient {
         send("{\"type\":\"end\"}");
     }
 
-    void circle(double x, double y, double r, Color color) {
-        send(String.format("{\"type\": \"circle\", \"x\": %f, \"y\": %f, \"r\": %f, \"color\": %d}", x, y, r, color.getRGB()));
+    void circle(double x, double y, double r, Color color, int layer) {
+        send(String.format("{\"type\": \"circle\", \"x\": %f, \"y\": %f, \"r\": %f, \"color\": %d, \"layer\": %d}", x, y, r, color.getRGB(), layer));
     }
 
-    void rect(double x1, double y1, double x2, double y2, Color color) {
-        send(String.format("{\"type\": \"rectangle\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d}", x1, y1, x2, y2, color.getRGB()));
+    void rect(double x1, double y1, double x2, double y2, Color color, int layer) {
+        send(String.format("{\"type\": \"rectangle\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d, \"layer\": %d}", x1, y1, x2, y2, color.getRGB(), layer));
     }
 
-    void line(double x1, double y1, double x2, double y2, Color color) {
-        send(String.format("{\"type\": \"line\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d}", x1, y1, x2, y2, color.getRGB()));
+    void line(double x1, double y1, double x2, double y2, Color color, int layer) {
+        send(String.format("{\"type\": \"line\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d, \"layer\": %d}", x1, y1, x2, y2, color.getRGB(), layer));
     }
 
     void livingUnit(double x, double y, double r, int hp, int maxHp,
                     Side side) {
-        livingUnit(x, y, r, hp, maxHp, side, 0, 0, 0, 0, false);
+        livingUnit(x, y, r, hp, maxHp, side, 0, UnitType.UNKNOWN, 0, 0, false);
     }
 
     void areaDescription(int cellX, int cellY, AreaType areaType) {
@@ -100,12 +114,12 @@ public class RewindClient {
      * @param maxCooldown -
      */
     void livingUnit(double x, double y, double r, int hp, int maxHp,
-                    Side side, double course, int unitType,
+                    Side side, double course, UnitType unitType,
                     int remCooldown, int maxCooldown, boolean selected) {
         send(String.format(
                 "{\"type\": \"unit\", \"x\": %f, \"y\": %f, \"r\": %f, \"hp\": %d, \"max_hp\": %d, \"enemy\": %d, \"unit_type\":%d, \"course\": %.3f," +
                         "\"rem_cooldown\":%d, \"cooldown\":%d, \"selected\":%d }",
-                x, y, r, hp, maxHp, side.side, unitType, course, remCooldown, maxCooldown, selected ? 1 : 0));
+                x, y, r, hp, maxHp, side.side, unitType.unitType, course, remCooldown, maxCooldown, selected ? 1 : 0));
     }
 
     public RewindClient(String host, int port) {
@@ -169,21 +183,21 @@ public class RewindClient {
                         100,
                         Side.values()[(int) (Side.values().length * Math.random())],
                         Math.PI * Math.random(),
-                        1, //TODO enum
+                        UnitType.values()[(int) (UnitType.values().length * Math.random())],
                         (int) (60 * Math.random()),
                         60,
                         Math.random() > 0.8);
 
-                rc.line(unixX, unitY, Math.random() * worldSize, Math.random() * worldSize, rndColor);
+                rc.line(unixX, unitY, Math.random() * worldSize, Math.random() * worldSize, rndColor, 3);
 
                 double circleX = unixX + Math.random() * 40 - 20;
                 double circleY = unitY + Math.random() * 40 - 20;
 
-                rc.circle(circleX, circleY, 10 + Math.random() * 10, rndColor);
+                rc.circle(circleX, circleY, 10 + Math.random() * 10, rndColor, 2);
 
                 double rectX1 = circleX + Math.random() * 100;
                 double rectY1 = circleY + Math.random() * 100;
-                rc.rect(rectX1, rectY1, rectX1 + Math.random() * 40, rectY1 + Math.random() * 40, rndColor);
+                rc.rect(rectX1, rectY1, rectX1 + Math.random() * 40, rectY1 + Math.random() * 40, rndColor, 1);
             }
             rc.endFrame();
         }
