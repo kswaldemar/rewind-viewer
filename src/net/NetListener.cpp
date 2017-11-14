@@ -64,7 +64,7 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
                          layer, static_cast<size_t>(Frame::LAYERS_COUNT));
             }
-            --layer;
+            layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
         }
 
         if (!frame_) {

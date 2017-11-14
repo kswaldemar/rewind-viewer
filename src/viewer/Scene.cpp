@@ -27,7 +27,7 @@ const std::unordered_map<int, const char *> side2str = {
 
 struct Scene::render_attrs_t {
     GLuint grid_vao = 0;
-    GLuint grid_vertex_count = 0;
+    GLsizei grid_vertex_count = 0;
     //Vertex array to draw any rectangle and circle
     GLuint rect_vao = 0;
     //Lines designed to dynamic draw
@@ -170,7 +170,6 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
 
     //Grid
     if (opt_.show_grid) {
-        //TODO: Rendering garbage lines if disabled by default
         shaders_->color.use();
         shaders_->color.set_mat4("model", attr_->grid_model);
         shaders_->color.set_vec4("color", opt_.grid_color);
