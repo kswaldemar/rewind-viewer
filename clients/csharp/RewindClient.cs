@@ -25,7 +25,7 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk
     {
         private const int BufferSizeBytes = 1 << 20;
 
-        private const int DefaultLayer = 2;
+        private const int DefaultLayer = 3;
 
         private static RewindClient _instance;
 
