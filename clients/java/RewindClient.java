@@ -2,6 +2,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.Locale;
 
 
 /**
@@ -136,6 +137,10 @@ public class RewindClient {
      * @param args .
      */
     public static void main(String[] args) {
+        // Double is formatted with a comma "," in some locales.
+        // For json to work properly, should use dot instead.
+        Locale.setDefault(Locale.US);
+
         RewindClient rc = new RewindClient();
         int worldSize = 1024;
         for (int x = 0; x < worldSize / 32; x++) {

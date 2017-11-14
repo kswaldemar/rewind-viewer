@@ -337,7 +337,7 @@ void Scene::render_grid() {
             grid.push_back(shift);
             grid.push_back(0.0);
         }
-        attr_->grid_vertex_count = static_cast<GLsizei>(grid.size());
+        attr_->grid_vertex_count = static_cast<GLsizei>(grid.size() / 3);
 
         glBindVertexArray(attr_->grid_vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
