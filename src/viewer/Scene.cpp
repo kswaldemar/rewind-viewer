@@ -17,6 +17,11 @@ bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
     return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
 }
 
+bool hittest(const glm::vec2 &wmouse, const pod::Popup &popup) {
+    auto d = wmouse - popup.center;
+    return (d.x * d.x + d.y * d.y) <= popup.radius * popup.radius;
+}
+
 const std::unordered_map<int, const char *> side2str = {
     {-1, "Ally"},
     {0,  "Neutral"},
@@ -228,6 +233,15 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
                 ImGui::EndTooltip();
             }
         }
+        for (const auto &popup : active_frame_->primitives[Frame::DEFAULT_LAYER].popups) {
+            if (hittest(mouse, popup)) {
+                ImGui::BeginTooltip();
+                ImGui::Text(
+                    popup.text.c_str()
+                );
+                ImGui::EndTooltip();
+            }
+        }
     }
 }
 
@@ -304,6 +318,14 @@ void Scene::render_frame_layer(const Frame::primitives_t &slice) {
         }
         glDisable(GL_DEPTH_TEST);
         glLineWidth(1);
+    }
+
+    if (!slice.popups.empty()) {
+        shaders_->circle.use();
+        shaders_->circle.set_int("textured", 0);
+        for (const auto &popup : slice.popups) {
+            render_circle(static_cast<const pod::Circle &>(popup));
+        }
     }
 }
 

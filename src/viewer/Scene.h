@@ -84,6 +84,7 @@ private:
     void render_rectangle(const pod::Rectangle &rect);
     void render_lines(const std::vector<pod::Line> &lines);
     void render_unit(const pod::Unit &unit);
+    void render_popup(const pod::Popup &popup);
 
     ResourceManager *mgr_;
 
