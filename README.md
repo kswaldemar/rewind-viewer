@@ -8,23 +8,24 @@
 
 Fast Russain AI Cup championship match viewer with rewinding support written in OpenGL
 
-![That it is look like](./resources/kdpv.png)
+![That's how it looks like](./resources/kdpv.png)
 
 ## Overview
-Viewer has several advantages in comparison of local-runner with drawing plugin:
- - All figures is drawn using your video adapter, so no more problems with slow drawing
+The viewer has several advantages in comparison of local-runner with drawing plugin:
+ - All figures are drawn using your video adapter, so no more problems with slow drawing
  - Rewinding - ability to navigate between game tick
  - In Pause navigation - zoom and navigate in any game state
  - Handy mouse navigation
 
 Obvious drawbacks:
- - Viewer running as standalone application, it know nothing about local runner or your strategy, so you need manually 
+ - Viewer running as standalone application, it knows nothing about local runner or your strategy, so you need manually 
 send all data (like buildings, units etc.) and you can draw only data visible by your strategy
- - In theory high memory usage, because it need to store all drawing primitives for rewinding support
+ - In theory, high memory usage, because it needs to store all drawing primitives for rewinding support
 
 :information_source: Currently viewer reached 1.2 version and developments is on hold.
-There definetely will be building support after round 1 and fog of war support right after round 2.
-Minor bugfixes and optimization may come during championship, but not so much.
+There definitely will be building support after round 1 and fog of war support right after round 2.
+Minor bugfixes and optimization may come during the championship, but not so much.
+
 
 ## Binaries
 
@@ -54,18 +55,24 @@ cmake --build . --config Release
 ```
 *Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows. 
 
-:warning: **Note**: Viewer should be launched from same folder, where `resources` is located. 
-So you need to manualy copy `resources` to build folder, or copy executable to project root directory.
+:warning: **Note**: Viewer should be launched from the same folder, where `resources` is located. 
+So you need to manually copy `resources` to build folder, or copy executable to project root directory.
 
 ## Strategy integration
-You need special client to be able send messages in viewer. See [example C++ client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/c%2B%2B/RewindClient.h) for information about json based message
+You need a special client to be able to send messages to the viewer. See [example C++ client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/c%2B%2B/RewindClient.h) for information about JSON based message
 protocol and implement one for your language of choice.
-Also see [client examples for official local runner](https://github.com/JustAMan/russian-ai-cup-visual/tree/master/clients).
+Also, see [client examples for official local runner](https://github.com/JustAMan/russian-ai-cup-visual/tree/master/clients).
 
-Then run viewer before strategy and it should start draw frames
+Sample usage: 
+
+1. Start the viewer.
+2. Start localrunner, preferably in render_to_screen=false mode.
+3. Start your strategy of choice.
+4. To be able to drew things in the viewer you will need to create a client, send data to the client in your strategy, and **close the frame** with client command. 
+5. There is no need to close the viewer after the strategy is done, simply clean old data (Edit -> Clear frame data, or just Ctrl+R) and start from step 2.
 
 ## License
-Project sources distibuted under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), thirdparties distributed under their own licences
+Project sources distributed under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), third parties distributed under their own licences
 
 ## Credits
 Project created with help of many great libraries:
