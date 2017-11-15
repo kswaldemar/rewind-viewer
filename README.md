@@ -10,7 +10,7 @@ Fast Russain AI Cup championship match viewer with rewinding support written in 
 
 ![That it is look like](./resources/kdpv.png)
 
-## Design
+## Overview
 Viewer has several advantages in comparison of local-runner with drawing plugin:
  - All figures is drawn using your video adapter, so no more problems with slow drawing
  - Rewinding - ability to navigate between game tick
@@ -25,6 +25,13 @@ send all data (like buildings, units etc.) and you can draw only data visible by
 :information_source: Currently viewer reached 1.2 version and developments is on hold.
 There definetely will be building support after round 1 and fog of war support right after round 2.
 Minor bugfixes and optimization may come during championship, but not so much.
+
+## Binaries
+
+Source code with changelog for significant releases can be found in [github releases page](https://github.com/kswaldemar/rewind-viewer/releases).
+
+Prebuilt windows binaries for other version, such as bugfixes [can be found here](https://github.com/kswaldemar/rewind-viewer/issues/23)
+
 
 ## Build
 
