@@ -17,6 +17,7 @@ struct Circle;
 struct Rectangle;
 struct Line;
 struct Unit;
+struct Popup;
 }
 
 /**
@@ -61,6 +62,7 @@ struct Frame {
     };
 
     std::array<primitives_t, LAYERS_COUNT> primitives;
+    std::vector<pod::Popup> popups;
     std::string user_message;
 };
 
@@ -102,6 +104,12 @@ struct Unit {
     float course;
     bool selected;
     int enemy; //-1 for ally, 0 for neutral, 1 for enemy
+};
+
+struct Popup {
+    glm::vec2 center;
+    float radius;
+    std::string text;
 };
 
 struct AreaDesc {
@@ -156,6 +164,13 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
     p.radius = j["r"].get<float>();
     p.center.x = j["x"].get<float>();
     p.center.y = j["y"].get<float>();
+}
+
+inline void from_json(const nlohmann::json &j, Popup &p) {
+    p.radius = j["r"].get<float>();
+    p.center.x = j["x"].get<float>();
+    p.center.y = j["y"].get<float>();
+    p.text = j["text"].get<std::string>();
 }
 
 inline void from_json(const nlohmann::json &j, Rectangle &p) {

@@ -15,6 +15,7 @@
     X(message) \
     X(unit) \
     X(area) \
+    X(popup) \
 
 enum class PrimitiveType {
 #define X(type) type,

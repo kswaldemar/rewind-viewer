@@ -17,6 +17,11 @@ bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
     return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
 }
 
+bool hittest(const glm::vec2 &wmouse, const pod::Popup &popup) {
+    auto d = wmouse - popup.center;
+    return (d.x * d.x + d.y * d.y) <= popup.radius * popup.radius;
+}
+
 const std::unordered_map<int, const char *> side2str = {
     {-1, "Ally"},
     {0,  "Neutral"},
@@ -224,6 +229,15 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
                     unit.center.x, unit.center.y,
                     unit.rem_cooldown, unit.cooldown,
                     unit.selected ? "yes" : "no"
+                );
+                ImGui::EndTooltip();
+            }
+        }
+        for (const auto &popup : active_frame_->popups) {
+            if (hittest(mouse, popup)) {
+                ImGui::BeginTooltip();
+                ImGui::Text(
+                    popup.text.c_str()
                 );
                 ImGui::EndTooltip();
             }
