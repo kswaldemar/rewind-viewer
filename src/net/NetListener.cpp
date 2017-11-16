@@ -40,6 +40,10 @@ void NetListener::run() {
                      client_socket->GetClientAddr(), client_socket->GetClientPort());
         }
         status_ = ConStatus::ESTABLISHED;
+        //Cleanup previous data
+        scene_->clear_data(false);
+        frame_ = nullptr;
+        //Serve socket
         serve_connection(client_socket);
     }
 }

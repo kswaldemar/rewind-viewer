@@ -57,9 +57,10 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     //Clear data option
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Edit", true)) {
-            if (ImGui::MenuItem(ICON_FA_RECYCLE " Clear frames data", "CTRL+R", false, scene->has_data())) {
-                scene->clear_data();
-            }
+            //if (ImGui::MenuItem(ICON_FA_RECYCLE " Clear frames data", "CTRL+R", false, scene->has_data())) {
+            //    scene->clear_data(true);
+            //}
+            ImGui::Checkbox("Close window by Escape key", &close_with_esc_);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -136,11 +137,11 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
             }
         }
         if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && io.KeyCtrl) {
-            scene->clear_data();
+            scene->clear_data(false);
         }
     }
 
-    request_exit_ = io.KeysDown[GLFW_KEY_ESCAPE];
+    request_exit_ = close_with_esc_ && io.KeysDown[GLFW_KEY_ESCAPE];
 
     //Hittest for detailed unit info
     if (!ImGui::GetIO().WantCaptureMouse) {
@@ -279,8 +280,13 @@ void UIController::playback_control_widget(Scene *scene) {
         int tick = scene->get_frame_index();
 
         if (!io.WantTextInput) {
-            tick -= io.KeysDown[GLFW_KEY_LEFT];
-            tick += io.KeysDown[GLFW_KEY_RIGHT];
+            if (io.KeyCtrl) {
+                tick -= key_pressed_once(GLFW_KEY_LEFT);
+                tick += key_pressed_once(GLFW_KEY_RIGHT);
+            } else {
+                tick -= io.KeysDown[GLFW_KEY_LEFT];
+                tick += io.KeysDown[GLFW_KEY_RIGHT];
+            }
         }
 
         ImGui::Button(ICON_FA_FAST_BACKWARD "##fastprev", button_size);

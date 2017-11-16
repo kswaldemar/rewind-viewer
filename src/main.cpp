@@ -145,7 +145,16 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LOG_INFO("Start render loop")
     while (!glfwWindowShouldClose(window)) {
+        // Swap buffers
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+
+        if (!glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
+            continue;
+        }
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
         //Updates
         ui.next_frame(&scene, net.connection_status());
         cam.update();
@@ -163,10 +172,6 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
 
         //// Render UI
         ui.frame_end();
-
-        // Swap buffers
-        glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     net.stop();

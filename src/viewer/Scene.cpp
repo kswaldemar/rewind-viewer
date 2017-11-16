@@ -150,7 +150,7 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
         std::lock_guard<std::mutex> f(frames_mutex_);
         frames_count_ = static_cast<int>(frames_.size());
         if (cur_frame_idx_ >= 0 && cur_frame_idx_ < frames_count_) {
-            active_frame_ = frames_[cur_frame_idx_].get();
+            active_frame_ = frames_[cur_frame_idx_];
         }
     }
 
@@ -182,7 +182,7 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     }
 
     //Frame
-    if (active_frame_ != nullptr) {
+    if (active_frame_) {
         for (size_t idx = 0; idx < active_frame_->primitives.size(); ++idx) {
             if (opt_.enabled_layers[idx]) {
                 render_frame_layer(active_frame_->primitives[idx]);
@@ -236,24 +236,24 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
         for (const auto &popup : active_frame_->popups) {
             if (hittest(mouse, popup)) {
                 ImGui::BeginTooltip();
-                ImGui::Text(
-                    popup.text.c_str()
-                );
+                ImGui::Text("%s", popup.text.c_str());
                 ImGui::EndTooltip();
             }
         }
     }
 }
 
-void Scene::clear_data() {
+void Scene::clear_data(bool clean_active) {
     {
         std::lock_guard<std::mutex> _(terrain_mutex_);
         terrains_.clear();
     }
     {
         std::lock_guard<std::mutex> _(frames_mutex_);
-        active_frame_ = nullptr;
         frames_.clear();
+        if (clean_active) {
+            active_frame_ = nullptr;
+        }
         frames_count_ = 0;
         cur_frame_idx_ = 0;
     }

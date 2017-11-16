@@ -51,6 +51,7 @@ private:
     bool request_exit_ = false;
     bool autoplay_scene_ = true;
     bool developer_mode_ = false;
+    bool close_with_esc_ = true;
 
     const uint16_t fast_skip_speed_ = 20; //In ticks per frame
 

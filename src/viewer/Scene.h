@@ -51,7 +51,7 @@ public:
     void show_detailed_info(const glm::vec2 &mouse) const;
 
     ///Remove all frames and terrain
-    void clear_data();
+    void clear_data(bool clean_active);
 
     ///True if has at least one frame
     bool has_data() const;
@@ -95,10 +95,10 @@ private:
     settings_t opt_;
 
     std::mutex frames_mutex_;
-    std::vector<std::unique_ptr<Frame>> frames_;
+    std::vector<std::shared_ptr<Frame>> frames_;
     int cur_frame_idx_ = 0;
     int frames_count_ = 0;
-    Frame *active_frame_ = nullptr;
+    std::shared_ptr<Frame> active_frame_ = nullptr;
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
     std::map<Frame::AreaType, GLuint> terrain2tex_;
