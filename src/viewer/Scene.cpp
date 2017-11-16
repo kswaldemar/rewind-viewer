@@ -233,7 +233,7 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
                 ImGui::EndTooltip();
             }
         }
-        for (const auto &popup : active_frame_->primitives[Frame::DEFAULT_LAYER].popups) {
+        for (const auto &popup : active_frame_->popups) {
             if (hittest(mouse, popup)) {
                 ImGui::BeginTooltip();
                 ImGui::Text(
@@ -318,14 +318,6 @@ void Scene::render_frame_layer(const Frame::primitives_t &slice) {
         }
         glDisable(GL_DEPTH_TEST);
         glLineWidth(1);
-    }
-
-    if (!slice.popups.empty()) {
-        shaders_->circle.use();
-        shaders_->circle.set_int("textured", 0);
-        for (const auto &popup : slice.popups) {
-            render_circle(static_cast<const pod::Circle &>(popup));
-        }
     }
 }
 

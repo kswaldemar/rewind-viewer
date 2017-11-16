@@ -59,10 +59,10 @@ struct Frame {
         std::vector<pod::Rectangle> rectangles;
         std::vector<pod::Line> lines;
         std::vector<pod::Unit> units;
-        std::vector<pod::Popup> popups;
     };
 
     std::array<primitives_t, LAYERS_COUNT> primitives;
+    std::vector<pod::Popup> popups;
     std::string user_message;
 };
 
@@ -106,7 +106,9 @@ struct Unit {
     int enemy; //-1 for ally, 0 for neutral, 1 for enemy
 };
 
-struct Popup : Circle {
+struct Popup {
+    glm::vec2 center;
+    float radius;
     std::string text;
 };
 
@@ -165,7 +167,9 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
 }
 
 inline void from_json(const nlohmann::json &j, Popup &p) {
-    from_json(j, static_cast<Circle &>(p));
+    p.radius = j["r"].get<float>();
+    p.center.x = j["x"].get<float>();
+    p.center.y = j["y"].get<float>();
     p.text = j["text"].get<std::string>();
 }
 

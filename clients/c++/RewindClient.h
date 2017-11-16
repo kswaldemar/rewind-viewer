@@ -95,10 +95,10 @@ public:
         send(format(fmt, x, y, r, color, layer));
     }
 
-    void popup(double x, double y, double r, uint32_t color, std::string text) {
+    void popup(double x, double y, double r, std::string text) {
         static const char *fmt =
-            R"({"type": "popup", "x": %lf, "y": %lf, "r": %lf, "color": %u, "text": %s})";
-        send(format(fmt, x, y, r, color, text.c_str()));
+            R"({"type": "popup", "x": %lf, "y": %lf, "r": %lf, "text": %s})";
+        send(format(fmt, x, y, r, text.c_str()));
     }
 
     void rect(double x1, double y1, double x2, double y2, uint32_t color, size_t layer = DEFAULT_LAYER) {

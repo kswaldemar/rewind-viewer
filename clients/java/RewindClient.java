@@ -72,8 +72,8 @@ public class RewindClient {
         send(String.format("{\"type\": \"line\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d, \"layer\": %d}", x1, y1, x2, y2, color.getRGB(), layer));
     }
 
-    void popup(double x, double y, double r, Color color, String text) {
-        send(String.format("{\"type\": \"popup\", \"x\": %f, \"y\": %f, \"r\": %f, \"color\": %d, \"text\": \"%s\"}", x, y, r, color.getRGB(), text));
+    void popup(double x, double y, double r, String text) {
+        send(String.format("{\"type\": \"popup\", \"x\": %f, \"y\": %f, \"r\": %f, \"text\": \"%s \"}", x, y, r, text));
     }
 
     void livingUnit(double x, double y, double r, int hp, int maxHp,
@@ -203,7 +203,7 @@ public class RewindClient {
                 double rectY1 = circleY + Math.random() * 100;
                 rc.rect(rectX1, rectY1, rectX1 + Math.random() * 40, rectY1 + Math.random() * 40, rndColor, 1);
             }
-            rc.popup(128, 128, 28, Color.red, "Hiii");
+            rc.popup(128, 128, 28, "Hello!\\nThis is popup message!\\nabcdefg");
             rc.endFrame();
         }
 
