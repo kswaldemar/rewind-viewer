@@ -107,7 +107,6 @@ func (c *RewindClient) livingUnitSmaller(x float64, y float64, r float64, hp int
 }
 
 func (c *RewindClient) areaDescription(cellX int, cellY int, areaType AreaType) {
-	fmt.Println(fmt.Sprintf("{\"type\": \"area\", \"x\": %d, \"y\": %d, \"area_type\": %d}", cellX, cellY, areaType));
 	c.writeString(fmt.Sprintf("{\"type\": \"area\", \"x\": %d, \"y\": %d, \"area_type\": %d}", cellX, cellY, areaType));
 }
 
