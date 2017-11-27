@@ -49,9 +49,11 @@ void Camera::update() {
             int width, height;
             glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
 
+            const int min_size = std::min(width, height);
+
             glm::vec2 delta = io.MouseDelta;
-            delta.x = -opt_.viewport_size * (delta.x / width);
-            delta.y = opt_.viewport_size * (delta.y / height) * y_axes_invert();
+            delta.x = -opt_.viewport_size * (delta.x / min_size);
+            delta.y =  opt_.viewport_size * (delta.y / min_size) * y_axes_invert();
             pos_ += delta;
         }
 
@@ -61,7 +63,7 @@ void Camera::update() {
 
 glm::vec2 Camera::screen2world(const glm::vec2 &coord) const {
     int width, height;
-    glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
+    glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
 
     const float half_view = opt_.viewport_size * 0.5f;
     const float min_size = std::min<float>(width, height);

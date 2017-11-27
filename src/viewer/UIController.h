@@ -51,11 +51,11 @@ private:
     bool request_exit_ = false;
     bool autoplay_scene_ = true;
     bool developer_mode_ = false;
-    bool close_with_esc_ = true;
+    bool close_with_esc_ = false;
 
     const uint16_t fast_skip_speed_ = 20; //In ticks per frame
 
-    glm::vec3 clear_color_ = {0.673, 0.764, 0.794};
+    glm::vec3 clear_color_ = {0.2, 0.3, 0.3};
 
     ///Last remembered state
     bool key_pressed_[512];
