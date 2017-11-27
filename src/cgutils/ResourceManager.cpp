@@ -4,9 +4,13 @@
 
 #include <stb_image.h>
 
+
 ResourceManager::ResourceManager(const std::string &path_to_res_folder)
     : res_folder_(path_to_res_folder)
 {
+    if (!res_folder_.empty() && res_folder_.back() != '/') {
+        res_folder_ += '/';
+    }
     stbi_set_flip_vertically_on_load(true);
 }
 
@@ -32,12 +36,14 @@ GLuint ResourceManager::gen_buffer() {
 
 GLuint ResourceManager::load_texture(const std::string &path_to_texture, bool gen_mipmap,
                                      GLint wrap_s, GLint wrap_t, GLint flt_min, GLint flt_mag) {
+
     int width;
     int height;
     int nr_channels;
-    unsigned char *data = stbi_load(path_to_texture.c_str(), &width, &height, &nr_channels, 0);
+    auto absolute_path = res_folder_ + path_to_texture;
+    unsigned char *data = stbi_load(absolute_path.c_str(), &width, &height, &nr_channels, 0);
     if (!data) {
-        LOG_WARN("Cannot load texture %s", path_to_texture.c_str());
+        LOG_WARN("Cannot load texture %s", absolute_path.c_str());
         return 0;
     }
 

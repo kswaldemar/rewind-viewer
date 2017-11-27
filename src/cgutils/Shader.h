@@ -14,7 +14,9 @@
  */
 class Shader {
 public:
-    Shader(const std::string &vertex_shader_path, const std::string &fragment_shader_path);
+    static void set_shaders_folder(const std::string &path);
+
+    Shader(const std::string &vertex, const std::string &fragment);
     ~Shader();
 
     void use();
@@ -34,6 +36,8 @@ public:
     void bind_uniform_block(const std::string &name, GLuint binding_point);
 
 private:
+    static std::string path_to_shaders_;
+
     GLuint program_ = 0;
 };
 

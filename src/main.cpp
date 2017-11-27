@@ -120,9 +120,12 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     LOG_INFO("Create Resource manager")
-    ResourceManager res;
+    ResourceManager res("resources/textures/");
+    Shader::set_shaders_folder("resources/shaders/");
+
     LOG_INFO("Create Scene")
     Scene scene(&res);
+
     LOG_INFO("Create GUI controller")
     UIController ui(&cam);
 
@@ -145,15 +148,15 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LOG_INFO("Start render loop")
     while (!glfwWindowShouldClose(window)) {
-        // Swap buffers
+        //Read window events
         glfwPollEvents();
 
         if (!glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
-            using namespace std::chrono_literals;
-            std::this_thread::sleep_for(100ms);
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
+        // Swap buffers
         glfwSwapBuffers(window);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -173,12 +176,11 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         glBindVertexArray(0);
         glUseProgram(0);
 
-        //// Render UI
+        // Render UI
         ui.frame_end();
     }
 
     net.stop();
     LOG_INFO("Exit from application");
-    using namespace std::chrono_literals;
-    std::this_thread::sleep_for(100ms);
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }

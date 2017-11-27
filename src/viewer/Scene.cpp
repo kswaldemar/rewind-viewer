@@ -44,10 +44,10 @@ struct Scene::render_attrs_t {
 
 struct Scene::shaders_t {
     shaders_t()
-        : color("resources/shaders/simple.vert", "resources/shaders/uniform_color.frag")
-        , circle("resources/shaders/circle.vert", "resources/shaders/circle.frag")
-        , lines("resources/shaders/lines.vert", "resources/shaders/lines.frag")
-        , textured("resources/shaders/simple.vert", "resources/shaders/textured.frag") {
+        : color("simple.vert", "uniform_color.frag")
+        , circle("circle.vert", "circle.frag")
+        , lines("lines.vert", "lines.frag")
+        , textured("simple.vert", "textured.frag") {
         //Setup variables, which will never change
         circle.use();
         circle.set_int("tex_smp", 0);
@@ -77,27 +77,24 @@ Scene::Scene(ResourceManager *res)
 
     //Load textures
     LOG_INFO("Load background texture")
-    attr_->grass_tex = mgr_->load_texture("resources/textures/grass.png", false, GL_REPEAT, GL_REPEAT);
+    attr_->grass_tex = mgr_->load_texture("grass.png", false, GL_REPEAT, GL_REPEAT);
 
     //Unit textures
     LOG_INFO("Load unit textures")
-    auto load_unit_tex = [this](const std::string &path) {
-        return mgr_->load_texture(path, true, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, GL_LINEAR, GL_LINEAR);
-    };
-    unit2tex_[Frame::UnitType::TANK] = load_unit_tex("resources/textures/tank.png");
-    unit2tex_[Frame::UnitType::IFV] = load_unit_tex("resources/textures/ifv.png");
-    unit2tex_[Frame::UnitType::ARRV] = load_unit_tex("resources/textures/arrv.png");
-    unit2tex_[Frame::UnitType::HELICOPTER] = load_unit_tex("resources/textures/helicopter.png");
-    unit2tex_[Frame::UnitType::FIGHTER] = load_unit_tex("resources/textures/fighter.png");
+    unit2tex_[Frame::UnitType::TANK] = mgr_->load_texture("tank.png");
+    unit2tex_[Frame::UnitType::IFV] = mgr_->load_texture("ifv.png");
+    unit2tex_[Frame::UnitType::ARRV] = mgr_->load_texture("arrv.png");
+    unit2tex_[Frame::UnitType::HELICOPTER] = mgr_->load_texture("helicopter.png");
+    unit2tex_[Frame::UnitType::FIGHTER] = mgr_->load_texture("fighter.png");
 
     //AreaDesc textures
     auto load_area_tex = [this](const std::string &path) {
         return mgr_->load_texture(path, true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
     };
-    terrain2tex_[Frame::AreaType::FOREST] = load_area_tex("resources/textures/forest.png");
-    terrain2tex_[Frame::AreaType::SWAMP] = load_area_tex("resources/textures/swamp.png");
-    terrain2tex_[Frame::AreaType::CLOUD] = load_area_tex("resources/textures/clouds.png");
-    terrain2tex_[Frame::AreaType::RAIN] = load_area_tex("resources/textures/rain.png");
+    terrain2tex_[Frame::AreaType::FOREST] = load_area_tex("forest.png");
+    terrain2tex_[Frame::AreaType::SWAMP] = load_area_tex("swamp.png");
+    terrain2tex_[Frame::AreaType::CLOUD] = load_area_tex("clouds.png");
+    terrain2tex_[Frame::AreaType::RAIN] = load_area_tex("rain.png");
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
