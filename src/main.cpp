@@ -146,12 +146,15 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     LOG_INFO("Start render loop")
     while (!glfwWindowShouldClose(window)) {
         // Swap buffers
-        glfwSwapBuffers(window);
         glfwPollEvents();
 
         if (!glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
+            using namespace std::chrono_literals;
+            std::this_thread::sleep_for(100ms);
             continue;
         }
+
+        glfwSwapBuffers(window);
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
