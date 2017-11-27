@@ -72,7 +72,7 @@ func (c *RewindClient) Dial(host, port string) (err error) {
 
 func getIntFromColor(color color.Color) uint32 {
 	var red, green, blue, alpha = color.RGBA();
-	var colorInt = (red << 24) + (green << 16) + (blue << 8) + (alpha);
+	var colorInt = (alpha << 24) + (red << 16) + (green << 8) + (blue);
 	return colorInt
 }
 
