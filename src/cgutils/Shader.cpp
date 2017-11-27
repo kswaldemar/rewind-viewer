@@ -83,15 +83,33 @@ GLuint create_shader_program(GLuint vert_shader, GLuint frag_shader) {
     return program;
 }
 
+
 } // anonymous namespace
 
-Shader::Shader(const std::string &vertex_shader_path, const std::string &fragment_shader_path) {
+void Shader::set_shaders_folder(const std::string &path) {
+    if (path.empty()) {
+        LOG_WARN("set_shaders_folder called with empty path");
+        return;
+    }
+    path_to_shaders_ = path;
+    if (path_to_shaders_.back() != '/') {
+        path_to_shaders_ += '/';
+    }
+}
+
+std::string Shader::path_to_shaders_;
+
+Shader::Shader(const std::string &vertex, const std::string &fragment) {
+
+    const std::string vs_path = path_to_shaders_ + vertex;
+    const std::string fs_path = path_to_shaders_ + fragment;
+
     LOG_INFO("Start compiling shader: vertex=%s, fragment=%s",
-             vertex_shader_path.c_str(), fragment_shader_path.c_str());
+             vs_path.c_str(), fs_path.c_str());
     LOG_INFO("Load Vertex shader");
-    const auto vs_src = load_file(vertex_shader_path);
+    const auto vs_src = load_file(vs_path);
     LOG_INFO("Load Fragment shader");
-    const auto fs_src = load_file(fragment_shader_path);
+    const auto fs_src = load_file(fs_path);
 
     LOG_INFO("Compile Vertex shader");
     auto v_shader = create_shader(GL_VERTEX_SHADER, vs_src);
