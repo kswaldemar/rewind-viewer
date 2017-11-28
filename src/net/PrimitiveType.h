@@ -16,6 +16,7 @@
     X(unit) \
     X(area) \
     X(popup) \
+    X(facility) \
 
 enum class PrimitiveType {
 #define X(type) type,

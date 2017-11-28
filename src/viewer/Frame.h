@@ -18,6 +18,7 @@ struct Rectangle;
 struct Line;
 struct Unit;
 struct Popup;
+struct Facility;
 }
 
 /**
@@ -28,6 +29,7 @@ struct Popup;
 struct Frame {
     constexpr static size_t LAYERS_COUNT = 5;
     constexpr static size_t DEFAULT_LAYER = 2;
+    constexpr static size_t FACILITY_LAYER = 0;
 
     enum class UnitType {
         UNKNOWN = 0,
@@ -37,6 +39,11 @@ struct Frame {
         HELICOPTER = 4,
         FIGHTER = 5,
         COUNT = 6,
+    };
+
+    enum class FacilityType {
+        RADAR,
+        FACTORY,
     };
 
     enum class AreaType {
@@ -54,7 +61,17 @@ struct Frame {
         return type2name.at(static_cast<size_t>(type));
     }
 
+    static const char *facility_name(FacilityType type) {
+        if (type == FacilityType::RADAR) {
+            return "Radar";
+        } else if (type == FacilityType::FACTORY) {
+            return "Factory";
+        }
+        return "Unknown";
+    }
+
     struct primitives_t {
+        std::vector<pod::Facility> facilities;
         std::vector<pod::Circle> circles;
         std::vector<pod::Rectangle> rectangles;
         std::vector<pod::Line> lines;
@@ -117,6 +134,18 @@ struct AreaDesc {
     int x;
     int y;
     Frame::AreaType type;
+};
+
+struct Facility {
+    //Cell for top left part
+    int x;
+    int y;
+    Frame::FacilityType type;
+    int enemy;
+    int production; //Current production progress in ticks
+    int max_production; //Max production progress in ticks
+    int capture; //Current capture status in ticks, may be negative if enemy capturing
+    int max_capture; //Max capture status in ticks
 };
 
 
@@ -217,5 +246,15 @@ inline void from_json(const nlohmann::json &j, AreaDesc &p) {
     p.type = static_cast<Frame::AreaType>(j["area_type"].get<int>());
 }
 
+inline void from_json(const nlohmann::json &j, Facility &p) {
+    p.x = j["x"].get<int>();
+    p.y = j["y"].get<int>();
+    p.type = static_cast<Frame::FacilityType>(j["facility_type"].get<int>());
+    p.enemy = j["enemy"].get<int>();
+    p.production = j["production"].get<int>();
+    p.max_production = j["max_production"].get<int>();
+    p.capture = j["capture"].get<int>();
+    p.max_capture = j["max_capture"].get<int>();
+}
 
 } // namespace pod

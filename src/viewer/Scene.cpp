@@ -87,10 +87,16 @@ Scene::Scene(ResourceManager *res)
     unit2tex_[Frame::UnitType::HELICOPTER] = mgr_->load_texture("helicopter.png");
     unit2tex_[Frame::UnitType::FIGHTER] = mgr_->load_texture("fighter.png");
 
+    //Building textures
+    LOG_INFO("Load building textures");
+    facility2tex_[Frame::FacilityType::RADAR] = mgr_->load_texture("radar.png");
+    facility2tex_[Frame::FacilityType::FACTORY] = mgr_->load_texture("factory.png");
+
     //AreaDesc textures
     auto load_area_tex = [this](const std::string &path) {
         return mgr_->load_texture(path, true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
     };
+    LOG_INFO("Load area textures");
     terrain2tex_[Frame::AreaType::FOREST] = load_area_tex("forest.png");
     terrain2tex_[Frame::AreaType::SWAMP] = load_area_tex("swamp.png");
     terrain2tex_[Frame::AreaType::CLOUD] = load_area_tex("clouds.png");
@@ -163,6 +169,7 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 1.0f});
     model = glm::translate(model, {1.0f, 1.0f, -0.2f});
     shaders_->textured.set_mat4("model", model);
+    shaders_->textured.set_vec3("color", glm::vec3(1.0));
     shaders_->textured.set_vec2("tex_scale", glm::vec2(opt_.grid_cells_count));
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -186,6 +193,25 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
             }
         }
     }
+}
+
+void Scene::set_frame_index(int idx) {
+    cur_frame_idx_ = cg::clamp(idx, 0, frames_count_ - 1);
+}
+
+int Scene::get_frame_index() {
+    return cur_frame_idx_;
+}
+
+int Scene::get_frames_count() {
+    return frames_count_;
+}
+
+const char *Scene::get_frame_user_message() {
+    if (active_frame_) {
+        return active_frame_->user_message.c_str();
+    }
+    return "";
 }
 
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
@@ -237,6 +263,26 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
                 ImGui::EndTooltip();
             }
         }
+
+        const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
+        int mouse_cell_x = static_cast<int>(mouse.x / cell_dim.x);
+        int mouse_cell_y = static_cast<int>(mouse.y / cell_dim.y);
+        for (const auto &facility : active_frame_->primitives[Frame::FACILITY_LAYER].facilities) {
+            if ((mouse_cell_x == facility.x || mouse_cell_x == facility.x + 1)
+                && (mouse_cell_y == facility.y || mouse_cell_y == facility.y + 1)) {
+                ImGui::BeginTooltip();
+                ImGui::Text(
+                    "%s %s:"
+                        "\nCapture progress: %d / %d"
+                        "\nProduction progress: %d / %d",
+                    side2str.at(facility.enemy),
+                    Frame::facility_name(facility.type),
+                    facility.capture, facility.max_capture,
+                    facility.production, facility.max_production
+                );
+                ImGui::EndTooltip();
+            }
+        }
     }
 }
 
@@ -269,6 +315,7 @@ void Scene::render_terrain() {
     const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
     shaders_->textured.use();
     shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0f, y_axes_invert_));
+    shaders_->textured.set_vec3("color", glm::vec3(1.0));
     glBindVertexArray(attr_->rect_vao);
     for (const auto &tm : terrains_) {
         float z = -0.1f;
@@ -287,6 +334,14 @@ void Scene::render_terrain() {
 }
 
 void Scene::render_frame_layer(const Frame::primitives_t &slice) {
+    if (!slice.facilities.empty()) {
+        shaders_->textured.use();
+        shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0, y_axes_invert_));
+        for (const auto &obj : slice.facilities) {
+            render_facility(obj);
+        }
+    }
+
     if (!slice.circles.empty()) {
         shaders_->circle.use();
         shaders_->circle.set_int("textured", 0);
@@ -493,23 +548,65 @@ void Scene::render_unit(const pod::Unit &unit) {
     }
 }
 
-void Scene::set_frame_index(int idx) {
-    cur_frame_idx_ = cg::clamp(idx, 0, frames_count_ - 1);
-}
-
-int Scene::get_frame_index() {
-    return cur_frame_idx_;
-}
-
-int Scene::get_frames_count() {
-    return frames_count_;
-}
-
-const char *Scene::get_frame_user_message() {
-    if (active_frame_) {
-        return active_frame_->user_message.c_str();
+void Scene::render_facility(const pod::Facility &facility) {
+    if (facility.enemy == -1) {
+        shaders_->textured.set_vec3("color", opt_.ally_unit_color);
+    } else if (facility.enemy == 1) {
+        shaders_->textured.set_vec3("color", opt_.enemy_unit_color);
+    } else {
+        shaders_->textured.set_vec3("color", opt_.neutral_unit_color);
     }
-    return "";
+
+    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
+
+    glBindVertexArray(attr_->rect_vao);
+    auto model = glm::translate(glm::mat4(1.0), {cell_dim.x * facility.x, cell_dim.y * facility.y, 0.0});
+    model = glm::scale(model, glm::vec3(cell_dim, 0.0f));
+    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    shaders_->textured.set_mat4("model", model);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, facility2tex_[facility.type]);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    glm::vec3 bar_pos{cell_dim.x * (facility.x + 0.5f), cell_dim.y * (facility.y + y_axes_invert_ * 0.1), 0.0f};
+    const float bar_height = cell_dim.y * 0.05f;
+    if (abs(facility.capture) != facility.max_capture && facility.capture != 0) {
+        //Someone capturing
+        const float saturation = std::abs(static_cast<float>(facility.capture) / facility.max_capture);
+        const glm::vec2 top_left{bar_pos.x, bar_pos.y + bar_height * y_axes_invert_ * 0.5f};
+        render_progress_bar(top_left,
+                            saturation * cell_dim.x,
+                            bar_height,
+                            facility.capture < 0 ? opt_.enemy_unit_color : opt_.ally_unit_color);
+
+
+        //Bar outlining
+        model = glm::translate(glm::mat4(1.0f), glm::vec3{top_left, 0.0f});
+        model = glm::scale(model, {cell_dim.x * 0.5f, bar_height * 0.5f, 0.0f});
+        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->color.set_mat4("model", model);
+        shaders_->color.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+        const uint8_t indicies[] = {0, 1, 3, 2};
+        glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
+    }
+    if (facility.production < facility.max_production) {
+        const float saturation = std::abs(static_cast<float>(facility.production) / facility.max_production);
+        render_progress_bar(bar_pos,
+                            saturation * cell_dim.x, bar_height * 0.5f,
+                            glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
+    }
+
+}
+
+void Scene::render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color) {
+    auto model = glm::translate(glm::mat4(1.0f), {up_left.x, up_left.y, 0.0f});
+    model = glm::scale(model, {w * 0.5f, h * 0.5f, 0.0f});
+    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+    shaders_->color.use();
+    shaders_->color.set_mat4("model", model);
+    shaders_->color.set_vec4("color", color);
+    glBindVertexArray(attr_->rect_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 Scene::settings_t &Scene::opt() {
