@@ -107,6 +107,11 @@ namespace Com.CodeGame.CodeWars2017.DevKit.CSharpCgdk
             SendCommand($"{{\"type\": \"message\", \"message\": \"{message}\"}}");
         }
 
+        public void Popup(double x, double y, double r, string text)
+        {
+            SendCommand($"{{\"type\": \"popup\", \"x\": {x}, \"y\": {y}, \"r\": {r}, \"text\": \"{text}\"}}");
+        }
+
         private void SendCommand(string command)
         {
             WriteString(command);
