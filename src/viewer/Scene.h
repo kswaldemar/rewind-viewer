@@ -84,6 +84,9 @@ private:
     void render_rectangle(const pod::Rectangle &rect);
     void render_lines(const std::vector<pod::Line> &lines);
     void render_unit(const pod::Unit &unit);
+    void render_facility(const pod::Facility &facility);
+
+    void render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color);
 
     ResourceManager *mgr_;
 
@@ -102,6 +105,7 @@ private:
 
     std::map<Frame::UnitType, GLuint> unit2tex_;
     std::map<Frame::AreaType, GLuint> terrain2tex_;
+    std::map<Frame::FacilityType, GLuint> facility2tex_;
 
     ///From camera, to properly draw hp bars above units
     int y_axes_invert_;

@@ -128,6 +128,10 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 LOG_V8("NetClient::Popup");
                 frame_->popups.emplace_back(j);
                 break;
+            case PrimitiveType::facility:
+                LOG_V8("NetClient::Facility");
+                frame_->primitives[Frame::FACILITY_LAYER].facilities.emplace_back(j);
+                break;
             case PrimitiveType::types_count:
                 LOG_WARN("Got 'types_count' message");
                 break;
