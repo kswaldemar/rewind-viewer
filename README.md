@@ -8,8 +8,6 @@
 
 Fast Russain AI Cup championship match viewer with rewinding support written in OpenGL
 
-![That's how it looks like](./resources/kdpv.png)
-
 ## Overview
 The viewer has several advantages in comparison of local-runner with drawing plugin:
  - All figures are drawn using your video adapter, so no more problems with slow drawing
@@ -69,7 +67,7 @@ Sample usage:
 2. Start localrunner, preferably in render_to_screen=false mode.
 3. Start your strategy of choice.
 4. To be able to drew things in the viewer you will need to create a client, send data to the client in your strategy, and **close the frame** with client command. 
-5. There is no need to close the viewer after the strategy is done, simply clean old data (Edit -> Clear frame data, or just Ctrl+R) and start from step 2.
+5. There is no need to close the viewer after the strategy is done, just start from step 2. Old drawn data will be cleaned after new connection.
 
 ## License
 Project sources distributed under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), third parties distributed under their own licences

@@ -287,7 +287,7 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
                                 "\nCapture progress: %d / %d",
                             side2str.at(facility.enemy),
                             Frame::facility_name(facility.type),
-                            facility.capture, facility.max_capture
+                            std::abs(facility.capture), facility.max_capture
                         );
                     } else {
                         ImGui::Text(
@@ -296,7 +296,7 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
                                 "\nProduction progress: %d / %d",
                             side2str.at(facility.enemy),
                             Frame::facility_name(facility.type),
-                            facility.capture, facility.max_capture,
+                            std::abs(facility.capture), facility.max_capture,
                             facility.production, facility.max_production
                         );
                     }
