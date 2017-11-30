@@ -89,8 +89,8 @@ Scene::Scene(ResourceManager *res)
 
     //Building textures
     LOG_INFO("Load building textures");
-    facility2tex_[Frame::FacilityType::RADAR] = mgr_->load_texture("radar.png");
-    facility2tex_[Frame::FacilityType::FACTORY] = mgr_->load_texture("factory.png");
+    facility2tex_[Frame::FacilityType::CONTROL_CENTER] = mgr_->load_texture("radar.png");
+    facility2tex_[Frame::FacilityType::VEHICLE_FACTORY] = mgr_->load_texture("factory.png");
 
     //AreaDesc textures
     auto load_area_tex = [this](const std::string &path) {
@@ -191,6 +191,12 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
             if (opt_.enabled_layers[idx]) {
                 render_frame_layer(active_frame_->primitives[idx]);
             }
+            //TODO: Need better way
+            if (idx == Frame::DEFAULT_LAYER && opt_.enabled_layers[Frame::FACILITY_LAYER]) {
+                for (const auto &f : active_frame_->primitives[Frame::FACILITY_LAYER].facilities) {
+                    render_facility_bars(f);
+                }
+            }
         }
     }
 }
@@ -237,25 +243,6 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
         return;
     }
     if (active_frame_) {
-        for (const auto &unit : active_frame_->primitives[Frame::DEFAULT_LAYER].units) {
-            if (hittest(mouse, unit)) {
-                ImGui::BeginTooltip();
-                ImGui::Text(
-                    "%s %s:"
-                        "\nHP: %d / %d"
-                        "\nPosition: %0.3lf, %0.3lf"
-                        "\nCooldown: %d (%d)"
-                        "\nSelected: %s",
-                    side2str.at(unit.enemy),
-                    Frame::unit_name(unit.utype),
-                    unit.hp, unit.max_hp,
-                    unit.center.x, unit.center.y,
-                    unit.rem_cooldown, unit.cooldown,
-                    unit.selected ? "yes" : "no"
-                );
-                ImGui::EndTooltip();
-            }
-        }
         for (const auto &popup : active_frame_->popups) {
             if (hittest(mouse, popup)) {
                 ImGui::BeginTooltip();
@@ -264,23 +251,57 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
             }
         }
 
-        const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
-        int mouse_cell_x = static_cast<int>(mouse.x / cell_dim.x);
-        int mouse_cell_y = static_cast<int>(mouse.y / cell_dim.y);
-        for (const auto &facility : active_frame_->primitives[Frame::FACILITY_LAYER].facilities) {
-            if ((mouse_cell_x == facility.x || mouse_cell_x == facility.x + 1)
-                && (mouse_cell_y == facility.y || mouse_cell_y == facility.y + 1)) {
-                ImGui::BeginTooltip();
-                ImGui::Text(
-                    "%s %s:"
-                        "\nCapture progress: %d / %d"
-                        "\nProduction progress: %d / %d",
-                    side2str.at(facility.enemy),
-                    Frame::facility_name(facility.type),
-                    facility.capture, facility.max_capture,
-                    facility.production, facility.max_production
-                );
-                ImGui::EndTooltip();
+        if (opt_.enabled_layers[Frame::DEFAULT_LAYER]) {
+            for (const auto &unit : active_frame_->primitives[Frame::DEFAULT_LAYER].units) {
+                if (hittest(mouse, unit)) {
+                    ImGui::BeginTooltip();
+                    ImGui::Text(
+                        "%s %s:"
+                            "\nHP: %d / %d"
+                            "\nPosition: %0.3lf, %0.3lf"
+                            "\nCooldown: %d (%d)"
+                            "\nSelected: %s",
+                        side2str.at(unit.enemy),
+                        Frame::unit_name(unit.utype),
+                        unit.hp, unit.max_hp,
+                        unit.center.x, unit.center.y,
+                        unit.rem_cooldown, unit.cooldown,
+                        unit.selected ? "yes" : "no"
+                    );
+                    ImGui::EndTooltip();
+                }
+            }
+        }
+
+        if (opt_.enabled_layers[Frame::FACILITY_LAYER]) {
+            const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
+            int mouse_cell_x = static_cast<int>(mouse.x / cell_dim.x);
+            int mouse_cell_y = static_cast<int>(mouse.y / cell_dim.y);
+            for (const auto &facility : active_frame_->primitives[Frame::FACILITY_LAYER].facilities) {
+                if ((mouse_cell_x == facility.x || mouse_cell_x == facility.x + 1)
+                    && (mouse_cell_y == facility.y || mouse_cell_y == facility.y + 1)) {
+                    ImGui::BeginTooltip();
+                    if (facility.type == Frame::FacilityType::CONTROL_CENTER) {
+                        ImGui::Text(
+                            "%s %s"
+                                "\nCapture progress: %d / %d",
+                            side2str.at(facility.enemy),
+                            Frame::facility_name(facility.type),
+                            facility.capture, facility.max_capture
+                        );
+                    } else {
+                        ImGui::Text(
+                            "%s %s:"
+                                "\nCapture progress: %d / %d"
+                                "\nProduction progress: %d / %d",
+                            side2str.at(facility.enemy),
+                            Frame::facility_name(facility.type),
+                            facility.capture, facility.max_capture,
+                            facility.production, facility.max_production
+                        );
+                    }
+                    ImGui::EndTooltip();
+                }
             }
         }
     }
@@ -336,9 +357,9 @@ void Scene::render_terrain() {
 void Scene::render_frame_layer(const Frame::primitives_t &slice) {
     if (!slice.facilities.empty()) {
         shaders_->textured.use();
-        shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0, y_axes_invert_));
+        shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0));
         for (const auto &obj : slice.facilities) {
-            render_facility(obj);
+            render_facility_object(obj);
         }
     }
 
@@ -548,7 +569,7 @@ void Scene::render_unit(const pod::Unit &unit) {
     }
 }
 
-void Scene::render_facility(const pod::Facility &facility) {
+void Scene::render_facility_object(const pod::Facility &facility) {
     if (facility.enemy == -1) {
         shaders_->textured.set_vec3("color", opt_.ally_unit_color);
     } else if (facility.enemy == 1) {
@@ -567,10 +588,14 @@ void Scene::render_facility(const pod::Facility &facility) {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, facility2tex_[facility.type]);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+void Scene::render_facility_bars(const pod::Facility &facility) {
+    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
 
     glm::vec3 bar_pos{cell_dim.x * (facility.x + 0.5f), cell_dim.y * (facility.y + y_axes_invert_ * 0.1), 0.0f};
     const float bar_height = cell_dim.y * 0.05f;
-    if (abs(facility.capture) != facility.max_capture && facility.capture != 0) {
+    if (abs(facility.capture) != facility.max_capture && facility.capture != 0 && facility.max_capture != 0) {
         //Someone capturing
         const float saturation = std::abs(static_cast<float>(facility.capture) / facility.max_capture);
         const glm::vec2 top_left{bar_pos.x, bar_pos.y + bar_height * y_axes_invert_ * 0.5f};
@@ -581,21 +606,24 @@ void Scene::render_facility(const pod::Facility &facility) {
 
 
         //Bar outlining
-        model = glm::translate(glm::mat4(1.0f), glm::vec3{top_left, 0.0f});
+        auto model = glm::translate(glm::mat4(1.0f), glm::vec3{top_left, 0.0f});
         model = glm::scale(model, {cell_dim.x * 0.5f, bar_height * 0.5f, 0.0f});
         model = glm::translate(model, {1.0f, 1.0f, 0.0f});
+        shaders_->color.use();
         shaders_->color.set_mat4("model", model);
         shaders_->color.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
         const uint8_t indicies[] = {0, 1, 3, 2};
+        glBindVertexArray(attr_->rect_vao);
+        glLineWidth(2);
         glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
+        glLineWidth(1);
     }
-    if (facility.production < facility.max_production) {
+    if (facility.production < facility.max_production && facility.max_production > 0) {
         const float saturation = std::abs(static_cast<float>(facility.production) / facility.max_production);
         render_progress_bar(bar_pos,
                             saturation * cell_dim.x, bar_height * 0.5f,
                             glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
     }
-
 }
 
 void Scene::render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color) {

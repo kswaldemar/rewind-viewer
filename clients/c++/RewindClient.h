@@ -63,6 +63,11 @@ public:
         FIGHTER = 5
     };
 
+    enum class FacilityType {
+        CONTROL_CENTER = 0,
+        VEHICLE_FACTORY = 1,
+    };
+
     enum class AreaType {
         UNKNOWN = 0,
         FOREST,
@@ -138,6 +143,30 @@ public:
         send(format(fmt, x, y, r, hp, max_hp,
                     static_cast<int>(side), static_cast<int>(utype),
                     cooldown, max_cooldown, selected, course));
+    }
+
+    /**
+    * Facility - rectangle with texture and progress bars
+    * @param cell_x - x cell of top left facility part
+    * @param cell_y - y cell of top left facility part
+    * @param type - type of facility
+    * @param side - enemy, ally or neutral
+    * @param production - current production progress, set to 0 if no production
+    * @param max_production - maximum production progress, used together with `production`
+    * @param capture - current capture progress, should be in range [-max_capture, max_capture],
+    * where negative values mean that facility is capturing by enemy
+    * @param max_capture - maximum capture progress, used together with `capture`
+    */
+    void facility(int cell_x, int cell_y,
+                  FacilityType type, Side side,
+                  int production, int max_production,
+                  int capture, int max_capture) {
+        static const char *fmt =
+            R"({"type": "facility", "x": %d, "y": %d, "facility_type": %d, "enemy": %d,)"
+                R"("production": %d, "max_production": %d, "capture": %d, "max_capture": %d})";
+        send(format(fmt, cell_x, cell_y,
+                    static_cast<int>(type), static_cast<int>(side),
+                    production, max_production, capture, max_capture));
     }
 
     /**

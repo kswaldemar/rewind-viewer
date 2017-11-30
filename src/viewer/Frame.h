@@ -42,8 +42,8 @@ struct Frame {
     };
 
     enum class FacilityType {
-        RADAR,
-        FACTORY,
+        CONTROL_CENTER = 0,
+        VEHICLE_FACTORY = 1,
     };
 
     enum class AreaType {
@@ -62,10 +62,10 @@ struct Frame {
     }
 
     static const char *facility_name(FacilityType type) {
-        if (type == FacilityType::RADAR) {
-            return "Radar";
-        } else if (type == FacilityType::FACTORY) {
-            return "Factory";
+        if (type == FacilityType::CONTROL_CENTER) {
+            return "Control Center";
+        } else if (type == FacilityType::VEHICLE_FACTORY) {
+            return "Vehicle Factory";
         }
         return "Unknown";
     }

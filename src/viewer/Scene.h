@@ -84,7 +84,9 @@ private:
     void render_rectangle(const pod::Rectangle &rect);
     void render_lines(const std::vector<pod::Line> &lines);
     void render_unit(const pod::Unit &unit);
-    void render_facility(const pod::Facility &facility);
+    void render_facility_object(const pod::Facility &facility);
+    ///Need separate function because it should be drawn on different layer
+    void render_facility_bars(const pod::Facility &facility);
 
     void render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color);
 
