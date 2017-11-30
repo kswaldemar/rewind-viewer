@@ -38,6 +38,15 @@ const (
 	UNIT_FIGHTER
 )
 
+
+
+type FacilityType int
+
+const (
+	CONTROL_CENTER    FacilityType = 0 + iota
+	VEHICLE_FACTORY
+)
+
 type RewindClient struct {
 	conn   net.Conn
 	reader *bufio.Reader
@@ -90,6 +99,10 @@ func (c *RewindClient) rect(x1 float64, y1 float64, x2 float64, y2 float64, colo
 
 func (c *RewindClient) line(x1 float64, y1 float64, x2 float64, y2 float64, color color.Color, layer int) {
 	c.writeString(fmt.Sprintf("{\"type\": \"line\", \"x1\": %f, \"y1\": %f, \"x2\": %f, \"y2\": %f, \"color\": %d, \"layer\": %d}", x1, y1, x2, y2, getIntFromColor(color), layer));
+}
+
+func (c *RewindClient) facility(cell_x int, cell_y int, type FacilityType, side SideType, production int, max_production int, capture int, max_capture int) {
+	c.writeString(fmt.Sprintf("{\"type\": \"facility\", \"x\": %d, \"y\": %d, \"facility_type\": %d, \"enemy\": %d, \"production\": %d, \"max_production\": %d, \"capture\": %d, \"max_capture\": %d}",cell_x, cell_y, type, side, production, max_production, capture, max_capture));
 }
 
 func (c *RewindClient) livingUnit(x float64, y float64, r float64, hp int, maxHp int, side SideType, course float64, unit UnitType, remCooldown int, maxCooldown int, selected bool) {
