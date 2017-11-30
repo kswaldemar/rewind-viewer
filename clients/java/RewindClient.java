@@ -39,6 +39,16 @@ public class RewindClient {
         }
     }
 
+    public enum FacilityType {
+        CONTROL_CENTER(0),
+        VEHICLE_FACTORY(1);
+        final int facilityType;
+
+        FacilityType(int facilityType) {
+            this.facilityType = facilityType;
+        }
+    }
+
     public enum UnitType {
         UNKNOWN(0),
         TANK(1),
@@ -83,6 +93,24 @@ public class RewindClient {
 
     void areaDescription(int cellX, int cellY, AreaType areaType) {
         send(String.format("{\"type\": \"area\", \"x\": %d, \"y\": %d, \"area_type\": %d}", cellX, cellY, areaType.areaType));
+    }
+
+    /**
+    * Facility - rectangle with texture and progress bars
+    * @param cell_x - x cell of top left facility part
+    * @param cell_y - y cell of top left facility part
+    * @param type - type of facility
+    * @param side - enemy, ally or neutral
+    * @param production - current production progress, set to 0 if no production
+    * @param max_production - maximum production progress, used together with `production`
+    * @param capture - current capture progress, should be in range [-max_capture, max_capture],
+    * where negative values mean that facility is capturing by enemy
+    * @param max_capture - maximum capture progress, used together with `capture`
+    */
+
+    void facility(int cell_x, int cell_y, FacilityType type, Side side, int production, int max_production, int capture, int max_capture) {
+        send(String.format("{\"type\": \"facility\", \"x\": %d, \"y\": %d, \"facility_type\": %d, \"enemy\": %d, \"production\": %d, \"max_production\": %d, \"capture\": %d, \"max_capture\": %d}",
+                cell_x, cell_y, type.facilityType, side.side, production, max_production, capture, max_capture));
     }
 
     void close() {
