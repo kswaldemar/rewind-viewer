@@ -124,6 +124,28 @@ class RewindClient
       selected:     selected ? 1 : 0,
     )
   end
+  
+  # @param cell_x [Integer] x of top-left facility cell
+  # @param cell_y [Integer] y of top-left facility cell
+  # @param type [Integer] one of FacilityType constants
+  # @param side [Integer] ally, neutral or enemy
+  # @param production [Integer] current production progress, set to 0 if no production
+  # @param max_production [Integer] maximum production progress, used together with `production`
+  # @param capture [Integer] current capture progress, should be in range [-max_capture, max_capture], where negative values mean that facility is being captured by enemy
+  # @param max_capture [Integer] maximum capture progress, used together with `capture`
+  def facility(cell_x, cell_y, type, side, production, max_production, capture, max_capture)
+    send_json(
+      type:           'facility',
+      x:              cell_x,
+      y:              cell_y,
+      facility_type:  type,
+      enemy:          side,
+      production:     production,
+      max_production: max_production,
+      capture:        capture,
+      max_capture:    max_capture
+    )
+  end
 
   def area_description(cell_x, cell_y, area_type)
     send_json(type: 'area', x: cell_x, y: cell_y, area_type: area_type)
