@@ -104,7 +104,7 @@ class RewindClient
   end
 
   def rect(x1, y1, x2, y2, color, layer)
-    send_json(type: 'rect', x1: x1, y1: y1, x2: x2, y2: y2, color: color.to_i, layer: layer)
+    send_json(type: 'rectangle', x1: x1, y1: y1, x2: x2, y2: y2, color: color.to_i, layer: layer)
   end
 
   def line(x1, y1, x2, y2, color, layer)
