@@ -31,7 +31,7 @@ Minor bugfixes and optimization may come during the championship, but not so muc
 
 Source code with changelog for significant releases can be found in [github releases page](https://github.com/kswaldemar/rewind-viewer/releases).
 
-Prebuilt windows binaries for other version, such as bugfixes [can be found here](https://github.com/kswaldemar/rewind-viewer/issues/23)
+Prebuilt windows binaries for other version, such as bugfixes [can be found here](https://github.com/kswaldemar/rewind-viewer/issues/23). It is required to have x86 C++ Redistributable for Visual Studio 2015 installed to run prebuild windows binaries.
 
 
 ## Build
