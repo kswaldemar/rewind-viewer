@@ -85,6 +85,11 @@ public:
         static RewindClient inst(HOST, PORT);
         return inst;
     }
+    
+    /**
+     * Cannot copy Singleton
+     */
+    RewindClient(const RewindClient &) = delete;
 
     /**
      * Should be send on end of move function
