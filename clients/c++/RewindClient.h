@@ -85,6 +85,11 @@ public:
         static RewindClient inst(HOST, PORT);
         return inst;
     }
+    
+    /**
+     * Cannot copy Singleton
+     */
+    RewindClient(const RewindClient &) = delete;
 
     /**
      * Should be send on end of move function
@@ -184,6 +189,7 @@ public:
      * Pass arbitrary user message to be stored in frame
      * Message content displayed in separate window inside viewer
      * Can be used several times per frame
+     * It can be used like printf, e.g.: message("This %s will be %s", "string", "formatted")
      */
     template<typename... Args>
     void message(Args... args) {
