@@ -36,9 +36,6 @@
  */
 class RewindClient {
 public:
-    ///You may use another value, but units always will be drawn in DEFAULT_LAYER, described in Frame.h
-    constexpr static int DEFAULT_LAYER = 3;
-
     enum Color : uint32_t {
         COLOR_RED = 0xFF0000,
         COLOR_GREEN = 0x00FF00,
@@ -48,36 +45,11 @@ public:
         COLOR_YELLOW = 0x00FFFF00, ///Zero transparency mean fully opaque
     };
 
-    enum class Side {
-        ALLY = -1,
-        NEUTRAL = 0,
-        ENEMY = 1,
-    };
-
-    enum class UnitType {
-        UNKNOWN = 0,
-        TANK = 1,
-        IFV = 2,
-        ARRV = 3,
-        HELICOPTER = 4,
-        FIGHTER = 5
-    };
-
-    enum class FacilityType {
-        CONTROL_CENTER = 0,
-        VEHICLE_FACTORY = 1,
-    };
-
-    enum class AreaType {
-        UNKNOWN = 0,
-        FOREST,
-        SWAMP,
-        RAIN,
-        CLOUD,
-    };
+    RewindClient(const RewindClient &) = delete;
+    RewindClient &operator=(const RewindClient&) = delete;
 
     /**
-     * Singleton
+     * Singletone
      */
     static RewindClient &instance() {
         static std::string HOST = "127.0.0.1";
@@ -117,68 +89,6 @@ public:
             R"({"type": "line", "x1": %lf, "y1": %lf, "x2": %lf, "y2": %lf, "color": %u, "layer": %u})";
         send(format(fmt, x1, y1, x2, y2, color, layer));
     }
-
-    /**
-     * Living unit - circle with HP and cooldown bars
-     * @param x - absolute X coordinate
-     * @param y - absolute X coordinate
-     * @param r - radius in game units
-     * @param hp - current health
-     * @param max_hp - maximum health
-     * @param cooldown - current cooldown. Cooldown bar only shown when value > 0
-     * @param max_cooldown - maximum cooldown. Cooldwon bar disabled if value == 0
-     * @param selected - true if selected by user (will have different color)
-     * @param side - enemy, ally or neutral
-     * @param course - faced direction, need only for correct texture display
-     * @param utype - unit type, need to choose texture, UNKNOWN mean untextured
-     */
-    void living_unit(double x, double y, double r,
-                     int hp, int max_hp,
-                     int cooldown, int max_cooldown,
-                     bool selected,
-                     Side side, double course = 0, UnitType utype = UnitType::UNKNOWN) {
-        static const char *fmt =
-            R"({"type": "unit", "x": %lf, "y": %lf, "r": %lf, "hp": %d, "max_hp": %d, "enemy": %d, "unit_type":%d, )"
-                R"("rem_cooldown": %d, "cooldown": %d, "selected":%d, "course": %.3lf})";
-        send(format(fmt, x, y, r, hp, max_hp,
-                    static_cast<int>(side), static_cast<int>(utype),
-                    cooldown, max_cooldown, selected, course));
-    }
-
-    /**
-    * Facility - rectangle with texture and progress bars
-    * @param cell_x - x cell of top left facility part
-    * @param cell_y - y cell of top left facility part
-    * @param type - type of facility
-    * @param side - enemy, ally or neutral
-    * @param production - current production progress, set to 0 if no production
-    * @param max_production - maximum production progress, used together with `production`
-    * @param capture - current capture progress, should be in range [-max_capture, max_capture],
-    * where negative values mean that facility is capturing by enemy
-    * @param max_capture - maximum capture progress, used together with `capture`
-    */
-    void facility(int cell_x, int cell_y,
-                  FacilityType type, Side side,
-                  int production, int max_production,
-                  int capture, int max_capture) {
-        static const char *fmt =
-            R"({"type": "facility", "x": %d, "y": %d, "facility_type": %d, "enemy": %d,)"
-                R"("production": %d, "max_production": %d, "capture": %d, "max_capture": %d})";
-        send(format(fmt, cell_x, cell_y,
-                    static_cast<int>(type), static_cast<int>(side),
-                    production, max_production, capture, max_capture));
-    }
-
-    /**
-     * Weather or terrain description in specific cell
-     * See Frame.h AreaType for available terrain and weather types
-     */
-    void area_description(int cell_x, int cell_y, AreaType area_type) {
-        static const char *fmt =
-            R"({"type": "area", "x": %d, "y": %d, "area_type": %d})";
-        send(format(fmt, cell_x, cell_y, static_cast<int>(area_type)));
-    }
-
 
     /**
      * Pass arbitrary user message to be stored in frame
