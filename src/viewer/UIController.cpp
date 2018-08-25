@@ -22,8 +22,10 @@ struct UIController::wnd_t {
     bool show_mouse_pos_tooltip = false;
 };
 
-UIController::UIController(Camera *camera)
-    : camera_(camera) {
+UIController::UIController(Camera *camera, Config *conf)
+    : camera_(camera)
+    , conf_(conf) {
+
     // Setup ImGui binding
     ImGui_ImplGlfwGL3_Init(glfwGetCurrentContext(), true);
     wnd_ = std::make_unique<wnd_t>();
@@ -60,7 +62,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
             //if (ImGui::MenuItem(ICON_FA_RECYCLE " Clear frames data", "CTRL+R", false, scene->has_data())) {
             //    scene->clear_data(true);
             //}
-            ImGui::Checkbox("Close window by Escape key", &close_with_esc_);
+            ImGui::Checkbox("Close window by Escape key", &conf_->ui.close_with_esc);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -122,7 +124,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
             autoplay_scene_ = !autoplay_scene_;
         }
         if (key_pressed_once(GLFW_KEY_G) && !io.KeyCtrl) {
-            scene->opt().show_grid = !scene->opt().show_grid;
+            conf_->scene.show_grid = !conf_->scene.show_grid;
         }
         if (key_pressed_once(GLFW_KEY_P)) {
             wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
@@ -130,7 +132,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (io.KeysDown[GLFW_KEY_D] && io.KeyCtrl) {
             developer_mode_ = true;
         }
-        auto &enabled_layers = scene->opt().enabled_layers;
+        auto &enabled_layers = conf_->scene.enabled_layers;
         for (size_t layer_idx = 0; layer_idx < enabled_layers.size(); ++layer_idx) {
             if (key_pressed_once(static_cast<int>(GLFW_KEY_1 + layer_idx))) {
                 enabled_layers[layer_idx] = !enabled_layers[layer_idx];
@@ -141,7 +143,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         }
     }
 
-    request_exit_ = close_with_esc_ && io.KeysDown[GLFW_KEY_ESCAPE];
+    request_exit_ = conf_->ui.close_with_esc && io.KeysDown[GLFW_KEY_ESCAPE];
 
     //Hittest for detailed unit info
     if (!ImGui::GetIO().WantCaptureMouse) {
@@ -149,7 +151,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     }
 
     //Background color
-    glClearColor(clear_color_.r, clear_color_.g, clear_color_.b, 1.0f);
+    glClearColor(conf_->ui.clear_color.r, conf_->ui.clear_color.g, conf_->ui.clear_color.b, 1.0f);
 }
 
 void UIController::frame_end() {
@@ -230,13 +232,13 @@ void UIController::info_widget(Scene *scene) {
         }
         if (ImGui::CollapsingHeader(ICON_FA_EYEDROPPER " Colors", flags)) {
             ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs);
-            ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
-            ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt().grid_color));
-            ImGui::ColorEdit3("Canvas", glm::value_ptr(scene->opt().scene_color));
+            ImGui::ColorEdit3("Background", glm::value_ptr(conf_->ui.clear_color));
+            ImGui::ColorEdit3("Grid", glm::value_ptr(conf_->scene.grid_color));
+            ImGui::ColorEdit3("Canvas", glm::value_ptr(conf_->scene.scene_color));
         }
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
             ImGui::Checkbox("World origin on top left", &camera_->opt().origin_on_top_left);
-            ImGui::Checkbox("Draw grid", &scene->opt().show_grid);
+            ImGui::Checkbox("Draw grid", &conf_->scene.show_grid);
             static const ImVec4 button_colors[] = {
                 ImVec4(0.5, 0.5, 0.5, 1.0),
                 ImVec4(0.58, 0.941, 0.429, 1.0)
@@ -245,7 +247,7 @@ void UIController::info_widget(Scene *scene) {
             static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)> captions{
                 {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}
             };
-            for (bool &enabled : scene->opt().enabled_layers) {
+            for (bool &enabled : conf_->scene.enabled_layers) {
                 if (ImGui::ColorButton(captions[idx], button_colors[enabled], ImGuiColorEditFlags_NoTooltip)) {
                     enabled = !enabled;
                 }
@@ -290,7 +292,7 @@ void UIController::playback_control_widget(Scene *scene) {
 
         ImGui::Button(ICON_FA_FAST_BACKWARD "##fastprev", button_size);
         if (ImGui::IsItemActive()) {
-            tick -= fast_skip_speed_;
+            tick -= conf_->ui.fast_skip_speed;
         }
         ImGui::SameLine(0.0f, buttons_spacing);
 
@@ -313,7 +315,7 @@ void UIController::playback_control_widget(Scene *scene) {
 
         ImGui::Button(ICON_FA_FAST_FORWARD "##fastnext", button_size);
         if (ImGui::IsItemActive()) {
-            tick += fast_skip_speed_;
+            tick += conf_->ui.fast_skip_speed;
         }
         ImGui::SameLine();
 

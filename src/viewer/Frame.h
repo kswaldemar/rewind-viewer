@@ -73,7 +73,7 @@ struct Popup {
 };
 
 /*
- * Json deserialisation
+ * Json deserialization
  */
 ///Helper function
 template<typename T>

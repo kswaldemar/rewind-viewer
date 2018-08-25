@@ -49,15 +49,14 @@ struct Scene::shaders_t {
     Shader textured;
 };
 
-Scene::Scene(ResourceManager *res)
-    : mgr_(res) {
+Scene::Scene(ResourceManager *res, const Config::SceneConf *conf)
+    : mgr_(res)
+    , conf_(*conf) {
+
     LOG_INFO("Initialize needed attributes")
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
-    attr_->grid_model = glm::scale(glm::mat4{}, {opt_.grid_dim.x, opt_.grid_dim.y, 0.0f});
-
-    //Enable all layers by default
-    opt_.enabled_layers.fill(true);
+    attr_->grid_model = glm::scale(glm::mat4{}, {conf_.grid_dim.x, conf_.grid_dim.y, 0.0f});
 
     //Shaders
     LOG_INFO("Compile shaders")
@@ -125,25 +124,25 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
 
     //Main scene area
     shaders_->color.use();
-    auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 1.0f});
+    auto model = glm::scale(glm::mat4(1.0f), {conf_.grid_dim * 0.5f, 1.0f});
     model = glm::translate(model, {1.0f, 1.0f, -0.2f});
     shaders_->color.set_mat4("model", model);
-    shaders_->color.set_vec4("color", opt_.scene_color);
+    shaders_->color.set_vec4("color", conf_.scene_color);
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     //Grid
-    if (opt_.show_grid) {
+    if (conf_.show_grid) {
         shaders_->color.use();
         shaders_->color.set_mat4("model", attr_->grid_model);
-        shaders_->color.set_vec4("color", opt_.grid_color);
+        shaders_->color.set_vec4("color", conf_.grid_color);
         render_grid();
     }
 
     //Frame
     if (active_frame_) {
         for (size_t idx = 0; idx < active_frame_->primitives.size(); ++idx) {
-            if (opt_.enabled_layers[idx]) {
+            if (conf_.enabled_layers[idx]) {
                 render_frame_layer(active_frame_->primitives[idx]);
             }
         }
@@ -249,8 +248,8 @@ void Scene::render_grid() {
         GLuint vbo = mgr_->gen_buffer();
 
         std::vector<float> coord_line;
-        const float step = 1.0f / opt_.grid_cells_count;
-        for (size_t i = 0; i <= opt_.grid_cells_count; ++i) {
+        const float step = 1.0f / conf_.grid_cells_count;
+        for (size_t i = 0; i <= conf_.grid_cells_count; ++i) {
             coord_line.push_back(step * i);
         }
 
@@ -342,8 +341,4 @@ void Scene::render_progress_bar(const glm::vec2 up_left, float w, float h, const
     shaders_->color.set_vec4("color", color);
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-Scene::settings_t &Scene::opt() {
-    return opt_;
 }

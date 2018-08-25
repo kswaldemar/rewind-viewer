@@ -8,6 +8,7 @@
 #include <cgutils/Camera.h>
 
 #include <viewer/Frame.h>
+#include <viewer/Config.h>
 
 #include <glm/glm.hpp>
 
@@ -24,8 +25,7 @@
  */
 class Scene {
 public:
-    friend class UIController;
-    explicit Scene(ResourceManager *res);
+    explicit Scene(ResourceManager *res, const Config::SceneConf *conf);
     ~Scene();
 
     void update_and_render(const glm::mat4 &proj_view, int y_axes_invert);
@@ -52,18 +52,6 @@ public:
     ///True if has at least one frame
     bool has_data() const;
 
-protected:
-    struct settings_t {
-        const uint16_t grid_cells_count = 32;
-        const glm::vec2 grid_dim = {1024.0f, 1024.0f};
-        glm::vec4 grid_color = {0.321f, 0.336f, 0.392f, 1.0f};
-        glm::vec4 scene_color = {0.757f, 0.856f, 0.882f, 1.0f};
-        bool show_grid = true;
-
-        std::array<bool, static_cast<size_t>(Frame::LAYERS_COUNT)> enabled_layers;
-    };
-    settings_t &opt();
-
 private:
     void render_frame_layer(const Frame::primitives_t &slice);
     void render_grid();
@@ -74,13 +62,13 @@ private:
     void render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color);
 
     ResourceManager *mgr_;
+    const Config::SceneConf &conf_;
 
     struct shaders_t;
     std::unique_ptr<shaders_t> shaders_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;
-    settings_t opt_;
 
     std::mutex frames_mutex_;
     std::vector<std::shared_ptr<Frame>> frames_;
