@@ -232,10 +232,9 @@ void UIController::info_widget(Scene *scene) {
             ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Background", glm::value_ptr(clear_color_));
             ImGui::ColorEdit3("Grid", glm::value_ptr(scene->opt().grid_color));
+            ImGui::ColorEdit3("Canvas", glm::value_ptr(scene->opt().scene_color));
         }
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
-            ImGui::Checkbox("Show full life bars", &scene->opt().show_full_hp_bars);
-            ImGui::Checkbox("Show detailed unit info on hover", &scene->opt().show_detailed_info_on_hover);
             ImGui::Checkbox("World origin on top left", &camera_->opt().origin_on_top_left);
             ImGui::Checkbox("Draw grid", &scene->opt().show_grid);
             static const ImVec4 button_colors[] = {

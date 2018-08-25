@@ -12,21 +12,10 @@
 
 namespace {
 
-bool hittest(const glm::vec2 &wmouse, const pod::Unit &unit) {
-    auto d = wmouse - unit.center;
-    return (d.x * d.x + d.y * d.y) <= unit.radius * unit.radius;
-}
-
 bool hittest(const glm::vec2 &wmouse, const pod::Popup &popup) {
     auto d = wmouse - popup.center;
     return (d.x * d.x + d.y * d.y) <= popup.radius * popup.radius;
 }
-
-const std::unordered_map<int, const char *> side2str = {
-    {-1, "Ally"},
-    {0,  "Neutral"},
-    {1,  "Enemy"},
-};
 
 } // anonymous namespace
 
@@ -38,16 +27,15 @@ struct Scene::render_attrs_t {
     //Lines designed to dynamic draw
     GLuint lines_vao = 0;
     GLuint uniform_buf;
-    GLuint grass_tex = 0;
     glm::mat4 grid_model;
 };
 
 struct Scene::shaders_t {
     shaders_t()
-        : color("simple.vert", "uniform_color.frag")
-        , circle("circle.vert", "circle.frag")
-        , lines("lines.vert", "lines.frag")
-        , textured("simple.vert", "textured.frag") {
+        : color("simple.vert", "uniform_color.frag"),
+          circle("circle.vert", "circle.frag"),
+          lines("lines.vert", "lines.frag"),
+          textured("simple.vert", "textured.frag") {
         //Setup variables, which will never change
         circle.use();
         circle.set_int("tex_smp", 0);
@@ -74,33 +62,6 @@ Scene::Scene(ResourceManager *res)
     //Shaders
     LOG_INFO("Compile shaders")
     shaders_ = std::make_unique<shaders_t>();
-
-    //Load textures
-    LOG_INFO("Load background texture")
-    attr_->grass_tex = mgr_->load_texture("grass.png", false, GL_REPEAT, GL_REPEAT);
-
-    //Unit textures
-    LOG_INFO("Load unit textures")
-    unit2tex_[Frame::UnitType::TANK] = mgr_->load_texture("tank.png");
-    unit2tex_[Frame::UnitType::IFV] = mgr_->load_texture("ifv.png");
-    unit2tex_[Frame::UnitType::ARRV] = mgr_->load_texture("arrv.png");
-    unit2tex_[Frame::UnitType::HELICOPTER] = mgr_->load_texture("helicopter.png");
-    unit2tex_[Frame::UnitType::FIGHTER] = mgr_->load_texture("fighter.png");
-
-    //Building textures
-    LOG_INFO("Load building textures");
-    facility2tex_[Frame::FacilityType::CONTROL_CENTER] = mgr_->load_texture("radar.png");
-    facility2tex_[Frame::FacilityType::VEHICLE_FACTORY] = mgr_->load_texture("factory.png");
-
-    //AreaDesc textures
-    auto load_area_tex = [this](const std::string &path) {
-        return mgr_->load_texture(path, true, GL_REPEAT, GL_REPEAT, GL_LINEAR_MIPMAP_NEAREST);
-    };
-    LOG_INFO("Load area textures");
-    terrain2tex_[Frame::AreaType::FOREST] = load_area_tex("forest.png");
-    terrain2tex_[Frame::AreaType::SWAMP] = load_area_tex("swamp.png");
-    terrain2tex_[Frame::AreaType::CLOUD] = load_area_tex("clouds.png");
-    terrain2tex_[Frame::AreaType::RAIN] = load_area_tex("rain.png");
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -162,20 +123,14 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
     glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(proj_view), GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //Main grass texture
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, attr_->grass_tex);
-    shaders_->textured.use();
+    //Main scene area
+    shaders_->color.use();
     auto model = glm::scale(glm::mat4(1.0f), {opt_.grid_dim * 0.5f, 1.0f});
     model = glm::translate(model, {1.0f, 1.0f, -0.2f});
-    shaders_->textured.set_mat4("model", model);
-    shaders_->textured.set_vec3("color", glm::vec3(1.0));
-    shaders_->textured.set_vec2("tex_scale", glm::vec2(opt_.grid_cells_count));
+    shaders_->color.set_mat4("model", model);
+    shaders_->color.set_vec4("color", opt_.scene_color);
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    //AreaDesc
-    render_terrain();
 
     //Grid
     if (opt_.show_grid) {
@@ -190,12 +145,6 @@ void Scene::update_and_render(const glm::mat4 &proj_view, int y_axes_invert) {
         for (size_t idx = 0; idx < active_frame_->primitives.size(); ++idx) {
             if (opt_.enabled_layers[idx]) {
                 render_frame_layer(active_frame_->primitives[idx]);
-            }
-            //TODO: Need better way
-            if (idx == Frame::DEFAULT_LAYER && opt_.enabled_layers[Frame::FACILITY_LAYER]) {
-                for (const auto &f : active_frame_->primitives[Frame::FACILITY_LAYER].facilities) {
-                    render_facility_bars(f);
-                }
             }
         }
     }
@@ -223,145 +172,45 @@ const char *Scene::get_frame_user_message() {
 void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
     std::lock_guard<std::mutex> f(frames_mutex_);
     //Sort units for proper draw order
-    auto &units = frame->primitives[Frame::DEFAULT_LAYER].units;
-    std::sort(units.begin(), units.end(), [](const pod::Unit &lhs, const pod::Unit &rhs) {
-        if (lhs.utype == rhs.utype) {
-            return lhs.enemy < rhs.enemy;
-        }
-        return lhs.utype < rhs.utype;
-    });
     frames_.emplace_back(std::move(frame));
 }
 
-void Scene::add_area_description(pod::AreaDesc area) {
-    std::lock_guard<std::mutex> f(terrain_mutex_);
-    terrains_.emplace_back(area);
-}
-
 void Scene::show_detailed_info(const glm::vec2 &mouse) const {
-    if (!opt_.show_detailed_info_on_hover || frames_.empty()) {
+    if (!active_frame_) {
         return;
     }
-    if (active_frame_) {
-        for (const auto &popup : active_frame_->popups) {
-            if (hittest(mouse, popup)) {
-                ImGui::BeginTooltip();
-                ImGui::Text("%s", popup.text.c_str());
-                ImGui::EndTooltip();
-            }
-        }
 
-        if (opt_.enabled_layers[Frame::DEFAULT_LAYER]) {
-            for (const auto &unit : active_frame_->primitives[Frame::DEFAULT_LAYER].units) {
-                if (hittest(mouse, unit)) {
-                    ImGui::BeginTooltip();
-                    ImGui::Text(
-                        "%s %s:"
-                            "\nHP: %d / %d"
-                            "\nPosition: %0.3lf, %0.3lf"
-                            "\nCooldown: %d (%d)"
-                            "\nSelected: %s",
-                        side2str.at(unit.enemy),
-                        Frame::unit_name(unit.utype),
-                        unit.hp, unit.max_hp,
-                        unit.center.x, unit.center.y,
-                        unit.rem_cooldown, unit.cooldown,
-                        unit.selected ? "yes" : "no"
-                    );
-                    ImGui::EndTooltip();
-                }
-            }
-        }
-
-        if (opt_.enabled_layers[Frame::FACILITY_LAYER]) {
-            const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
-            int mouse_cell_x = static_cast<int>(mouse.x / cell_dim.x);
-            int mouse_cell_y = static_cast<int>(mouse.y / cell_dim.y);
-            for (const auto &facility : active_frame_->primitives[Frame::FACILITY_LAYER].facilities) {
-                if ((mouse_cell_x == facility.x || mouse_cell_x == facility.x + 1)
-                    && (mouse_cell_y == facility.y || mouse_cell_y == facility.y + 1)) {
-                    ImGui::BeginTooltip();
-                    if (facility.type == Frame::FacilityType::CONTROL_CENTER) {
-                        ImGui::Text(
-                            "%s %s"
-                                "\nCapture progress: %d / %d",
-                            side2str.at(facility.enemy),
-                            Frame::facility_name(facility.type),
-                            std::abs(facility.capture), facility.max_capture
-                        );
-                    } else {
-                        ImGui::Text(
-                            "%s %s:"
-                                "\nCapture progress: %d / %d"
-                                "\nProduction progress: %d / %d",
-                            side2str.at(facility.enemy),
-                            Frame::facility_name(facility.type),
-                            std::abs(facility.capture), facility.max_capture,
-                            facility.production, facility.max_production
-                        );
-                    }
-                    ImGui::EndTooltip();
-                }
-            }
+    for (const auto &popup : active_frame_->popups) {
+        if (hittest(mouse, popup)) {
+            ImGui::BeginTooltip();
+            ImGui::Text("%s", popup.text.c_str());
+            ImGui::EndTooltip();
         }
     }
 }
 
 void Scene::clear_data(bool clean_active) {
-    {
-        std::lock_guard<std::mutex> _(terrain_mutex_);
-        terrains_.clear();
+    std::lock_guard<std::mutex> _(frames_mutex_);
+    frames_.clear();
+    if (clean_active) {
+        active_frame_ = nullptr;
     }
-    {
-        std::lock_guard<std::mutex> _(frames_mutex_);
-        frames_.clear();
-        if (clean_active) {
-            active_frame_ = nullptr;
-        }
-        frames_count_ = 0;
-        cur_frame_idx_ = 0;
-    }
+    frames_count_ = 0;
+    cur_frame_idx_ = 0;
 }
 
 bool Scene::has_data() const {
     return frames_count_ > 0;
 }
 
-void Scene::render_terrain() {
-    std::lock_guard<std::mutex> f(terrain_mutex_);
-    if (terrains_.empty()) {
-        return;
-    }
-
-    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
-    shaders_->textured.use();
-    shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0f, y_axes_invert_));
-    shaders_->textured.set_vec3("color", glm::vec3(1.0));
-    glBindVertexArray(attr_->rect_vao);
-    for (const auto &tm : terrains_) {
-        float z = -0.1f;
-        if (tm.type == Frame::AreaType::RAIN || tm.type == Frame::AreaType::CLOUD) {
-            z += 0.05f;
-        }
-
-        auto model = glm::translate(glm::mat4(1.0), {cell_dim.x * tm.x, cell_dim.y * tm.y, z});
-        model = glm::scale(model, glm::vec3(cell_dim * 0.5f, 0.0f));
-        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
-        shaders_->textured.set_mat4("model", model);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, terrain2tex_[tm.type]);
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    }
-}
-
 void Scene::render_frame_layer(const Frame::primitives_t &slice) {
-    if (!slice.facilities.empty()) {
-        shaders_->textured.use();
-        shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0));
-        for (const auto &obj : slice.facilities) {
-            render_facility_object(obj);
-        }
-    }
+    //if (!slice.facilities.empty()) {
+    //    shaders_->textured.use();
+    //    shaders_->textured.set_vec2("tex_scale", glm::vec2(1.0));
+    //    for (const auto &obj : slice.facilities) {
+    //        render_facility_object(obj);
+    //    }
+    //}
 
     if (!slice.circles.empty()) {
         shaders_->circle.use();
@@ -383,15 +232,15 @@ void Scene::render_frame_layer(const Frame::primitives_t &slice) {
         render_lines(slice.lines);
     }
 
-    if (!slice.units.empty()) {
-        glLineWidth(2); //Bold outlining
-        glEnable(GL_DEPTH_TEST);
-        for (const auto &unit : slice.units) {
-            render_unit(unit);
-        }
-        glDisable(GL_DEPTH_TEST);
-        glLineWidth(1);
-    }
+    //if (!slice.units.empty()) {
+    //    glLineWidth(2); //Bold outlining
+    //    glEnable(GL_DEPTH_TEST);
+    //    for (const auto &unit : slice.units) {
+    //        render_unit(unit);
+    //    }
+    //    glDisable(GL_DEPTH_TEST);
+    //    glLineWidth(1);
+    //}
 }
 
 void Scene::render_grid() {
@@ -482,148 +331,6 @@ void Scene::render_lines(const std::vector<pod::Line> &lines) {
     glBindVertexArray(attr_->lines_vao);
     glBufferData(GL_ARRAY_BUFFER, lines.size() * sizeof(pod::Line), lines.data(), GL_DYNAMIC_DRAW);
     glDrawArrays(GL_LINES, 0, static_cast<GLsizei>(lines.size() * 2));
-}
-
-void Scene::render_unit(const pod::Unit &unit) {
-    //Circle
-    shaders_->circle.use();
-    shaders_->circle.set_float("radius2", unit.radius * unit.radius);
-    if (unit.selected) {
-        shaders_->circle.set_vec4("color", opt_.selected_unit_color);
-    } else if (unit.enemy == 1) {
-        shaders_->circle.set_vec4("color", opt_.enemy_unit_color);
-    } else if (unit.enemy == -1) {
-        shaders_->circle.set_vec4("color", opt_.ally_unit_color);
-    } else {
-        shaders_->circle.set_vec4("color", opt_.neutral_unit_color);
-    }
-
-    const float aerial_z_value = 0.11f;
-    const float hp_bar_z_value = 0.12f;
-    const float cd_bar_z_value = 0.13f;
-
-    float z_value = 0.0f;
-    if (unit.utype == Frame::UnitType::FIGHTER || unit.utype == Frame::UnitType::HELICOPTER) {
-        z_value = aerial_z_value;
-    }
-    if (unit.enemy == 1) {
-        //Enemies above us
-        z_value += 0.005;
-    }
-
-    auto vcenter = glm::vec3{unit.center.x, unit.center.y, z_value};
-    glm::mat4 model = glm::translate(glm::mat4(1.0f), vcenter);
-    if (unit.utype != Frame::UnitType::UNKNOWN) {
-        shaders_->circle.set_int("textured", 1);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, unit2tex_[unit.utype]);
-        static const float tex_compensation = glm::radians(90.0f); //Because texture by default aligned to Y axes
-        model = glm::rotate(model, unit.course - tex_compensation, {0.0f, 0.0f, 1.0f});
-    } else {
-        shaders_->circle.set_int("textured", 0);
-    }
-    model = glm::scale(model, glm::vec3{unit.radius, unit.radius, 0.0f});
-    shaders_->circle.set_vec3("center", vcenter);
-    shaders_->circle.set_mat4("model", model);
-
-    glBindVertexArray(attr_->rect_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-    const glm::vec3 bar_shift{vcenter.x - unit.radius,
-                              vcenter.y + unit.radius * 1.15 * y_axes_invert_,
-                              hp_bar_z_value};
-    const float hp_bar_height = std::max(unit.radius * 0.10f, 0.1f);
-    if (opt_.show_full_hp_bars || unit.hp != unit.max_hp) {
-        //HP bar
-        float hp_length = static_cast<float>(cg::lerp(unit.hp, 0, unit.max_hp, 0, unit.radius));
-        model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {hp_length, hp_bar_height, 0.0f});
-        model = glm::translate(model, {1.0f, 0.0f, 0.0f});
-        float color_shift = static_cast<float>(unit.hp) / unit.max_hp;
-        glm::vec3 color{1.0f - color_shift, color_shift, 0.0};
-        auto m = 1.0f / std::max(color.r, color.g);
-        shaders_->color.use();
-        shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec4("color", glm::vec4(color * m, 1.0f));
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-        //Hp bar outlining
-        model = glm::translate(glm::mat4(1.0f), bar_shift);
-        model = glm::scale(model, {unit.radius, hp_bar_height, 0.0f});
-        model = glm::translate(model, {1.0f, 0.0f, 0.0f});
-        shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-        const uint8_t indicies[] = {0, 1, 3, 2};
-        glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
-    }
-    if (opt_.show_cooldown_bars && unit.rem_cooldown > 0) {
-        model = glm::translate(glm::mat4(1.0f),
-                               {bar_shift.x, bar_shift.y - hp_bar_height, cd_bar_z_value});
-        const double cooldown_fraction = cg::lerp(unit.rem_cooldown, unit.cooldown, 0, 0, unit.radius);
-        model = glm::scale(model, {cooldown_fraction, hp_bar_height * 0.5f, 0.0f});
-        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
-        shaders_->color.use();
-        shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec4("color", glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    }
-}
-
-void Scene::render_facility_object(const pod::Facility &facility) {
-    if (facility.enemy == -1) {
-        shaders_->textured.set_vec3("color", opt_.ally_unit_color);
-    } else if (facility.enemy == 1) {
-        shaders_->textured.set_vec3("color", opt_.enemy_unit_color);
-    } else {
-        shaders_->textured.set_vec3("color", opt_.neutral_unit_color);
-    }
-
-    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
-
-    glBindVertexArray(attr_->rect_vao);
-    auto model = glm::translate(glm::mat4(1.0), {cell_dim.x * facility.x, cell_dim.y * facility.y, 0.0});
-    model = glm::scale(model, glm::vec3(cell_dim, 0.0f));
-    model = glm::translate(model, {1.0f, 1.0f, 0.0f});
-    shaders_->textured.set_mat4("model", model);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, facility2tex_[facility.type]);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
-
-void Scene::render_facility_bars(const pod::Facility &facility) {
-    const auto cell_dim = opt_.grid_dim / static_cast<float>(opt_.grid_cells_count);
-
-    glm::vec3 bar_pos{cell_dim.x * (facility.x + 0.5f), cell_dim.y * (facility.y + y_axes_invert_ * 0.1), 0.0f};
-    const float bar_height = cell_dim.y * 0.05f;
-    if (abs(facility.capture) != facility.max_capture && facility.capture != 0 && facility.max_capture != 0) {
-        //Someone capturing
-        const float saturation = std::abs(static_cast<float>(facility.capture) / facility.max_capture);
-        const glm::vec2 top_left{bar_pos.x, bar_pos.y + bar_height * y_axes_invert_ * 0.5f};
-        render_progress_bar(top_left,
-                            saturation * cell_dim.x,
-                            bar_height,
-                            facility.capture < 0 ? opt_.enemy_unit_color : opt_.ally_unit_color);
-
-
-        //Bar outlining
-        auto model = glm::translate(glm::mat4(1.0f), glm::vec3{top_left, 0.0f});
-        model = glm::scale(model, {cell_dim.x * 0.5f, bar_height * 0.5f, 0.0f});
-        model = glm::translate(model, {1.0f, 1.0f, 0.0f});
-        shaders_->color.use();
-        shaders_->color.set_mat4("model", model);
-        shaders_->color.set_vec4("color", glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-        const uint8_t indicies[] = {0, 1, 3, 2};
-        glBindVertexArray(attr_->rect_vao);
-        glLineWidth(2);
-        glDrawElements(GL_LINE_LOOP, 4, GL_UNSIGNED_BYTE, indicies);
-        glLineWidth(1);
-    }
-    if (facility.production < facility.max_production && facility.max_production > 0) {
-        const float saturation = std::abs(static_cast<float>(facility.production) / facility.max_production);
-        render_progress_bar(bar_pos,
-                            saturation * cell_dim.x, bar_height * 0.5f,
-                            glm::vec4(0.5f, 0.5f, 0.5f, 1.0f));
-    }
 }
 
 void Scene::render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color) {
