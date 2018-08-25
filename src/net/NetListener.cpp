@@ -77,8 +77,6 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
 
         auto &slice = frame_->primitives[layer];
 
-        static std::vector<pod::AreaDesc> areas;
-
         switch (type) {
             case PrimitiveType::begin:
                 LOG_V8("NetClient::Begin");
@@ -87,16 +85,6 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 LOG_V8("NetClient::End");
                 if (!stop_) {
                     scene_->add_frame(std::move(frame_));
-                    if (!areas.empty()) {
-                        std::sort(areas.begin(), areas.end(),
-                                  [](const pod::AreaDesc &lhs, const pod::AreaDesc &rhs) {
-                            return lhs.type < rhs.type;
-                        });
-                        for (const auto &area : areas) {
-                            scene_->add_area_description(area);
-                        }
-                        areas.clear();
-                    }
                 }
                 frame_ = nullptr;
                 break;
@@ -116,21 +104,9 @@ void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 LOG_V8("NetClient::Message");
                 frame_->user_message += j["message"].get<std::string>();
                 break;
-            case PrimitiveType::unit:
-                LOG_V8("NetClient::Unit");
-                frame_->primitives[Frame::DEFAULT_LAYER].units.emplace_back(j);
-                break;
-            case PrimitiveType::area:
-                LOG_V8("NetClient::Area");
-                areas.emplace_back(j);
-                break;
             case PrimitiveType::popup:
                 LOG_V8("NetClient::Popup");
                 frame_->popups.emplace_back(j);
-                break;
-            case PrimitiveType::facility:
-                LOG_V8("NetClient::Facility");
-                frame_->primitives[Frame::FACILITY_LAYER].facilities.emplace_back(j);
                 break;
             case PrimitiveType::types_count:
                 LOG_WARN("Got 'types_count' message");

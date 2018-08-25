@@ -5,6 +5,7 @@
 #include <cgutils/utils.h>
 #include <cgutils/ResourceManager.h>
 #include <viewer/UIController.h>
+#include <viewer/Config.h>
 #include <common/logger.h>
 #include <imgui_impl/imgui_impl_glfw_gl3.h>
 
@@ -16,6 +17,7 @@ constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
 
 constexpr const char *WINDOW_TITLE = "Rewind viewer for Russian AI Cup";
+constexpr const char *CONF_FILENAME = "rewindviewer.cfg";
 
 GLFWwindow *setup_window();
 void prepare_and_run_game_loop(GLFWwindow *window);
@@ -115,8 +117,11 @@ GLFWwindow *setup_window() {
 }
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
+    LOG_INFO("Try load configuration file");
+    Config conf = Config::load_from_file(CONF_FILENAME);
+
     LOG_INFO("Create camera")
-    Camera cam({730.0f, 445.0f}, 1000);
+    Camera cam(conf.scene.grid_dim * 0.5f, std::max(conf.scene.grid_dim.x, conf.scene.grid_dim.y));
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     LOG_INFO("Create Resource manager")
@@ -124,10 +129,10 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     Shader::set_shaders_folder("resources/shaders/");
 
     LOG_INFO("Create Scene")
-    Scene scene(&res);
+    Scene scene(&res, &conf.scene);
 
     LOG_INFO("Create GUI controller")
-    UIController ui(&cam);
+    UIController ui(&cam, &conf);
 
     //Start network listening
     LOG_INFO("Start networking thread")
@@ -181,6 +186,10 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     }
 
     net.stop();
+
+    LOG_INFO("Save config file %s", CONF_FILENAME);
+    conf.save_to_file(CONF_FILENAME);
+
     LOG_INFO("Exit from application");
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }

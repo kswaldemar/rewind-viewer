@@ -11,6 +11,7 @@
 
 #include <cgutils/Camera.h>
 #include <net/NetListener.h>
+#include <viewer/Config.h>
 
 #include <memory>
 
@@ -21,7 +22,7 @@ class Scene;
  */
 class UIController {
 public:
-    UIController(Camera *camera);
+    UIController(Camera *camera, Config *conf);
     ~UIController();
 
     /**
@@ -47,15 +48,11 @@ private:
     std::unique_ptr<wnd_t> wnd_;
 
     Camera *camera_;
+    Config *conf_;
 
     bool request_exit_ = false;
     bool autoplay_scene_ = true;
     bool developer_mode_ = false;
-    bool close_with_esc_ = false;
-
-    const uint16_t fast_skip_speed_ = 20; //In ticks per frame
-
-    glm::vec3 clear_color_ = {0.2, 0.3, 0.3};
 
     ///Last remembered state
     bool key_pressed_[512];
