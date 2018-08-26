@@ -247,14 +247,12 @@ void Scene::render_grid() {
         attr_->grid_vao = mgr_->gen_vertex_array();
         GLuint vbo = mgr_->gen_buffer();
 
-        std::vector<float> coord_line;
-        const float step = 1.0f / conf_.grid_cells_count;
-        for (size_t i = 0; i <= conf_.grid_cells_count; ++i) {
-            coord_line.push_back(step * i);
-        }
-
         std::vector<float> grid;
-        for (float shift : coord_line) {
+
+        const float step_x = 1.0f / conf_.grid_cells.x;
+        for (size_t i = 0; i <= conf_.grid_cells.x; ++i) {
+            const float shift = step_x * i;
+
             grid.push_back(shift);
             grid.push_back(0.0);
             grid.push_back(0.0);
@@ -262,8 +260,13 @@ void Scene::render_grid() {
             grid.push_back(shift);
             grid.push_back(1.0);
             grid.push_back(0.0);
+        }
 
-            grid.push_back(0);
+        const float step_y = 1.0f / conf_.grid_cells.y;
+        for (size_t i = 0; i <= conf_.grid_cells.y; ++i) {
+            const float shift = step_y * i;
+
+            grid.push_back(0.0);
             grid.push_back(shift);
             grid.push_back(0.0);
 
@@ -271,6 +274,7 @@ void Scene::render_grid() {
             grid.push_back(shift);
             grid.push_back(0.0);
         }
+
         attr_->grid_vertex_count = static_cast<GLsizei>(grid.size() / 3);
 
         glBindVertexArray(attr_->grid_vao);

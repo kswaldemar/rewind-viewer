@@ -50,13 +50,13 @@ Config Config::load_from_file(const std::string &fname) {
             auto &v = cfg.ui.clear_color;
             sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
         } else if (key == "scene.grid_cells_count") {
-            sscanf(value.c_str(), "%hu", &cfg.scene.grid_cells_count);
+            sscanf(value.c_str(), "(%hu, %hu)", &cfg.scene.grid_cells.x, &cfg.scene.grid_cells.y);
         } else if (key == "scene.grid_dim") {
             auto &v = cfg.scene.grid_dim;
             sscanf(value.c_str(), "(%f, %f)", &v.x, &v.y);
         } else if (key == "scene.grid_color") {
             auto &v = cfg.scene.grid_color;
-            sscanf(value.c_str(), "(%f,%f,%f)", &v.r, &v.g, &v.b);
+            sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
         } else if (key == "scene.scene_color") {
             auto &v = cfg.scene.scene_color;
             sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
@@ -86,8 +86,8 @@ void Config::save_to_file(const std::string &fname) const {
     fputs("\n# Background color, rgb format\n", f);
     fprintf(f, "ui.clear_color = (%.3f, %.3f, %.3f)\n", ui.clear_color.r, ui.clear_color.g, ui.clear_color.b);
 
-    fputs("\n# Grid cells count\n", f);
-    fprintf(f, "scene.grid_cells_count = %hu\n", scene.grid_cells_count);
+    fputs("\n# Grid cells count in each dimension (X, Y)\n", f);
+    fprintf(f, "scene.grid_cells_count = (%hu, %hu)\n", scene.grid_cells.x, scene.grid_cells.y);
     fputs("\n# Scene size\n", f);
     fprintf(f, "scene.grid_dim = (%.3f, %.3f)\n", scene.grid_dim.x, scene.grid_dim.y);
     fputs("\n# Grid color, rgb format\n", f);
