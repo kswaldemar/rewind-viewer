@@ -21,13 +21,9 @@
  *  
  *  For available types see enum PrimitveType in Frame.h header
  *
- *  For terrain and weather support see area_description command.
- *  You can send several terrain/weather commands with same coordinates.
- *  Note: Terrain is static command and affect all frames. So you need to send it only once per game session.
- *
  *  Colors has ARGB format, if you set only RGB component alpha channel will be set to full opaque value 255.
  *
- *  Note: All command, except terrain, only affect currently rendering frame and will not appear in next frame
+ *  Note: All command only affect currently rendering frame and will not appear in the next frame
  *
  *  Layers:
  *   - Circle, Line and Rectangle support explicit layer where they need to be drawn
@@ -38,6 +34,9 @@
  */
 class RewindClient {
 public:
+    ///Default layer to draw primitives
+    constexpr static int DEFAULT_LAYER = 3;
+
     enum Color : uint32_t {
         COLOR_RED = 0xFF0000,
         COLOR_GREEN = 0x00FF00,
@@ -59,11 +58,6 @@ public:
         static RewindClient inst(HOST, PORT);
         return inst;
     }
-    
-    /**
-     * Cannot copy Singleton
-     */
-    RewindClient(const RewindClient &) = delete;
 
     /**
      * Should be send on end of move function
@@ -81,7 +75,7 @@ public:
 
     void popup(double x, double y, double r, std::string text) {
         static const char *fmt =
-            R"({"type": "popup", "x": %lf, "y": %lf, "r": %lf, "text": %s})";
+            R"({"type": "popup", "x": %lf, "y": %lf, "r": %lf, "text": "%s"})";
         send(format(fmt, x, y, r, text.c_str()));
     }
 
