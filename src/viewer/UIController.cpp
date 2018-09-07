@@ -227,7 +227,7 @@ void UIController::info_widget(Scene *scene) {
         if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
-            ImGui::InputFloat("Viewport size", &camera_->opt().viewport_size, 50.0, 1000.0, 0);
+            ImGui::InputFloat("Viewport size", &camera_->viewport_size_, 50.0, 1000.0, 0);
             ImGui::PopItemWidth();
         }
         if (ImGui::CollapsingHeader(ICON_FA_EYEDROPPER " Colors", flags)) {
@@ -237,7 +237,7 @@ void UIController::info_widget(Scene *scene) {
             ImGui::ColorEdit3("Canvas", glm::value_ptr(conf_->scene.scene_color));
         }
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
-            ImGui::Checkbox("World origin on top left", &camera_->opt().origin_on_top_left);
+            ImGui::Checkbox("World origin on top left", &conf_->camera.origin_on_top_left);
             ImGui::Checkbox("Draw grid", &conf_->scene.show_grid);
             static const ImVec4 button_colors[] = {
                 ImVec4(0.5, 0.5, 0.5, 1.0),

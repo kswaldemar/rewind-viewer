@@ -121,7 +121,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     Config conf = Config::load_from_file(CONF_FILENAME);
 
     LOG_INFO("Create camera")
-    Camera cam(conf.scene.grid_dim * 0.5f, std::max(conf.scene.grid_dim.x, conf.scene.grid_dim.y));
+    Camera cam(&conf.camera);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
     LOG_INFO("Create Resource manager")

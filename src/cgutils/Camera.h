@@ -9,11 +9,13 @@
 
 #include <glm/glm.hpp>
 
+#include <viewer/Config.h>
+
 class Camera {
 public:
     friend class UIController;
 
-    Camera(const glm::vec2 &initial_pos, float viewport_size);
+    Camera(const Config::CameraConf *conf);
     ~Camera() = default;
 
     const glm::mat4 &proj_view() const;
@@ -25,19 +27,14 @@ public:
     ///1 if directed up, -1 if directed down
     int y_axes_invert() const;
 
-protected:
-    struct settings_t {
-        float viewport_size;
-        bool origin_on_top_left = true;
-    };
-    settings_t &opt();
-
 private:
     void update_matrix();
 
-    settings_t opt_;
+    const Config::CameraConf &conf_;
+
     glm::mat4 pr_view_;
     glm::vec2 pos_;
+    float viewport_size_;
 };
 
 

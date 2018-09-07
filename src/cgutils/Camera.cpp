@@ -17,10 +17,11 @@ namespace {
 
 } // anonymous namespace
 
-Camera::Camera(const glm::vec2 &initial_pos, float viewport_size)
-    : pos_(initial_pos)
+Camera::Camera(const Config::CameraConf *conf)
+    : conf_(*conf)
 {
-    opt_.viewport_size = viewport_size;
+    pos_ = conf_.start_position;
+    viewport_size_ = conf_.start_viewport_size;
     update_matrix();
 }
 
@@ -41,7 +42,7 @@ void Camera::update() {
 
             pos_ += rel_mouse_pos - new_mouse_pos;
 
-            opt_.viewport_size *= zoom_k;
+            viewport_size_ *= zoom_k;
         }
 
         //Map dragging
@@ -52,8 +53,8 @@ void Camera::update() {
             const int min_size = std::min(width, height);
 
             glm::vec2 delta = io.MouseDelta;
-            delta.x = -opt_.viewport_size * (delta.x / min_size);
-            delta.y =  opt_.viewport_size * (delta.y / min_size) * y_axes_invert();
+            delta.x = -viewport_size_ * (delta.x / min_size);
+            delta.y =  viewport_size_ * (delta.y / min_size) * y_axes_invert();
             pos_ += delta;
         }
 
@@ -65,7 +66,7 @@ glm::vec2 Camera::screen2world(const glm::vec2 &coord) const {
     int width, height;
     glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
 
-    const float half_view = opt_.viewport_size * 0.5f;
+    const float half_view = viewport_size_ * 0.5f;
     const float min_size = std::min<float>(width, height);
     const float x_half_view = half_view * width / min_size;
     const float y_half_view = half_view * height / min_size;
@@ -77,18 +78,14 @@ glm::vec2 Camera::screen2world(const glm::vec2 &coord) const {
 }
 
 int Camera::y_axes_invert() const {
-    return opt_.origin_on_top_left ? -1 : 1;
-}
-
-Camera::settings_t &Camera::opt() {
-    return opt_;
+    return conf_.origin_on_top_left ? -1 : 1;
 }
 
 void Camera::update_matrix() {
     int width, height;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
 
-    const float half_view = opt_.viewport_size * 0.5f;
+    const float half_view = viewport_size_ * 0.5f;
     const float min_size = std::min<float>(width, height);
     const float x_half_view = half_view * width / min_size;
     const float y_half_view = half_view * height / min_size;

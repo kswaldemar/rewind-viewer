@@ -8,6 +8,12 @@
 
 namespace {
 
+inline bool read_bool(const char *str) {
+    int flag;
+    sscanf(str, "%d", &flag);
+    return static_cast<bool>(flag);
+}
+
 }
 
 Config Config::load_from_file(const std::string &fname) {
@@ -21,6 +27,8 @@ Config Config::load_from_file(const std::string &fname) {
 
     char buf[512];
     std::string line;
+
+    Config::present_keys_t keys;
 
     while (fgets(buf, sizeof(buf), f)) {
         line = buf;
@@ -40,12 +48,13 @@ Config Config::load_from_file(const std::string &fname) {
 
         std::string value = line.substr(eq_idx + 2); //+2 to skip space
         std::string key = line.substr(0, eq_idx - 1);
+
+        keys.insert(key);
+
         if (key == "ui.fast_skip_speed") {
             sscanf(value.c_str(), "%hu", &cfg.ui.fast_skip_speed);
         } else if (key == "ui.close_with_esc") {
-            int flag;
-            sscanf(value.c_str(), "%d", &flag);
-            cfg.ui.close_with_esc = static_cast<bool>(flag);
+            cfg.ui.close_with_esc = read_bool(value.c_str());
         } else if (key == "ui.clear_color") {
             auto &v = cfg.ui.clear_color;
             sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
@@ -61,13 +70,20 @@ Config Config::load_from_file(const std::string &fname) {
             auto &v = cfg.scene.scene_color;
             sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
         } else if (key == "scene.show_grid") {
-            int flag;
-            sscanf(value.c_str(), "%d", &flag);
-            cfg.scene.show_grid = static_cast<bool>(flag);
+            cfg.scene.show_grid = read_bool(value.c_str());
+        } else if (key == "camera.origin_on_top_left") {
+            cfg.camera.origin_on_top_left = read_bool(value.c_str());
+        } else if (key == "camera.start_position") {
+            auto &v = cfg.camera.start_position;
+            sscanf(value.c_str(), "(%f, %f)", &v.x, &v.y);
+        } else if (key == "camera.start_viewport_size") {
+            sscanf(value.c_str(), "%f", &cfg.camera.start_viewport_size);
         } else {
             LOG_WARN("Invalid config line (%s): unknown key '%s'", line.c_str(), key.c_str());
         }
     }
+
+    cfg.update_dynamic_values(keys);
 
     return cfg;
 }
@@ -96,4 +112,19 @@ void Config::save_to_file(const std::string &fname) const {
     fprintf(f, "scene.scene_color = (%.3f, %.3f, %.3f)\n", scene.scene_color.r, scene.scene_color.g, scene.scene_color.b);
     fputs("\n# If true, grid will be shown by default\n", f);
     fprintf(f, "scene.show_grid = %d\n", scene.show_grid);
+
+    fputs("\n# If true, world origin will be in top left corner of screen, like in normal computer graphics\n", f);
+    fprintf(f, "camera.origin_on_top_left = %d\n", camera.origin_on_top_left);
+    fputs("\n# Initial settings for camera. In game camera movement won't rewrite that values\n", f);
+    fprintf(f, "camera.start_position = (%.3f, %.3f)\n", camera.start_position.x, camera.start_position.y);
+    fprintf(f, "camera.start_viewport_size = %.3f\n", camera.start_viewport_size);
+}
+
+void Config::update_dynamic_values(const Config::present_keys_t &keys) {
+    if (keys.find("camera.start_position") == keys.end()) {
+        camera.start_position = scene.grid_dim * 0.5f;
+    }
+    if (keys.find("camera.start_viewport_size") == keys.end()) {
+        camera.start_viewport_size = std::max(scene.grid_dim.x, scene.grid_dim.y);
+    }
 }
