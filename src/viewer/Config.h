@@ -28,6 +28,10 @@ public:
         std::array<bool, static_cast<size_t>(Frame::LAYERS_COUNT)> enabled_layers = {{1, 1, 1, 1, 1}};
     } scene;
 
+    struct NetConf {
+        bool use_binary_protocol = false;
+    } net;
+
     struct CameraConf {
         bool origin_on_top_left = true;
         glm::vec2 start_position;

@@ -1,4 +1,5 @@
 #include "NetListener.h"
+#include "ProtoHandler.h"
 
 #include <net/PrimitiveType.h>
 #include <common/logger.h>
@@ -7,8 +8,11 @@
 #include <errno.h>
 #endif
 
-NetListener::NetListener(Scene *scene, const std::string &listen_host, uint16_t listen_port)
-    : scene_(scene), host_(listen_host), port_(listen_port) {
+NetListener::NetListener(const std::string &listen_host, uint16_t listen_port, std::unique_ptr<ProtoHandler> &&handler)
+    : host_(listen_host),
+      port_(listen_port),
+      handler_(std::move(handler)) {
+
     socket_ = std::make_unique<CPassiveSocket>(CPassiveSocket::SocketTypeTcp);
     if (socket_->Initialize()) {
         socket_->DisableNagleAlgoritm();
@@ -41,8 +45,7 @@ void NetListener::run() {
         }
         status_ = ConStatus::ESTABLISHED;
         //Cleanup previous data
-        scene_->clear_data(false);
-        frame_ = nullptr;
+        handler_->on_new_connection();
         //Serve socket
         serve_connection(client_socket);
     }
@@ -55,70 +58,9 @@ void NetListener::stop() {
     stop_ = true;
 }
 
-void NetListener::process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end) {
-    using namespace nlohmann;
-    try {
-        auto j = json::parse(chunk_begin, chunk_end);
-        PrimitiveType type = primitve_type_from_str(j["type"]);
-        auto layer_it = j.find("layer");
-        size_t layer = Frame::DEFAULT_LAYER;
-        if (layer_it != j.end()) {
-            layer = layer_it->get<size_t>();
-            if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
-                LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
-                         layer, static_cast<size_t>(Frame::LAYERS_COUNT));
-            }
-            layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
-        }
 
-        if (!frame_) {
-            frame_ = std::make_unique<Frame>();
-        }
-
-        auto &slice = frame_->primitives[layer];
-
-        switch (type) {
-            case PrimitiveType::begin:
-                LOG_V8("NetClient::Begin");
-                break;
-            case PrimitiveType::end:
-                LOG_V8("NetClient::End");
-                if (!stop_) {
-                    scene_->add_frame(std::move(frame_));
-                }
-                frame_ = nullptr;
-                break;
-            case PrimitiveType::circle:
-                LOG_V8("NetClient::Circle detected");
-                slice.circles.emplace_back(j);
-                break;
-            case PrimitiveType::rectangle:
-                LOG_V8("NetClient::Rectangle detected");
-                slice.rectangles.emplace_back(j);
-                break;
-            case PrimitiveType::line:
-                LOG_V8("NetClient::Line detected");
-                slice.lines.emplace_back(j);
-                break;
-            case PrimitiveType::message:
-                LOG_V8("NetClient::Message");
-                frame_->user_message += j["message"].get<std::string>();
-                break;
-            case PrimitiveType::popup:
-                LOG_V8("NetClient::Popup");
-                frame_->popups.emplace_back(j);
-                break;
-            case PrimitiveType::types_count:
-                LOG_WARN("Got 'types_count' message");
-                break;
-        }
-    } catch (const std::exception &e) {
-        LOG_WARN("NetListener::Exception: %s", e.what());
-    }
-}
 
 void NetListener::serve_connection(CActiveSocket *client) {
-    std::string prev_block;
     while (!stop_) {
         const int32_t nbytes = client->Receive(1024);
         if (stop_) {
@@ -126,31 +68,12 @@ void NetListener::serve_connection(CActiveSocket *client) {
         }
         if (nbytes > 0) {
             auto data = client->GetData();
+            //todo: Maybe remove that zero, because it doesn't make sense in case of binary data
+            // same for debug print
             data[nbytes] = '\0';
             LOG_V9("NetClient:: Message %d bytes, '%s'", nbytes, data);
             //Strategy can send several messages in one block
-            const uint8_t *beg = data;
-            const uint8_t *block_end = data + nbytes;
-            while (true) {
-                const uint8_t *end = std::find(beg, block_end, '}');
-                if (end == block_end) {
-                    if (beg != block_end) {
-                        prev_block = std::string(beg, end);
-                    }
-                    break;
-                }
-                ++end;
-                //Support for fragmented messages
-                if (prev_block.empty()) {
-                    process_json_message(beg, end);
-                } else {
-                    prev_block += std::string(beg, end);
-                    process_json_message(reinterpret_cast<const uint8_t *>(prev_block.data()),
-                                         reinterpret_cast<const uint8_t *>(prev_block.data() + prev_block.size()));
-                    prev_block.clear();
-                }
-                beg = end;
-            }
+            handler_->handle_message(data, static_cast<uint32_t>(nbytes));
         } else {
             client->Close();
             status_ = ConStatus::CLOSED;

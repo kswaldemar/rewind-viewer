@@ -9,7 +9,7 @@
 #include <csimplesocket/PassiveSocket.h>
 #include <csimplesocket/ActiveSocket.h>
 
-struct Frame;
+class ProtoHandler;
 
 /**
  * Negotiation with running strategy
@@ -27,7 +27,7 @@ public:
         CLOSED
     };
 
-    NetListener(Scene *scene, const std::string &listen_host, uint16_t listen_port);
+    NetListener(const std::string &listen_host, uint16_t listen_port, std::unique_ptr<ProtoHandler> &&handler);
 
     ///Return current connection status.
     ///Will be wait until first data chunk, established while tcp connection alive
@@ -40,7 +40,6 @@ public:
     void stop();
 
 private:
-    void process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end);
     void serve_connection(CActiveSocket *client);
 
     Scene *scene_;
@@ -50,6 +49,7 @@ private:
     std::string host_;
     uint16_t port_;
 
-    std::unique_ptr<Frame> frame_ = nullptr;
+    std::unique_ptr<ProtoHandler> handler_;
+
     bool stop_ = false;
 };

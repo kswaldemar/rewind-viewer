@@ -23,6 +23,8 @@ set(Sources
     viewer/Scene.cpp
     viewer/Config.cpp
     net/NetListener.cpp
+    net/ProtoHandler.cpp
+    net/json_handler/JsonHandler.cpp
 )
 
 add_executable(${PROJECT_NAME} ${Sources})

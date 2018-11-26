@@ -6,12 +6,15 @@
 #include <cgutils/ResourceManager.h>
 #include <viewer/UIController.h>
 #include <viewer/Config.h>
+#include <net/json_handler/JsonHandler.h>
 #include <common/logger.h>
 #include <imgui_impl/imgui_impl_glfw_gl3.h>
 
 #include <stb_image.h>
 
 #include <thread>
+#include <exception>
+
 
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
@@ -24,7 +27,7 @@ void prepare_and_run_game_loop(GLFWwindow *window);
 
 int main(int argc, char **argv) {
     loguru::init(argc, argv);
-    loguru::add_file("rewindviewer-debug.log", loguru::Truncate, 7);
+    loguru::add_file("rewindviewer-debug.log", loguru::Truncate, 9);
     loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_INFO);
 
     // Init GLFW
@@ -134,9 +137,18 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     LOG_INFO("Create GUI controller")
     UIController ui(&cam, &conf);
 
+    std::unique_ptr<ProtoHandler> proto_handler;
+    if (conf.net.use_binary_protocol) {
+        LOG_INFO("Create network protocol handler: working with Binary protocol");
+        throw std::runtime_error("Not implemented");
+    } else {
+        LOG_INFO("Create network protocol handler: working with JSON protocol");
+        proto_handler = std::make_unique<JsonHandler>(&scene);
+    }
+
     //Start network listening
     LOG_INFO("Start networking thread")
-    NetListener net(&scene, "127.0.0.1", 9111);
+    NetListener net("127.0.0.1", 9111, std::move(proto_handler));
     std::thread network_thread([&net] {
         try {
             net.run();
