@@ -55,8 +55,6 @@ public:
     bool has_data() const;
 
 private:
-    void render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color);
-
     const Config::SceneConf &conf_;
 
     std::unique_ptr<Renderer> renderer_;
