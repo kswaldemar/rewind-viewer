@@ -187,7 +187,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         }
 
         //Non Ui related drawing
-        scene.update_and_render(cam.proj_view(), cam.y_axes_invert());
+        scene.update_and_render(cam);
 
         // Cleanup opengl state
         glBindVertexArray(0);

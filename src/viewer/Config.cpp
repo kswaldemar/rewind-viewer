@@ -125,7 +125,7 @@ void Config::save_to_file(const std::string &fname) const {
     fputs("\n# Grid cells count in each dimension (X, Y)\n", f);
     fprintf(f, "%s = (%hu, %hu)\n", SCENE_GRID_CELLS_COUNT, scene.grid_cells.x, scene.grid_cells.y);
     fputs("\n# Scene size\n", f);
-    fprintf(f, "%s = (%.3f, %.3f)\n", SCENE_GRID_DIM, scene.grid_dim.x, scene.grid_dim.y);
+    fprintf(f, "%s = (%.0f, %.0f)\n", SCENE_GRID_DIM, scene.grid_dim.x, scene.grid_dim.y);
     fputs("\n# Grid color, rgb format\n", f);
     fprintf(f, "%s = (%.3f, %.3f, %.3f)\n", SCENE_GRID_COLOR,
             scene.grid_color.r, scene.grid_color.g, scene.grid_color.b);

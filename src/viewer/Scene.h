@@ -15,6 +15,8 @@
 #include <memory>
 #include <mutex>
 
+class Renderer;
+
 /**
  * Represent whole game state.
  *  - contains all frames
@@ -28,7 +30,7 @@ public:
     explicit Scene(ResourceManager *res, const Config::SceneConf *conf);
     ~Scene();
 
-    void update_and_render(const glm::mat4 &proj_view, int y_axes_invert);
+    void update_and_render(const Camera &cam);
 
     ///Set frame to draw now, index should be in range [0, frames_count)
     void set_frame_index(int idx);
@@ -53,29 +55,15 @@ public:
     bool has_data() const;
 
 private:
-    void render_frame_layer(const Frame::primitives_t &slice);
-    void render_grid();
-    void render_circle(const pod::Circle &circle);
-    void render_rectangle(const pod::Rectangle &rect);
-    void render_lines(const std::vector<pod::Line> &lines);
-
     void render_progress_bar(const glm::vec2 up_left, float w, float h, const glm::vec4 &color);
 
-    ResourceManager *mgr_;
     const Config::SceneConf &conf_;
 
-    struct shaders_t;
-    std::unique_ptr<shaders_t> shaders_;
-
-    struct render_attrs_t;
-    std::unique_ptr<render_attrs_t> attr_;
+    std::unique_ptr<Renderer> renderer_;
 
     std::mutex frames_mutex_;
     std::vector<std::shared_ptr<Frame>> frames_;
     int cur_frame_idx_ = 0;
     int frames_count_ = 0;
     std::shared_ptr<Frame> active_frame_ = nullptr;
-
-    ///From camera, to properly draw hp bars above units
-    int y_axes_invert_;
 };

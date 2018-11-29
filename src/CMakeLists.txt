@@ -21,6 +21,7 @@ set(Sources
     cgutils/ResourceManager.cpp
     viewer/UIController.cpp
     viewer/Scene.cpp
+    viewer/Renderer.cpp
     viewer/Config.cpp
     net/NetListener.cpp
     net/ProtoHandler.cpp
