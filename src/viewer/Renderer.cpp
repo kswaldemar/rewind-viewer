@@ -54,7 +54,7 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     LOG_INFO("Initialize needed attributes")
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
-    attr_->grid_model = glm::scale(glm::mat4{}, {area_size_.x, area_size_.y, 0.0f});
+    attr_->grid_model = glm::scale(glm::mat4{1.0}, {area_size_.x, area_size_.y, 1.0f});
 
     //Shaders
     LOG_INFO("Compile shaders")
