@@ -281,7 +281,7 @@ void UIController::playback_control_widget(Scene *scene) {
         int tick = scene->get_frame_index();
 
         if (!io.WantTextInput) {
-            if (io.KeyCtrl) {
+            if (io.KeyCtrl || io.KeySuper) {
                 tick -= key_pressed_once(GLFW_KEY_LEFT);
                 tick += key_pressed_once(GLFW_KEY_RIGHT);
             } else {
