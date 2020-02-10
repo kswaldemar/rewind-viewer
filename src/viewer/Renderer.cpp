@@ -54,11 +54,16 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     LOG_INFO("Initialize needed attributes")
     attr_ = std::make_unique<render_attrs_t>();
     //Init needed attributes
-    attr_->grid_model = glm::scale(glm::mat4{}, {area_size_.x, area_size_.y, 0.0f});
+    attr_->grid_model = glm::scale(glm::mat4{1.0}, {area_size_.x, area_size_.y, 0.0f});
 
     //Shaders
     LOG_INFO("Compile shaders")
     shaders_ = std::make_unique<shaders_t>();
+
+    //Even more shaders
+    LOG_INFO("Even moar shaders");
+    Shader::set_shaders_folder("resources/shaders2");
+    shaders2_ = std::make_unique<ShaderCollection>();
 
     //Preload rectangle to memory for further drawing
     LOG_INFO("Create rectangle for future rendering")
@@ -98,6 +103,18 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     shaders_->circle.bind_uniform_block("MatrixBlock", 0);
     shaders_->lines.bind_uniform_block("MatrixBlock", 0);
     shaders_->textured.bind_uniform_block("MatrixBlock", 0);
+
+    //*** DO NOT FORGET UPDATE SHADERS2 HERE ***//
+    shaders2_->line.bind_uniform_block("MatrixBlock", 0);
+
+    //Create one gl context (needed vertex array pointers) for all RenderContext's
+    gl_ctx_ = RenderContext::create_gl_context(*res);
+
+    //*** Testing data ***//
+    const glm::vec4 color_red = {1.0, 0.0, 0.0, 1.0};
+    const glm::vec4 color_blue = {0, 0, 1.0, 1.0};
+    test_context_.add_polyline({{0, 0}, {100, 10}, {10, 100}, {50, 50}, {40, 30}}, color_red);
+    test_context_.add_polyline({{10, 0}, {30, 15}, {40, 60}, {10, 90}, {5, 25}}, color_blue);
 }
 
 Renderer::~Renderer() = default;
@@ -118,6 +135,9 @@ void Renderer::render_background(glm::vec3 color) {
     shaders_->color.set_vec4("color", glm::vec4{color, 1.0f});
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    //JUST FOR TESTING PURPOSES
+    test_context_.draw(gl_ctx_, *shaders2_);
 }
 
 void Renderer::render_grid(glm::vec3 color) {

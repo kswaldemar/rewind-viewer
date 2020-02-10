@@ -4,6 +4,9 @@
 
 #pragma once
 
+#include "ShaderCollection.h"
+#include "RenderContext.h"
+
 #include <cgutils/Camera.h>
 #include <cgutils/ResourceManager.h>
 
@@ -31,6 +34,11 @@ private:
 
     struct shaders_t;
     std::unique_ptr<shaders_t> shaders_;
+
+    //TODO: Убрать unique_ptr когда shader folder будут удалены старые шейдеры и shader folder будет выставлен в дефолт
+    std::unique_ptr<ShaderCollection> shaders2_;
+    RenderContext::context_vao_t gl_ctx_;
+    RenderContext test_context_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;

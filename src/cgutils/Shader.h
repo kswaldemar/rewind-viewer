@@ -19,7 +19,7 @@ public:
     Shader(const std::string &vertex, const std::string &fragment);
     ~Shader();
 
-    void use();
+    void use() const;
 
     GLuint id() const;
 

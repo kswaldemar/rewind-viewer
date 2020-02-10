@@ -23,6 +23,10 @@ set(Sources
     viewer/Scene.cpp
     viewer/Renderer.cpp
     viewer/Config.cpp
+
+    viewer/RenderContext.cpp
+    viewer/ShaderCollection.cpp
+
     net/NetListener.cpp
     net/ProtoHandler.cpp
     net/json_handler/JsonHandler.cpp
