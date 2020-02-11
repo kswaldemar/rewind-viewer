@@ -23,15 +23,16 @@ public:
 
     GLuint id() const;
 
-    GLint uniform(const std::string &name);
+    GLint uniform(const std::string &name) const;
 
-    void set_mat4(const std::string &name, const glm::mat4 &v);
-    void set_mat4(const std::string &name, float *pv);
-    void set_vec2(const std::string &name, const glm::vec2 &v);
-    void set_vec3(const std::string &name, const glm::vec3 &v);
-    void set_vec4(const std::string &name, const glm::vec4 &v);
-    void set_float(const std::string &name, float val);
-    void set_int(const std::string &name, GLint val);
+    void set_mat4(const std::string &name, const glm::mat4 &v) const;
+    void set_mat4(const std::string &name, float *pv) const;
+    void set_vec2(const std::string &name, const glm::vec2 &v) const;
+    void set_vec3(const std::string &name, const glm::vec3 &v) const;
+    void set_vec4(const std::string &name, const glm::vec4 &v) const;
+    void set_float(const std::string &name, float val) const;
+    void set_int(const std::string &name, GLint val) const;
+    void set_uint(const std::string &name, GLuint val) const;
 
     void bind_uniform_block(const std::string &name, GLuint binding_point);
 

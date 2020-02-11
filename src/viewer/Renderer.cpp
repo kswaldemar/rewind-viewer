@@ -117,6 +117,11 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     //test_context_.add_polyline({{0, 0}, {100, 10}, {10, 100}, {50, 50}, {40, 30}}, color_red);
     //test_context_.add_polyline({{10, 0}, {30, 15}, {40, 60}, {10, 90}, {5, 25}}, color_blue);
 
+    //for (int i = 0; i < 1200; i += 5) {
+    //    for (int j = 0; j < 800; j += 5) {
+    //        test_context_.add_circle({i, j}, 5, {i / 1200.0, j / 800.0, 0.5, 1.0});
+    //    }
+    //}
     test_context_.add_circle({8, 8}, 8, color_red);
     test_context_.add_circle({20, 10}, 8, color_green);
     test_context_.add_circle({10, 20}, 8, color_blue);

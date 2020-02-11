@@ -155,7 +155,7 @@ GLuint Shader::id() const {
     return program_;
 }
 
-GLint Shader::uniform(const std::string &name) {
+GLint Shader::uniform(const std::string &name) const {
     GLint loc = glGetUniformLocation(program_, name.c_str());
     if (loc == -1) {
         LOG_WARN("No such uniform:: %s", name.c_str());
@@ -163,27 +163,27 @@ GLint Shader::uniform(const std::string &name) {
     return loc;
 }
 
-void Shader::set_mat4(const std::string &name, const glm::mat4 &v) {
+void Shader::set_mat4(const std::string &name, const glm::mat4 &v) const {
     glUniformMatrix4fv(uniform(name), 1, GL_FALSE, glm::value_ptr(v));
 }
 
-void Shader::set_vec2(const std::string &name, const glm::vec2 &v) {
+void Shader::set_vec2(const std::string &name, const glm::vec2 &v) const {
     glUniform2f(uniform(name), v.x, v.y);
 }
 
-void Shader::set_vec3(const std::string &name, const glm::vec3 &v) {
+void Shader::set_vec3(const std::string &name, const glm::vec3 &v) const {
     glUniform3f(uniform(name), v.x, v.y, v.z);
 }
 
-void Shader::set_vec4(const std::string &name, const glm::vec4 &v) {
+void Shader::set_vec4(const std::string &name, const glm::vec4 &v) const {
     glUniform4f(uniform(name), v.x, v.y, v.z, v.w);
 }
 
-void Shader::set_mat4(const std::string &name, float *pv) {
+void Shader::set_mat4(const std::string &name, float *pv) const {
     glUniformMatrix4fv(uniform(name), 1, GL_FALSE, pv);
 }
 
-void Shader::set_float(const std::string &name, float val) {
+void Shader::set_float(const std::string &name, float val) const {
     glUniform1f(uniform(name), val);
 }
 
@@ -197,6 +197,10 @@ void Shader::bind_uniform_block(const std::string &name, GLuint binding_point) {
 
 }
 
-void Shader::set_int(const std::string &name, GLint val) {
+void Shader::set_int(const std::string &name, GLint val) const {
     glUniform1i(uniform(name), val);
+}
+
+void Shader::set_uint(const std::string &name, GLuint val) const {
+    glUniform1ui(uniform(name), val);
 }

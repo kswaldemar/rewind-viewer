@@ -24,7 +24,7 @@ struct circle_layout_t {
 
 struct RenderContext::memory_layout_t {
     std::vector<point_layout_t> points;
-    std::vector<circle_layout_t> circles;
+    std::vector<circle_layout_t> filled_circles;
     std::vector<GLuint> line_indicies;
 };
 
@@ -72,7 +72,7 @@ RenderContext::RenderContext() {
 RenderContext::~RenderContext() = default;
 
 void RenderContext::add_circle(glm::vec2 center, float r, glm::vec4 color) {
-    impl_->circles.push_back({color, center, r});
+    impl_->filled_circles.push_back({color, center, r});
 }
 
 void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color) {
@@ -110,12 +110,12 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderC
     glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, line_elements.data());
 
     //Activate second shader and so on...
-    size_t hwgo = sizeof(circle_layout_t);
     glBindVertexArray(vaos.circle_vao);
-    glBufferData(GL_ARRAY_BUFFER, impl_->circles.size() * sizeof(circle_layout_t),
-                 impl_->circles.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, impl_->filled_circles.size() * sizeof(circle_layout_t),
+                 impl_->filled_circles.data(), GL_DYNAMIC_DRAW);
     shaders.circle.use();
-    glDrawArrays(GL_POINTS, 0, impl_->circles.size());
+    shaders.circle.set_uint("line_width", 1);
+    glDrawArrays(GL_POINTS, 0, impl_->filled_circles.size());
 
     //glLineWidth(1);
     //glDisable(GL_LINE_SMOOTH);

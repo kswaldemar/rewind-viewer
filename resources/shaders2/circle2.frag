@@ -5,21 +5,18 @@ in GS_OUT {
     vec4 color;
     vec2 cur_pt;
     vec2 center;
-    float radius2;
+    float radius;
 } fs_in;
 
+//Zero line width mean filled circle
+uniform uint line_width;
+
 void main() {
-    vec2 rvec = fs_in.cur_pt - fs_in.center;
-    float cur_r2 = dot(rvec, rvec);
-    if (cur_r2 > fs_in.radius2) {
-        discard;
-    }
+    float dist = distance(fs_in.cur_pt, fs_in.center);
+    float delta = fwidth(dist);
 
-    vec4 solid = fs_in.color;
-//    solid.w = 0.5;
-//    vec4 border = fs_in.color * 0.5;
-//    border.w = fs_in.color.w;
-//    vec4 solid = mix(fs_in.color, border, cur_r2 / fs_in.radius2);
+    float alpha = step(fs_in.radius, dist);
+    alpha += (1.0 - step(fs_in.radius - delta * line_width, dist)) * step(1, line_width);
 
-    frag_color = solid;
+    frag_color = mix(fs_in.color, vec4(0.0), alpha);
 }

@@ -11,7 +11,7 @@ out GS_OUT {
     vec4 color;
     vec2 cur_pt;
     vec2 center;
-    float radius2;
+    float radius;
 } gs_out;
 
 layout (std140) uniform MatrixBlock {
@@ -22,7 +22,7 @@ void main() {
     float r = gs_in[0].radius;
     gs_out.color = gs_in[0].color;
     gs_out.center = gl_in[0].gl_Position.xy;
-    gs_out.radius2 = gs_in[0].radius * gs_in[0].radius;
+    gs_out.radius = gs_in[0].radius;
 
     vec4 center_pos = gl_in[0].gl_Position;
     vec4 point;
