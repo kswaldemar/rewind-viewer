@@ -16,7 +16,7 @@ class Shader {
 public:
     static void set_shaders_folder(const std::string &path);
 
-    Shader(const std::string &vertex, const std::string &fragment);
+    Shader(const std::string &vertex, const std::string &fragment, const std::string &geom = "");
     ~Shader();
 
     void use() const;

@@ -14,11 +14,17 @@ struct point_layout_t {
     glm::vec2 point;
 } __attribute__((packed));
 
+struct circle_layout_t {
+    glm::vec4 color;
+    glm::vec2 point;
+    float radius;
+} __attribute__((packed));
+
 } // anonymous namespace
 
 struct RenderContext::memory_layout_t {
     std::vector<point_layout_t> points;
-
+    std::vector<circle_layout_t> circles;
     std::vector<GLuint> line_indicies;
 };
 
@@ -26,20 +32,35 @@ RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &r
     RenderContext::context_vao_t ret;
 
     //Initialize forward pass point vao
-    ret.point_vao = res.gen_vertex_array();
-    GLuint vbo = res.gen_buffer();
+    {
+        ret.point_vao = res.gen_vertex_array();
+        GLuint vbo = res.gen_buffer();
+        //GLuint vbo = res.gen_buffer();
+        glBindVertexArray(ret.point_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        //Point layout of RenderContext: vec4 color, vec2 pos
+        const size_t stride = 6 * sizeof(float);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glBindVertexArray(0);
+    }
 
-    glBindVertexArray(ret.point_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    //Point layout of RenderContext: vec4 color, vec2 pos
-    const size_t stride = 6 * sizeof(float);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glBindVertexArray(0);
-
-    //Here we go further initialization
+    {
+        ret.circle_vao = res.gen_vertex_array();
+        GLuint vbo = res.gen_buffer();
+        glBindVertexArray(ret.circle_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        const size_t stride = 7 * sizeof(float);
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
+        glVertexAttribPointer(2, 1, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(6));
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
+        glBindVertexArray(0);
+    }
 
     return ret;
 }
@@ -50,8 +71,8 @@ RenderContext::RenderContext() {
 
 RenderContext::~RenderContext() = default;
 
-void RenderContext::add_circle(glm::vec2 center, double r, glm::vec4 color) {
-
+void RenderContext::add_circle(glm::vec2 center, float r, glm::vec4 color) {
+    impl_->circles.push_back({color, center, r});
 }
 
 void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color) {
@@ -83,11 +104,18 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderC
     glBufferData(GL_ARRAY_BUFFER, impl_->points.size() * sizeof(point_layout_t), impl_->points.data(), GL_DYNAMIC_DRAW);
 
     //Draw every polyline with linewidth 1
+
     shaders.line.use();
     const auto &line_elements = impl_->line_indicies;
     glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, line_elements.data());
 
     //Activate second shader and so on...
+    size_t hwgo = sizeof(circle_layout_t);
+    glBindVertexArray(vaos.circle_vao);
+    glBufferData(GL_ARRAY_BUFFER, impl_->circles.size() * sizeof(circle_layout_t),
+                 impl_->circles.data(), GL_DYNAMIC_DRAW);
+    shaders.circle.use();
+    glDrawArrays(GL_POINTS, 0, impl_->circles.size());
 
     //glLineWidth(1);
     //glDisable(GL_LINE_SMOOTH);

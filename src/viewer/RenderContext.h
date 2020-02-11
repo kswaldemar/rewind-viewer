@@ -21,6 +21,7 @@ class RenderContext {
 public:
     struct context_vao_t {
         GLuint point_vao;
+        GLuint circle_vao;
     };
     static context_vao_t create_gl_context(ResourceManager &res);
 
@@ -28,7 +29,7 @@ public:
     ~RenderContext();
 
     ///Filled circle
-    void add_circle(glm::vec2 center, double r, glm::vec4 color);
+    void add_circle(glm::vec2 center, float r, glm::vec4 color);
 
     ///Polyline
     void add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color);

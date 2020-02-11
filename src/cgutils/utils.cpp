@@ -39,7 +39,7 @@ void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenu
         return;
     }
 
-    LOG_WARN("Debug message (%ud): %s", id, message);
+    LOG_WARN("Debug message (%u): %s", id, message);
 
     //@formatter:off
     switch (source)

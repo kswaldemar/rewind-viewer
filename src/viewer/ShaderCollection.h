@@ -9,4 +9,5 @@ struct ShaderCollection {
     ShaderCollection();
 
     Shader line;
+    Shader circle;
 };
