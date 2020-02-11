@@ -28,8 +28,8 @@ public:
     RenderContext();
     ~RenderContext();
 
-    ///Filled circle
-    void add_circle(glm::vec2 center, float r, glm::vec4 color);
+    ///Circle
+    void add_circle(glm::vec2 center, float r, glm::vec4 color, bool fill);
 
     ///Polyline
     void add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color);
