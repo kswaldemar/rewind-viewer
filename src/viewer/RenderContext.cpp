@@ -24,8 +24,9 @@ struct circle_layout_t {
 
 struct RenderContext::memory_layout_t {
     std::vector<point_layout_t> points;
-    std::vector<circle_layout_t> filled_circles;
     std::vector<circle_layout_t> circles;
+    std::vector<circle_layout_t> filled_circles;
+    std::vector<GLuint> triangle_indicies;
     std::vector<GLuint> line_indicies;
 };
 
@@ -33,9 +34,10 @@ RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &r
     RenderContext::context_vao_t ret;
 
     //Initialize forward pass point vao
+    //TODO: How vbo binding really works inside vertex arrays? Using two different vbo breaks lines drawing
+    GLuint vbo = res.gen_buffer();
     {
         ret.point_vao = res.gen_vertex_array();
-        GLuint vbo = res.gen_buffer();
         //GLuint vbo = res.gen_buffer();
         glBindVertexArray(ret.point_vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -50,7 +52,7 @@ RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &r
 
     {
         ret.circle_vao = res.gen_vertex_array();
-        GLuint vbo = res.gen_buffer();
+        //GLuint vbo = res.gen_buffer();
         glBindVertexArray(ret.circle_vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         const size_t stride = 7 * sizeof(float);
@@ -80,6 +82,36 @@ void RenderContext::add_circle(glm::vec2 center, float r, glm::vec4 color, bool 
     }
 }
 
+void RenderContext::add_filled_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color) {
+    GLuint idx = impl_->points.size();
+    impl_->points.push_back({color, p1});
+    impl_->points.push_back({color, p2});
+    impl_->points.push_back({color, p3});
+    impl_->triangle_indicies.push_back(idx);
+    impl_->triangle_indicies.push_back(idx + 1);
+    impl_->triangle_indicies.push_back(idx + 2);
+}
+
+void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color, bool fill) {
+    auto top_right = glm::vec2{bottom_right.x, top_left.y};
+    auto bottom_left = glm::vec2{top_left.x, bottom_right.y};
+
+    if (fill) {
+        GLuint idx = impl_->points.size();
+        impl_->points.push_back({color, top_left});
+        impl_->points.push_back({color, top_right});
+        impl_->points.push_back({color, bottom_right});
+        impl_->points.push_back({color, bottom_left});
+
+        for (uint8_t t : {0, 1, 3,
+                          1, 2, 3}) {
+            impl_->triangle_indicies.push_back(idx + t);
+        }
+    } else {
+        add_polyline({top_left, top_right, bottom_right, bottom_left, top_left}, color);
+    }
+}
+
 void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color) {
     if (points.size() < 2) {
         throw std::invalid_argument("Got polyline with only one point");
@@ -94,10 +126,6 @@ void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4
         impl_->line_indicies.push_back(idx - 1);
         impl_->line_indicies.push_back(idx);
     }
-}
-
-void RenderContext::add_polygone(const std::vector<glm::vec2> &points, glm::vec4 color) {
-
 }
 
 void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderCollection &shaders) const {
@@ -117,6 +145,10 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderC
     shaders.line.use();
     const auto &line_elements = impl_->line_indicies;
     glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, line_elements.data());
+
+    //Filled triangles, so any polygon
+    const auto &triangle_elements = impl_->triangle_indicies;
+    glDrawElements(GL_TRIANGLES, triangle_elements.size(), GL_UNSIGNED_INT, triangle_elements.data());
 
     //Filled circles
     glBindVertexArray(vaos.circle_vao);
