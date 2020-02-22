@@ -25,7 +25,8 @@ struct circle_layout_t {
 struct RenderContext::memory_layout_t {
     std::vector<point_layout_t> points;
     std::vector<circle_layout_t> circles;
-    std::vector<circle_layout_t> filled_circles;
+    std::vector<GLuint> filled_circle_indicies;
+    std::vector<GLuint> thin_circle_indicies;
     std::vector<GLuint> triangle_indicies;
     std::vector<GLuint> line_indicies;
 };
@@ -35,12 +36,11 @@ RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &r
 
     //Initialize forward pass point vao
     //TODO: How vbo binding really works inside vertex arrays? Using two different vbo breaks lines drawing
-    GLuint vbo = res.gen_buffer();
     {
         ret.point_vao = res.gen_vertex_array();
-        //GLuint vbo = res.gen_buffer();
+        ret.point_vbo = res.gen_buffer();
         glBindVertexArray(ret.point_vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, ret.point_vbo);
         //Point layout of RenderContext: vec4 color, vec2 pos
         const size_t stride = 6 * sizeof(float);
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
@@ -52,9 +52,9 @@ RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &r
 
     {
         ret.circle_vao = res.gen_vertex_array();
-        //GLuint vbo = res.gen_buffer();
+        ret.circle_vbo = res.gen_buffer();
         glBindVertexArray(ret.circle_vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBindBuffer(GL_ARRAY_BUFFER, ret.circle_vbo);
         const size_t stride = 7 * sizeof(float);
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
@@ -75,10 +75,12 @@ RenderContext::RenderContext() {
 RenderContext::~RenderContext() = default;
 
 void RenderContext::add_circle(glm::vec2 center, float r, glm::vec4 color, bool fill) {
+    GLuint idx = impl_->circles.size();
+    impl_->circles.push_back({color, center, r});
     if (fill) {
-        impl_->filled_circles.push_back({color, center, r});
+        impl_->filled_circle_indicies.push_back(idx);
     } else {
-        impl_->circles.push_back({color, center, r});
+        impl_->thin_circle_indicies.push_back(idx);
     }
 }
 
@@ -132,17 +134,24 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderC
     //glLineWidth(2);
     //glEnable(GL_LINE_SMOOTH);
 
-    //Load points
-    glBindVertexArray(vaos.point_vao);
+    //Load data
+    glBindBuffer(GL_ARRAY_BUFFER, vaos.point_vbo);
     glBufferData(
         GL_ARRAY_BUFFER,
         impl_->points.size() * sizeof(point_layout_t),
         impl_->points.data(),
-        GL_DYNAMIC_DRAW
-    );
+        GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vaos.circle_vbo);
+    glBufferData(
+        GL_ARRAY_BUFFER,
+        impl_->circles.size() * sizeof(circle_layout_t),
+        impl_->circles.data(),
+        GL_DYNAMIC_DRAW);
 
     //Lines
     shaders.line.use();
+    glBindVertexArray(vaos.point_vao);
     const auto &line_elements = impl_->line_indicies;
     glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, line_elements.data());
 
@@ -150,27 +159,21 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderC
     const auto &triangle_elements = impl_->triangle_indicies;
     glDrawElements(GL_TRIANGLES, triangle_elements.size(), GL_UNSIGNED_INT, triangle_elements.data());
 
-    //Filled circles
-    glBindVertexArray(vaos.circle_vao);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        impl_->filled_circles.size() * sizeof(circle_layout_t),
-        impl_->filled_circles.data(),
-        GL_DYNAMIC_DRAW
-    );
+    //Circles
     shaders.circle.use();
-    shaders.circle.set_uint("line_width", 0);
-    glDrawArrays(GL_POINTS, 0, impl_->filled_circles.size());
+    glBindVertexArray(vaos.circle_vao);
 
-    //Thin circles
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        impl_->circles.size() * sizeof(circle_layout_t),
-        impl_->circles.data(),
-        GL_DYNAMIC_DRAW
-    );
+    //Filled
+    shaders.circle.set_uint("line_width", 0);
+    glDrawElements(
+        GL_POINTS, impl_->filled_circle_indicies.size(),
+        GL_UNSIGNED_INT, impl_->filled_circle_indicies.data());
+
+    //Thin
     shaders.circle.set_uint("line_width", 1);
-    glDrawArrays(GL_POINTS, 0, impl_->circles.size());
+    glDrawElements(
+        GL_POINTS, impl_->thin_circle_indicies.size(),
+        GL_UNSIGNED_INT, impl_->thin_circle_indicies.data());
 
     //glLineWidth(1);
     //glDisable(GL_LINE_SMOOTH);

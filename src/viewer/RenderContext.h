@@ -22,6 +22,9 @@ public:
     struct context_vao_t {
         GLuint point_vao;
         GLuint circle_vao;
+
+        GLuint point_vbo;
+        GLuint circle_vbo;
     };
     static context_vao_t create_gl_context(ResourceManager &res);
 

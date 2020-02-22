@@ -114,8 +114,8 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     const glm::vec4 color_red = {1.0, 0.0, 0.0, 1.0};
     const glm::vec4 color_blue = {0, 0, 1.0, 1.0};
     const glm::vec4 color_green = {0, 1.0, 0.0, 1.0};
-    //test_context_.add_polyline({{0, 0}, {100, 10}, {10, 100}, {50, 50}, {40, 30}}, color_red);
-    //test_context_.add_polyline({{10, 0}, {30, 15}, {40, 60}, {10, 90}, {5, 25}}, color_blue);
+    test_context_.add_polyline({{0, 0}, {100, 10}, {10, 100}, {50, 50}, {40, 30}}, color_red);
+    test_context_.add_polyline({{10, 0}, {30, 15}, {40, 60}, {10, 90}, {5, 25}}, color_blue);
 
     //for (int i = 0; i < 1200; i += 5) {
     //    for (int j = 0; j < 800; j += 5) {
@@ -123,11 +123,12 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     //    }
     //}
 
-    test_context_.add_rectangle({5, 5}, {45, 30}, {1.0, 1.0, 0.0, 0.5}, true);
+    test_context_.add_rectangle({5, 5}, {45, 35}, {1.0, 1.0, 0.0, 0.7}, true);
+    test_context_.add_filled_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8});
 
     test_context_.add_circle({8, 8}, 8, color_red, true);
     test_context_.add_circle({20, 10}, 8, color_green, true);
-    test_context_.add_circle({10, 20}, 8, color_blue, true);
+    test_context_.add_circle({10, 20}, 8, color_blue, false);
 }
 
 Renderer::~Renderer() = default;
