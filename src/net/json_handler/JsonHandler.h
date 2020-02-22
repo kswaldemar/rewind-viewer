@@ -5,6 +5,37 @@
 
 #include <cstdint>
 
+namespace pod {
+
+struct Color {
+    glm::vec4 color;
+};
+
+struct Line : Color {
+    glm::vec2 pt_from;
+    glm::vec2 pt_to;
+};
+
+struct Circle : Color {
+    glm::vec2 center;
+    float radius;
+    bool fill;
+};
+
+struct Rectangle : Color {
+    glm::vec2 top_left;
+    glm::vec2 bottom_right;
+    bool fill;
+};
+
+struct Popup {
+    glm::vec2 center;
+    float radius;
+    std::string text;
+};
+
+} // namespace pod
+
 class JsonHandler
     : public ProtoHandler
 {

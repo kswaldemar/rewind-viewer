@@ -35,12 +35,11 @@ inline void from_json(const nlohmann::json &j, Color &p) {
 
 inline void from_json(const nlohmann::json &j, Line &p) {
     from_json(j, static_cast<Color &>(p));
-    p.color2 = p.color;
 
-    p.x1 = j["x1"].get<float>();
-    p.y1 = j["y1"].get<float>();
-    p.x2 = j["x2"].get<float>();
-    p.y2 = j["y2"].get<float>();
+    p.pt_from.x = j["x1"].get<float>();
+    p.pt_from.y = j["y1"].get<float>();
+    p.pt_to.x = j["x2"].get<float>();
+    p.pt_to.y = j["y2"].get<float>();
 }
 
 inline void from_json(const nlohmann::json &j, Circle &p) {
@@ -49,6 +48,7 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
     p.radius = j["r"].get<float>();
     p.center.x = j["x"].get<float>();
     p.center.y = j["y"].get<float>();
+    p.fill = value_or_default(j, "fill", false);
 }
 
 inline void from_json(const nlohmann::json &j, Popup &p) {
@@ -60,18 +60,19 @@ inline void from_json(const nlohmann::json &j, Popup &p) {
 
 inline void from_json(const nlohmann::json &j, Rectangle &p) {
     from_json(j, static_cast<Color &>(p));
-    float x1 = j["x1"].get<float>();
-    float y1 = j["y1"].get<float>();
-    float x2 = j["x2"].get<float>();
-    float y2 = j["y2"].get<float>();
 
-    p.w = x2 - x1;
-    p.h = y2 - y1;
-    p.center.x = x1 + p.w * 0.5f;
-    p.center.y = y1 + p.h * 0.5f;
+    p.top_left.x = j["x1"].get<float>();
+    p.top_left.y = j["y1"].get<float>();
+    p.bottom_right.x = j["x2"].get<float>();
+    p.bottom_right.y = j["y2"].get<float>();
+    p.fill = value_or_default(j, "fill", true);
+
+    if (p.top_left.x > p.bottom_right.x) {
+        std::swap(p.top_left, p.bottom_right);
+    }
 }
 
-}
+} // namespace pod
 
 void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
     const uint8_t *beg = data;
@@ -85,7 +86,7 @@ void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
             break;
         }
         ++end;
-        //Support for fragmented messages
+        //Support fragmented messages
         if (fragment_msg_.empty()) {
             process_json_message(beg, end);
         } else {
@@ -104,55 +105,63 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
     try {
         auto j = json::parse(chunk_begin, chunk_end);
         PrimitiveType type = primitve_type_from_str(j["type"]);
-        auto layer_it = j.find("layer");
-        size_t layer = Frame::DEFAULT_LAYER;
-        if (layer_it != j.end()) {
-            layer = layer_it->get<size_t>();
-            if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
-                LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
-                         layer, static_cast<size_t>(Frame::LAYERS_COUNT));
-            }
-            layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
-        }
 
         if (!frame_) {
+            //TODO: Think about factory from Scene to implement immediate mode
             frame_ = std::make_unique<Frame>();
         }
 
-        auto &slice = frame_->primitives[layer];
+        auto &ctx = frame_->context();
 
         switch (type) {
-            case PrimitiveType::begin:
-                LOG_V8("JsonHandler::Begin");
-                break;
             case PrimitiveType::end:
                 LOG_V8("JsonHandler::End");
                 send_to_scene(std::move(frame_));
                 frame_ = nullptr;
                 break;
-            case PrimitiveType::circle:
+            case PrimitiveType::circle: {
                 LOG_V8("JsonHandler::Circle detected");
-                slice.circles.emplace_back(j);
+                auto obj = j.get<pod::Circle>();
+                ctx.add_circle(obj.center, obj.radius, obj.color, obj.fill);
                 break;
-            case PrimitiveType::rectangle:
+            }
+            case PrimitiveType::rectangle: {
                 LOG_V8("JsonHandler::Rectangle detected");
-                slice.rectangles.emplace_back(j);
+                auto obj = j.get<pod::Rectangle>();
+                ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.color, obj.fill);
                 break;
-            case PrimitiveType::line:
+            }
+            case PrimitiveType::line: {
                 LOG_V8("JsonHandler::Line detected");
-                slice.lines.emplace_back(j);
+                auto obj = j.get<pod::Line>();
+                ctx.add_polyline({obj.pt_from, obj.pt_to}, obj.color);
                 break;
+            }
             case PrimitiveType::message:
                 LOG_V8("JsonHandler::Message");
-                frame_->user_message += j["message"].get<std::string>();
+                frame_->add_user_text(j["message"].get<std::string>());
                 break;
-            case PrimitiveType::popup:
+            case PrimitiveType::popup: {
                 LOG_V8("JsonHandler::Popup");
-                frame_->popups.emplace_back(j);
+                auto obj = j.get<pod::Popup>();
+                frame_->add_round_popup(obj.center, obj.radius, std::move(obj.text));
                 break;
+            }
+            case PrimitiveType::layer: {
+                LOG_V8("JsonHandler::Layer");
+                size_t layer = j["value"].get<size_t>();
+                if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
+                    LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
+                             layer, static_cast<size_t>(Frame::LAYERS_COUNT));
+                }
+                layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
+                frame_->set_layer_id(layer);
+                break;
+            }
             case PrimitiveType::types_count:
                 LOG_WARN("Got 'types_count' message");
                 break;
+
         }
     } catch (const std::exception &e) {
         LOG_WARN("JsonClient::Exception: %s", e.what());

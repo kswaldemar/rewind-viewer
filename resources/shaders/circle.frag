@@ -1,35 +1,22 @@
 #version 330 core
 out vec4 frag_color;
 
-in VS_OUT {
-    vec2 uv;
-    vec3 coord;
+in GS_OUT {
+    vec4 color;
+    vec2 cur_pt;
+    vec2 center;
+    float radius;
 } fs_in;
 
-uniform vec3 center;
-uniform vec4 color;
-uniform float radius2;
-uniform sampler2D tex_smp;
-uniform bool textured; // Whenever use texture or not
-
-//const float circle_alpha = 0.6; //outer unit circle alpha
-const float texture_coloring = 0.3; //how much add color to texture, 0 - use texture as is
+//Zero line width mean filled circle
+uniform uint line_width;
 
 void main() {
-    vec3 rv = fs_in.coord - center;
-    float cur_r2 = dot(rv, rv);
-    if (cur_r2 > radius2)
-        discard;
-    vec4 border = color * 0.3;
-    border.w = color.w;
-    vec4 solid = mix(color, border, cur_r2 / radius2);
+    float dist = distance(fs_in.cur_pt, fs_in.center);
+    float delta = fwidth(dist);
 
-    if (textured) {
-        vec4 tex = texture(tex_smp, fs_in.uv);
-        vec4 colored_tex = mix(tex, vec4(solid.rgb, 1.0), texture_coloring);
-        frag_color = mix(solid, colored_tex, tex.a);
-    } else {
-        frag_color = color;
-    }
+    float alpha = step(fs_in.radius, dist);
+    alpha += (1.0 - step(fs_in.radius - delta * line_width, dist)) * step(1, line_width);
 
+    frag_color = mix(fs_in.color, vec4(0.0), alpha);
 }

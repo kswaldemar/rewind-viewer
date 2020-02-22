@@ -103,32 +103,28 @@ void Shader::set_shaders_folder(const std::string &path) {
 std::string Shader::path_to_shaders_;
 
 Shader::Shader(const std::string &vertex, const std::string &fragment, const std::string &geom/*=""*/) {
-    const std::string vs_path = path_to_shaders_ + vertex;
-    const std::string fs_path = path_to_shaders_ + fragment;
-
     if (!geom.empty()) {
-        LOG_INFO("Start compiling shader: vertex=%s, fragment=%s, geometry=%s",
-                 vs_path.c_str(), fs_path.c_str(), geom.c_str());
+        LOG_INFO("Start compiling shader in directory '%s': vertex=%s, fragment=%s, geometry=%s",
+                 path_to_shaders_.c_str(), vertex.c_str(), fragment.c_str(), geom.c_str());
     } else {
-        LOG_INFO("Start compiling shader: vertex=%s, fragment=%s",
-                 vs_path.c_str(), fs_path.c_str());
+        LOG_INFO("Start compiling shader in directory '%s': vertex=%s, fragment=%s",
+                 path_to_shaders_.c_str(), vertex.c_str(), fragment.c_str());
     }
 
     LOG_INFO("Load Vertex shader");
-    const auto vs_src = load_file(vs_path);
+    const auto vs_src = load_file(path_to_shaders_ + vertex);
     LOG_INFO("Compile Vertex shader");
     auto v_shader = create_shader(GL_VERTEX_SHADER, vs_src);
 
     LOG_INFO("Load Fragment shader");
-    const auto fs_src = load_file(fs_path);
+    const auto fs_src = load_file(path_to_shaders_ + fragment);
     LOG_INFO("Compile Fragment shader");
     auto f_shader = create_shader(GL_FRAGMENT_SHADER, fs_src);
 
     GLuint geom_shader = 0;
     if (!geom.empty()) {
-        const std::string geom_path = path_to_shaders_ + geom;
         LOG_INFO("Load Geometry shader");
-        const auto geom_src = load_file(geom_path);
+        const auto geom_src = load_file(path_to_shaders_ + geom);
         LOG_INFO("Compile Geometry shader");
         geom_shader = create_shader(GL_GEOMETRY_SHADER, geom_src);
     }

@@ -1,6 +1,5 @@
 import _socket
 import json
-from enum import Enum
 
 class RewindClient():
     def __init__(self, host=None, port=None):
@@ -18,17 +17,17 @@ class RewindClient():
         if self.socket:
             self.socket.sendall(json.dumps(obj).encode('utf-8'))
 
-    def circle(self, x, y, radius, color, layer=3):
+    def circle(self, x, y, radius, color, fill=False):
         self._send({
             'type': 'circle',
             'x': x,
             'y': y,
             'r': radius,
             'color': color,
-            'layer': layer
+            'fill': fill
         })
 
-    def rectangle(self, x1, y1, x2, y2, color, layer=3):
+    def rectangle(self, x1, y1, x2, y2, color, fill=False):
         self._send({
             'type': 'rectangle',
             'x1': x1,
@@ -36,24 +35,29 @@ class RewindClient():
             'x2': x2,
             'y2': y2,
             'color': color,
-            'layer': layer
+            'fill': fill
         })
 
-    def line(self, x1, y1, x2, y2, color, layer=3):
+    def line(self, x1, y1, x2, y2, color):
         self._send({
             'type': 'line',
             'x1': x1,
             'y1': y1,
             'x2': x2,
             'y2': y2,
-            'color': color,
-            'layer': layer
+            'color': color
         })
 
     def message(self, msg):
         self._send({
             'type': 'message',
             'message': msg
+        })
+
+    def set_layer(self, value):
+        self._send({
+            'type': 'layer',
+            'value': value
         })
 
     def end_frame(self):

@@ -5,8 +5,7 @@
 #include "ShaderCollection.h"
 
 ShaderCollection::ShaderCollection()
-    : line("lines2.vert", "lines2.frag")
-    , circle("circle2.vert", "circle2.frag", "circle2.geom")
-{
-    circle.set_uint("line_width", 0);
-}
+    : line("lines.vert", "lines.frag")
+    , circle("circle.vert", "circle.frag", "circle.geom")
+    , color("simple.vert", "uniform_color.frag")
+{ }

@@ -23,22 +23,13 @@ public:
 
     void render_background(glm::vec3 color);
     void render_grid(glm::vec3 color);
-    void render_frame_layer(const Frame::primitives_t &slice);
+    void render_primitives(const RenderContext &ctx);
 
 private:
-    void do_render_circle(const pod::Circle &circle);
-    void do_render_rectangle(const pod::Rectangle &rect);
-    void do_render_lines(const std::vector<pod::Line> &lines);
-
     ResourceManager *mgr_;
 
-    struct shaders_t;
-    std::unique_ptr<shaders_t> shaders_;
-
-    //TODO: Убрать unique_ptr когда shader folder будут удалены старые шейдеры и shader folder будет выставлен в дефолт
-    std::unique_ptr<ShaderCollection> shaders2_;
-    RenderContext::context_vao_t gl_ctx_;
-    RenderContext test_context_;
+    std::unique_ptr<ShaderCollection> shaders_;
+    RenderContext::context_vao_t ctx_render_params_;
 
     struct render_attrs_t;
     std::unique_ptr<render_attrs_t> attr_;

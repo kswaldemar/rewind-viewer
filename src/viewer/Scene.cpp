@@ -13,11 +13,6 @@
 
 namespace {
 
-bool hittest(const glm::vec2 &wmouse, const pod::Popup &popup) {
-    auto d = wmouse - popup.center;
-    return (d.x * d.x + d.y * d.y) <= popup.radius * popup.radius;
-}
-
 } // anonymous namespace
 
 
@@ -49,9 +44,11 @@ void Scene::update_and_render(const Camera &cam) {
 
     //Frame
     if (active_frame_) {
-        for (size_t idx = 0; idx < active_frame_->primitives.size(); ++idx) {
+        const auto &contexts = active_frame_->all_contexts();
+
+        for (size_t idx = 0; idx < contexts.size(); ++idx) {
             if (conf_.enabled_layers[idx]) {
-                renderer_->render_frame_layer(active_frame_->primitives[idx]);
+                renderer_->render_primitives(contexts[idx]);
             }
         }
     }
@@ -71,15 +68,14 @@ int Scene::get_frames_count() {
 
 const char *Scene::get_frame_user_message() {
     if (active_frame_) {
-        return active_frame_->user_message.c_str();
+        return active_frame_->user_message();
     }
     return "";
 }
 
-void Scene::add_frame(std::unique_ptr<Frame> &&frame) {
+void Scene::add_frame(std::unique_ptr<Frame> &&new_frame) {
     std::lock_guard<std::mutex> f(frames_mutex_);
-    //Sort units for proper draw order
-    frames_.emplace_back(std::move(frame));
+    frames_.emplace_back(std::move(new_frame));
 }
 
 void Scene::show_detailed_info(const glm::vec2 &mouse) const {
@@ -87,10 +83,10 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
         return;
     }
 
-    for (const auto &popup : active_frame_->popups) {
-        if (hittest(mouse, popup)) {
+    for (const auto &popup : active_frame_->popups()) {
+        if (popup->hit_test(mouse)) {
             ImGui::BeginTooltip();
-            ImGui::Text("%s", popup.text.c_str());
+            ImGui::Text("%s", popup->text());
             ImGui::EndTooltip();
         }
     }

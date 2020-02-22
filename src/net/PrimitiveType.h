@@ -7,13 +7,13 @@
 #include <string>
 
 #define X_PRIMITIVE_TYPES_LIST \
-    X(begin) \
     X(end) \
     X(circle) \
     X(rectangle) \
     X(line) \
     X(message) \
     X(popup) \
+    X(layer) \
 
 enum class PrimitiveType {
 #define X(type) type,

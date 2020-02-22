@@ -10,4 +10,6 @@ struct ShaderCollection {
 
     Shader line;
     Shader circle;
+    //Forward pass vertices with uniform-specified color
+    Shader color;
 };

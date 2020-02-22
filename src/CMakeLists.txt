@@ -26,6 +26,7 @@ set(Sources
 
     viewer/RenderContext.cpp
     viewer/ShaderCollection.cpp
+    viewer/Frame.cpp
 
     net/NetListener.cpp
     net/ProtoHandler.cpp
