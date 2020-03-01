@@ -58,10 +58,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
 
     //Clear data option
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Edit", true)) {
-            //if (ImGui::MenuItem(ICON_FA_RECYCLE " Clear frames data", "CTRL+R", false, scene->has_data())) {
-            //    scene->clear_data(true);
-            //}
+        if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Preferences", true)) {
             ImGui::Checkbox("Close window by Escape key", &conf_->ui.close_with_esc);
             ImGui::EndMenu();
         }
@@ -122,6 +119,9 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     if (!io.WantTextInput) {
         if (key_pressed_once(GLFW_KEY_SPACE)) {
             autoplay_scene_ = !autoplay_scene_;
+        }
+        if (io.KeysDown[GLFW_KEY_LEFT]) {
+            autoplay_scene_ = false;
         }
         if (key_pressed_once(GLFW_KEY_G) && !io.KeyCtrl) {
             conf_->scene.show_grid = !conf_->scene.show_grid;
@@ -278,7 +278,8 @@ void UIController::playback_control_widget(Scene *scene) {
     if (ImGui::Begin("Playback control", &wnd_->show_playback_control, flags)) {
         ImGui::BeginGroup();
 
-        int tick = scene->get_frame_index();
+        //Tick is one indexed
+        int tick = scene->get_frame_index() + 1;
 
         if (!io.WantTextInput) {
             if (io.KeyCtrl) {
@@ -323,7 +324,7 @@ void UIController::playback_control_widget(Scene *scene) {
 
         const auto frames_cnt = scene->get_frames_count();
         if (frames_cnt > 0) {
-            tick = std::min(tick, frames_cnt);
+            tick = cg::clamp(tick, 1, frames_cnt);
             float ftick = tick;
             ImGui::PushItemWidth(-1);
             if (io.KeyCtrl && io.KeysDown[GLFW_KEY_G]) {
@@ -333,7 +334,7 @@ void UIController::playback_control_widget(Scene *scene) {
                 tick = static_cast<int>(ftick);
             }
             ImGui::PopItemWidth();
-            scene->set_frame_index(tick);
+            scene->set_frame_index(tick - 1);
         } else {
             ImGui::Text("Frame list empty");
         }
