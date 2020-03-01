@@ -43,7 +43,10 @@ public:
     const char *get_frame_user_message();
 
     ///Called from network listener when next frame is ready
-    void add_frame(std::unique_ptr<Frame> &&frame);
+    void add_frame(const Frame &frame);
+
+    ///Add primitives to permanent frame
+    void add_permanent_frame_data(const Frame &data);
 
     ///Show detailed info in tooltip if mouse hover unit
     void show_detailed_info(const glm::vec2 &mouse) const;
@@ -64,4 +67,9 @@ private:
     int cur_frame_idx_ = 0;
     int frames_count_ = 0;
     std::shared_ptr<Frame> active_frame_ = nullptr;
+
+    //Permanent frame get rendered each time before active_frame
+    Frame permanent_frame_;
+
+    std::atomic_flag lock_permanent_frame_ = ATOMIC_FLAG_INIT;
 };

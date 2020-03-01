@@ -20,6 +20,13 @@ struct circle_layout_t {
     float radius;
 } __attribute__((packed));
 
+void add_elements(size_t shift, std::vector<GLuint> &to, const std::vector<GLuint> &from) {
+    to.reserve(to.size() + from.size());
+    for (GLuint i : from) {
+        to.push_back(shift + i);
+    }
+}
+
 } // anonymous namespace
 
 struct RenderContext::memory_layout_t {
@@ -128,6 +135,30 @@ void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4
         impl_->line_indicies.push_back(idx - 1);
         impl_->line_indicies.push_back(idx);
     }
+}
+
+void RenderContext::update_from(const RenderContext &other) {
+    const size_t points_cnt = impl_->points.size();
+    add_elements(points_cnt, impl_->line_indicies, other.impl_->line_indicies);
+    add_elements(points_cnt, impl_->triangle_indicies, other.impl_->triangle_indicies);
+
+    impl_->points.reserve(points_cnt + other.impl_->points.size());
+    for (const auto &obj : other.impl_->points) {
+        impl_->points.emplace_back(obj);
+    }
+
+    const size_t circles_cnt = impl_->circles.size();
+    add_elements(circles_cnt, impl_->thin_circle_indicies, other.impl_->thin_circle_indicies);
+    add_elements(circles_cnt, impl_->filled_circle_indicies, other.impl_->filled_circle_indicies);
+
+    impl_->circles.reserve(circles_cnt + other.impl_->circles.size());
+    for (const auto &obj : other.impl_->circles) {
+        impl_->circles.emplace_back(obj);
+    }
+}
+
+void RenderContext::clear() {
+    (*impl_) = memory_layout_t();
 }
 
 void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderCollection &shaders) const {

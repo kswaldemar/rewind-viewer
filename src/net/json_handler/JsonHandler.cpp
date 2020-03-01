@@ -2,13 +2,14 @@
 
 #include <common/logger.h>
 #include <net/PrimitiveType.h>
+#include <viewer/FrameEditor.h>
 
 #include <json.hpp>
 
-namespace pod {
-/*
- * Json deserialization
- */
+#include <cassert>
+
+namespace {
+
 ///Helper function
 template<typename T>
 inline T value_or_default(const nlohmann::json &j, const std::string &name, T def_val) {
@@ -18,6 +19,41 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
     }
     return def_val;
 }
+
+} // anonymous namespace
+
+namespace pod {
+
+struct Color {
+    glm::vec4 color;
+};
+
+struct Line : Color {
+    glm::vec2 pt_from;
+    glm::vec2 pt_to;
+};
+
+struct Circle : Color {
+    glm::vec2 center;
+    float radius;
+    bool fill;
+};
+
+struct Rectangle : Color {
+    glm::vec2 top_left;
+    glm::vec2 bottom_right;
+    bool fill;
+};
+
+struct Popup {
+    glm::vec2 center;
+    float radius;
+    std::string text;
+};
+
+/*
+ * Json deserialization
+ */
 
 inline void from_json(const nlohmann::json &j, Color &p) {
     auto color = j["color"].get<uint32_t>();
@@ -106,19 +142,14 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
         auto j = json::parse(chunk_begin, chunk_end);
         PrimitiveType type = primitve_type_from_str(j["type"]);
 
-        if (!frame_) {
-            //TODO: Think about factory from Scene to implement immediate mode
-            frame_ = std::make_unique<Frame>();
-        }
-
-        auto &ctx = frame_->context();
+        auto &ctx = get_frame_editor().context();
 
         switch (type) {
-            case PrimitiveType::end:
+            case PrimitiveType::end: {
                 LOG_V8("JsonHandler::End");
-                send_to_scene(std::move(frame_));
-                frame_ = nullptr;
+                on_frame_end();
                 break;
+            }
             case PrimitiveType::circle: {
                 LOG_V8("JsonHandler::Circle detected");
                 auto obj = j.get<pod::Circle>();
@@ -139,23 +170,31 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             }
             case PrimitiveType::message:
                 LOG_V8("JsonHandler::Message");
-                frame_->add_user_text(j["message"].get<std::string>());
+                get_frame_editor().add_user_text(j["message"].get<std::string>());
                 break;
             case PrimitiveType::popup: {
                 LOG_V8("JsonHandler::Popup");
                 auto obj = j.get<pod::Popup>();
-                frame_->add_round_popup(obj.center, obj.radius, std::move(obj.text));
+                get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
                 break;
             }
-            case PrimitiveType::layer: {
+            case PrimitiveType::options: {
                 LOG_V8("JsonHandler::Layer");
-                size_t layer = j["value"].get<size_t>();
-                if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
-                    LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
-                             layer, static_cast<size_t>(Frame::LAYERS_COUNT));
+                auto it = j.find("permanent");
+                if (it != j.end()) {
+                    use_permanent_frame(it->get<bool>());
                 }
-                layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
-                frame_->set_layer_id(layer);
+
+                it = j.find("layer");
+                if (it != j.end()) {
+                    size_t layer = it->get<size_t>();
+                    if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
+                        LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
+                                 layer, static_cast<size_t>(Frame::LAYERS_COUNT));
+                    }
+                    layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
+                    get_frame_editor().set_layer_id(layer);
+                }
                 break;
             }
             case PrimitiveType::types_count:
@@ -166,10 +205,4 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
     } catch (const std::exception &e) {
         LOG_WARN("JsonClient::Exception: %s", e.what());
     }
-}
-
-void JsonHandler::on_new_connection() {
-    ProtoHandler::on_new_connection();
-
-    frame_ = nullptr;
 }

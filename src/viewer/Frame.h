@@ -22,15 +22,7 @@ public:
     using context_collection_t = std::array<RenderContext, LAYERS_COUNT>;
     using hittest_t = std::unique_ptr<IPopup>;
 
-    void add_box_popup(glm::vec2 top_left, glm::vec2 bottom_right, std::string message);
-
-    void add_round_popup(glm::vec2 center, float radius, std::string message);
-
-    void add_user_text(const std::string &msg);
-
-    void set_layer_id(size_t id);
-
-    RenderContext &context();
+    void update_from(const Frame &other);
 
     const context_collection_t &all_contexts() const;
 
@@ -38,8 +30,7 @@ public:
 
     const char *user_message() const;
 
-private:
-    size_t layer_id_ = DEFAULT_LAYER;
+protected:
     context_collection_t contexts_;
     std::vector<hittest_t> popups_;
     std::string user_message_;

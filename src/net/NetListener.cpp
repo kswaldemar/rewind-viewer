@@ -58,8 +58,6 @@ void NetListener::stop() {
     stop_ = true;
 }
 
-
-
 void NetListener::serve_connection(CActiveSocket *client) {
     while (!stop_) {
         const int32_t nbytes = client->Receive(1024);

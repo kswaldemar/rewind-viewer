@@ -131,7 +131,7 @@ void Renderer::render_background(glm::vec3 color) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     //JUST FOR TESTING PURPOSES
-    g_test_context.draw(ctx_render_params_, *shaders_);
+    //g_test_context.draw(ctx_render_params_, *shaders_);
 }
 
 void Renderer::render_grid(glm::vec3 color) {

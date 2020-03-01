@@ -42,6 +42,12 @@ public:
     ///Polyline
     void add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color);
 
+    ///Add all primitves from other RenderContext
+    void update_from(const RenderContext &other);
+
+    ///Remove everything
+    void clear();
+
     void draw(const context_vao_t &vaos, const ShaderCollection &shaders) const;
 
 private:

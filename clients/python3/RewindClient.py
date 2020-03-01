@@ -54,10 +54,18 @@ class RewindClient():
             'message': msg
         })
 
-    def set_layer(self, value):
+    def set_options(self, layer=None, permanent=None):
+        data = {'type': 'options'}
+        if layer is not None:
+            data['layer'] = layer
+        if permanent is not None:
+            data['permanent'] = permanent
+        self._send(data)
+
+    def set_permanent(self, value):
         self._send({
-            'type': 'layer',
-            'value': value
+            'type': 'option',
+            'permanent': value
         })
 
     def end_frame(self):

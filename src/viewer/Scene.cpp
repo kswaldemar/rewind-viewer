@@ -42,10 +42,22 @@ void Scene::update_and_render(const Camera &cam) {
         renderer_->render_grid(conf_.grid_color);
     }
 
-    //Frame
+    //Draw permanent frame
+    {
+        while (lock_permanent_frame_.test_and_set(std::memory_order_acquire))
+            ;
+        const auto &contexts = permanent_frame_.all_contexts();
+        for (size_t idx = 0; idx < contexts.size(); ++idx) {
+            if (conf_.enabled_layers[idx]) {
+                renderer_->render_primitives(contexts[idx]);
+            }
+        }
+        lock_permanent_frame_.clear(std::memory_order_release);
+    }
+
+    //Draw currently selected frame
     if (active_frame_) {
         const auto &contexts = active_frame_->all_contexts();
-
         for (size_t idx = 0; idx < contexts.size(); ++idx) {
             if (conf_.enabled_layers[idx]) {
                 renderer_->render_primitives(contexts[idx]);
@@ -73,9 +85,19 @@ const char *Scene::get_frame_user_message() {
     return "";
 }
 
-void Scene::add_frame(std::unique_ptr<Frame> &&new_frame) {
+void Scene::add_frame(const Frame &frame) {
+    auto new_frame = std::make_shared<Frame>();
+    new_frame->update_from(frame);
+
     std::lock_guard<std::mutex> f(frames_mutex_);
-    frames_.emplace_back(std::move(new_frame));
+    frames_.emplace_back(new_frame);
+}
+
+void Scene::add_permanent_frame_data(const Frame &data) {
+    while (lock_permanent_frame_.test_and_set(std::memory_order_acquire))
+        ;
+    permanent_frame_.update_from(data);
+    lock_permanent_frame_.clear(std::memory_order_release);
 }
 
 void Scene::show_detailed_info(const glm::vec2 &mouse) const {

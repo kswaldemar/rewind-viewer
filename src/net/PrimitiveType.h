@@ -13,7 +13,7 @@
     X(line) \
     X(message) \
     X(popup) \
-    X(layer) \
+    X(options) \
 
 enum class PrimitiveType {
 #define X(type) type,

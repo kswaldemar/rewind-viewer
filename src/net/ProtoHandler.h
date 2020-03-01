@@ -5,7 +5,7 @@
 #pragma once
 
 #include <viewer/Scene.h>
-
+#include <viewer/FrameEditor.h>
 
 class ProtoHandler {
 public:
@@ -18,9 +18,20 @@ public:
     virtual void on_new_connection();
 
 protected:
-    ///Should be called when frame is finished (end message arrived)
-    void send_to_scene(std::unique_ptr<Frame> &&frame);
+    ///Should be called by specific handler when 'end_frame' received
+    void on_frame_end();
+
+    ///Get frame editor for normal or permanent frame
+    ///Specific handler should use it to create primitives
+    FrameEditor &get_frame_editor();
+
+    ///Whenever to use normal or permanent frame for drawing
+    void use_permanent_frame(bool use);
 
 private:
+    void reset_state();
+
     Scene *scene_;
+    FrameEditor frame_editors_[2];
+    bool use_permanent_;
 };
