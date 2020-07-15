@@ -48,7 +48,7 @@ void Camera::update() {
         //Map dragging
         if (ImGui::IsMouseDragging()) {
             int width, height;
-            glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
+            glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
 
             const int min_size = std::min(width, height);
 
