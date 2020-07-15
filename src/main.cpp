@@ -52,14 +52,14 @@ int main(int argc, char **argv) {
     LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
     LOG_INFO("Driver %s, Renderer %s", glGetString(GL_VENDOR), glGetString(GL_RENDERER));
 
-#ifdef OPENGL_DEBUG
-#  if (GL_ARB_debug_output)
-    LOG_INFO("OpenGL:: Debug output enabled");
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-    glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
-    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-#  endif
-#endif
+//#ifdef OPENGL_DEBUG
+//#  if (GL_ARB_debug_output)
+//    LOG_INFO("OpenGL:: Debug output enabled");
+//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+//    glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
+//    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+//#  endif
+//#endif
 
     LOG_INFO("Setup vertical sync to 60fps")
     glfwSwapInterval(1);

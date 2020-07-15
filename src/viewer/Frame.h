@@ -10,6 +10,7 @@
 #include <viewer/RenderContext.h>
 
 struct IPopup {
+    virtual ~IPopup() = default;
     virtual bool hit_test(glm::vec2 pt) const = 0;
     virtual const char *text() const = 0;
 };

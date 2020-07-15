@@ -12,7 +12,7 @@
 #include <memory>
 
 
-class ShaderCollection;
+struct ShaderCollection;
 
 /**
  * RenderContext

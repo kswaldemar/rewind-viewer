@@ -9,7 +9,9 @@
 
 class ProtoHandler {
 public:
-    ProtoHandler(Scene *scene);
+    explicit ProtoHandler(Scene *scene);
+    virtual ~ProtoHandler() = default;
+
     ///Called whenever data from socket should be processed
     /// data should be copied if wanted to be used after function call
     virtual void handle_message(const uint8_t *data, uint32_t nbytes) = 0;

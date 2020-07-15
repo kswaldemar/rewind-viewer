@@ -35,7 +35,7 @@ public:
     struct CameraConf {
         bool origin_on_top_left = true;
         glm::vec2 start_position;
-        float start_viewport_size;
+        float start_viewport_size = 10.0;
     } camera;
 
     static Config load_from_file(const std::string &fname);
