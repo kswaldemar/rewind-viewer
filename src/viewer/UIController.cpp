@@ -5,7 +5,8 @@
 #include "UIController.h"
 
 #include <imgui_impl/imgui_widgets.h>
-#include <imgui_impl/imgui_impl_glfw_gl3.h>
+#include <imgui_impl/imgui_impl_glfw.h>
+#include <imgui_impl/imgui_impl_opengl3.h>
 #include <imgui_impl/style.h>
 #include <fontawesome.h>
 
@@ -26,8 +27,11 @@ UIController::UIController(Camera *camera, Config *conf)
     : camera_(camera)
     , conf_(conf) {
 
+    ImGui::CreateContext();
+
     // Setup ImGui binding
-    ImGui_ImplGlfwGL3_Init(glfwGetCurrentContext(), true);
+    ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
+    ImGui_ImplOpenGL3_Init();
     wnd_ = std::make_unique<wnd_t>();
 
     setup_custom_style(false);
@@ -44,17 +48,21 @@ UIController::UIController(Camera *camera, Config *conf)
     icons_config.PixelSnapH = true;
     io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf", 14.0f, &icons_config, icons_range);
     //Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
-    ImGui_ImplGlfwGL3_CreateDeviceObjects();
+    ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
 
 UIController::~UIController() {
     // Cleanup imgui
-    ImGui_ImplGlfwGL3_Shutdown();
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status) {
     // Start new frame
-    ImGui_ImplGlfwGL3_NewFrame();
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
 
     //Clear data option
     if (ImGui::BeginMainMenuBar()) {
@@ -156,6 +164,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
 
 void UIController::frame_end() {
     ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 bool UIController::close_requested() {
@@ -187,7 +196,11 @@ void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
     const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
                        | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-    if (ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, ImVec2{0, 0}, 0.3, flags)) {
+    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.3);
+    bool show = ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, flags);
+    ImGui::PopStyleVar();
+
+    if (show) {
         ImGui::BeginGroup();
         ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS %.1f", ImGui::GetIO().Framerate);
         ImGui::SameLine();
@@ -330,9 +343,9 @@ void UIController::playback_control_widget(Scene *scene) {
             if (io.KeyCtrl && io.KeysDown[GLFW_KEY_G]) {
                 ImGui::SetKeyboardFocusHere();
             }
-            if (ImGui::TickBar("##empty", &ftick, 0, frames_cnt, {0.0f, 0.0f})) {
-                tick = static_cast<int>(ftick);
-            }
+            //if (ImGui::TickBar("##empty", &ftick, 0, frames_cnt, {0.0f, 0.0f})) {
+            //    tick = static_cast<int>(ftick);
+            //}
             ImGui::PopItemWidth();
             scene->set_frame_index(tick - 1);
         } else {

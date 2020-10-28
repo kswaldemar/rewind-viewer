@@ -8,7 +8,7 @@
 #include <viewer/Config.h>
 #include <net/json_handler/JsonHandler.h>
 #include <common/logger.h>
-#include <imgui_impl/imgui_impl_glfw_gl3.h>
+#include <imgui_impl/imgui_impl_glfw.h>
 
 #include <stb_image.h>
 

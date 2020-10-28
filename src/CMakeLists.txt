@@ -13,8 +13,9 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(Sources
     main.cpp
-    imgui_impl/imgui_impl_glfw_gl3.cpp
-    imgui_impl/imgui_widgets.cpp
+    imgui_impl/imgui_impl_glfw.cpp
+    imgui_impl/imgui_impl_opengl3.cpp
+#    imgui_impl/imgui_widgets.cpp
     cgutils/Shader.cpp
     cgutils/Camera.cpp
     cgutils/utils.cpp

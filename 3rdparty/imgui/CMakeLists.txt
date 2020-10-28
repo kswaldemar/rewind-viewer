@@ -5,13 +5,14 @@ project(ImGui)
 add_library(${PROJECT_NAME} STATIC
     include/imgui.h
     include/imgui_internal.h
-    include/stb_rect_pack.h
-    include/stb_textedit.h
-    include/stb_truetype.h
+    include/imstb_rectpack.h
+    include/imstb_textedit.h
+    include/imstb_truetype.h
 
     src/imgui.cpp
     src/imgui_demo.cpp
     src/imgui_draw.cpp
+    src/imgui_widgets.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)

@@ -46,7 +46,7 @@ void Camera::update() {
         }
 
         //Map dragging
-        if (ImGui::IsMouseDragging()) {
+        if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
             int width, height;
             glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
 
