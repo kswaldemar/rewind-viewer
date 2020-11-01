@@ -55,5 +55,5 @@ private:
     bool developer_mode_ = false;
 
     ///Last remembered state
-    bool key_pressed_[512];
+    bool key_pressed_[512] = {};
 };

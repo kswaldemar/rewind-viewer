@@ -22,6 +22,21 @@ bool key_modifier(const ImGuiIO &io) {
 #endif
 }
 
+float get_scale_factor() {
+    int w, h;
+    int display_w, display_h;
+
+    auto window = glfwGetCurrentContext();
+
+    glfwGetWindowSize(window, &w, &h);
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+
+    return std::max(display_w / static_cast<float>(w), display_h / static_cast<float>(h));
+}
+
+const float kDefaultFontSize = 13.0f;
+const float kFontawesomeFontSize = 14.0f;
+
 }  // namespace
 
 struct UIController::wnd_t {
@@ -46,17 +61,25 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     setup_custom_style(false);
 
     auto &io = ImGui::GetIO();
-
     io.IniFilename = "rewindviewer.ini";
 
+    const float scale_factor = get_scale_factor();
+
+    auto font_cfg = ImFontConfig();
+    font_cfg.SizePixels = kDefaultFontSize * scale_factor;
+    font_cfg.OversampleH = 1;
+    font_cfg.OversampleV = 1;
+    font_cfg.PixelSnapH = true;
+
     // Load and merge fontawesome to current font
-    io.Fonts->AddFontDefault();
+    io.Fonts->AddFontDefault(&font_cfg);
     const ImWchar icons_range[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
     icons_config.MergeMode = true;
     icons_config.PixelSnapH = true;
-    io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf", 14.0f, &icons_config,
-                                 icons_range);
+    io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf",
+                                 kFontawesomeFontSize * scale_factor, &icons_config, icons_range);
+    io.FontGlobalScale = 1.0f / scale_factor;
     // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
