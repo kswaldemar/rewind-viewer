@@ -51,8 +51,6 @@ struct UIController::wnd_t {
 };
 
 UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf_(conf) {
-    ImGui::CreateContext();
-
     // Setup ImGui binding
     ImGui_ImplGlfw_InitForOpenGL(glfwGetCurrentContext(), true);
     ImGui_ImplOpenGL3_Init();
@@ -61,8 +59,6 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     setup_custom_style(false);
 
     auto &io = ImGui::GetIO();
-    io.IniFilename = "rewindviewer.ini";
-
     const float scale_factor = get_scale_factor();
 
     auto font_cfg = ImFontConfig();
@@ -268,7 +264,9 @@ void UIController::info_widget(Scene *scene) {
     const float desired_width = 300;
     ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_None);
     ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_None);
-    ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
+    ImGui::Begin(
+        "Info", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
         if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {

@@ -20,7 +20,7 @@ constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
 
 constexpr const char *WINDOW_TITLE = "Rewind viewer for Russian AI Cup";
-constexpr const char *CONF_FILENAME = "rewindviewer.cfg";
+constexpr const char *CONF_FILENAME = "rewindviewer.ini";
 
 GLFWwindow *setup_window();
 void prepare_and_run_game_loop(GLFWwindow *window);
@@ -121,7 +121,8 @@ GLFWwindow *setup_window() {
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
     LOG_INFO("Try load configuration file");
-    Config conf = Config::load_from_file(CONF_FILENAME);
+    auto conf_ptr = Config::init_with_imgui(CONF_FILENAME);
+    auto& conf = *conf_ptr;
 
     LOG_INFO("Create camera")
     Camera cam(&conf.camera);
@@ -157,9 +158,6 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         }
     });
     network_thread.detach();
-
-    int width, height;
-    glfwGetFramebufferSize(window, &width, &height);
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -198,9 +196,6 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     }
 
     net.stop();
-
-    LOG_INFO("Save config file %s", CONF_FILENAME);
-    conf.save_to_file(CONF_FILENAME);
 
     LOG_INFO("Exit from application");
 }

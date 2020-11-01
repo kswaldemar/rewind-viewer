@@ -25,7 +25,7 @@ public:
         glm::vec4 grid_color = {0.3219f, 0.336f, 0.392f, 1.0f};
         glm::vec4 scene_color = {0.757f, 0.856f, 0.882f, 1.0f};
         bool show_grid = true;
-        std::array<bool, Frame::LAYERS_COUNT> enabled_layers = {{1, 1, 1, 1, 1}};
+        std::array<bool, Frame::LAYERS_COUNT> enabled_layers = {{true, true, true, true, true}};
     } scene;
 
     struct NetConf {
@@ -38,13 +38,11 @@ public:
         float start_viewport_size = 10.0;
     } camera;
 
-    static Config load_from_file(const std::string &fname);
-
-    void save_to_file(const std::string &fname) const;
+    static std::unique_ptr<Config> init_with_imgui(const std::string &fname);
 
 private:
     using present_keys_t = std::unordered_set<std::string>;
 
     ///Update config values which depends from other fields
-    void update_dynamic_values(const present_keys_t &);
+    //void update_dynamic_values(const present_keys_t &);
 };
