@@ -268,7 +268,7 @@ void UIController::info_widget(Scene *scene) {
     const float desired_width = 300;
     ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_None);
     ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_None);
-    ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoTitleBar);
+    ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
         if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {
