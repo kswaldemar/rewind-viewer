@@ -12,6 +12,18 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+namespace {
+
+bool key_modifier(const ImGuiIO &io) {
+#ifdef __APPLE__
+    return io.KeySuper;
+#else
+    return io.KeyCtrl;
+#endif
+}
+
+}  // namespace
+
 struct UIController::wnd_t {
     bool show_style_editor = false;
     bool show_fps_overlay = true;
@@ -129,13 +141,13 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (io.KeysDown[GLFW_KEY_LEFT]) {
             autoplay_scene_ = false;
         }
-        if (key_pressed_once(GLFW_KEY_G) && !io.KeyCtrl) {
+        if (key_pressed_once(GLFW_KEY_G) && !key_modifier(io)) {
             conf_->scene.show_grid = !conf_->scene.show_grid;
         }
         if (key_pressed_once(GLFW_KEY_P)) {
             wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
         }
-        if (io.KeysDown[GLFW_KEY_D] && io.KeyCtrl) {
+        if (io.KeysDown[GLFW_KEY_D] && key_modifier(io)) {
             developer_mode_ = true;
         }
         auto &enabled_layers = conf_->scene.enabled_layers;
@@ -144,7 +156,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
                 enabled_layers[layer_idx] = !enabled_layers[layer_idx];
             }
         }
-        if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && io.KeyCtrl) {
+        if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && key_modifier(io)) {
             scene->clear_data(false);
         }
     }
@@ -231,10 +243,9 @@ void UIController::info_widget(Scene *scene) {
     int width, height;
     glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
     const float desired_width = 300;
-    ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_Always);
-    ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)},
-                             ImGuiCond_Always);
-    ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
+    ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_None);
+    ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_None);
+    ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoTitleBar);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
         if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {
@@ -283,8 +294,8 @@ void UIController::playback_control_widget(Scene *scene) {
     auto width = io.DisplaySize.x;
     ImGui::SetNextWindowPos({0, io.DisplaySize.y - 20 - 2 * ImGui::GetStyle().WindowPadding.y});
     ImGui::SetNextWindowSize({width, 30});
-    static const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
-                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
+    static const auto flags =
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
     if (ImGui::Begin("Playback control", &wnd_->show_playback_control, flags)) {
         ImGui::BeginGroup();
 
@@ -293,7 +304,7 @@ void UIController::playback_control_widget(Scene *scene) {
 
         if (!io.WantTextInput) {
             int prev_tick = tick;
-            if (io.KeyCtrl) {
+            if (key_modifier(io)) {
                 tick -= key_pressed_once(GLFW_KEY_LEFT);
                 tick += key_pressed_once(GLFW_KEY_RIGHT);
             } else {
@@ -302,7 +313,7 @@ void UIController::playback_control_widget(Scene *scene) {
             }
 
             if (prev_tick != tick) {
-                //Manually changed
+                // Manually changed
                 autoplay_scene_ = false;
             }
         }
@@ -342,7 +353,9 @@ void UIController::playback_control_widget(Scene *scene) {
         if (frames_cnt > 0) {
             tick = cg::clamp(tick, 1, frames_cnt);
             ImGui::PushItemWidth(-1);
-            if (ImGui::SliderInt("##empty", &tick, 1, frames_cnt, "%d",
+
+            const std::string slider_fmt = "%d/" + std::to_string(frames_cnt);
+            if (ImGui::SliderInt("##empty", &tick, 1, frames_cnt, slider_fmt.data(),
                                  ImGuiSliderFlags_AlwaysClamp)) {
                 autoplay_scene_ = false;
             }

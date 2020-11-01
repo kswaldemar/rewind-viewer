@@ -59,6 +59,7 @@ inline void setup_custom_style(bool bStyleDark_)
     style.WindowPadding.y = 7;
     style.WindowRounding = 4;
     style.GrabRounding = 2;
+    style.WindowBorderSize = 0.0f;
 
     if( bStyleDark_ )
     {
