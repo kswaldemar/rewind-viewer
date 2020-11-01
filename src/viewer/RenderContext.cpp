@@ -5,6 +5,8 @@
 #include "RenderContext.h"
 #include "ShaderCollection.h"
 
+#include <common/logger.h>
+
 #include <exception>
 
 namespace {
@@ -27,7 +29,7 @@ void add_elements(size_t shift, std::vector<GLuint> &to, const std::vector<GLuin
     }
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 struct RenderContext::memory_layout_t {
     std::vector<point_layout_t> points;
@@ -39,16 +41,17 @@ struct RenderContext::memory_layout_t {
 };
 
 RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &res) {
-    RenderContext::context_vao_t ret;
+    RenderContext::context_vao_t ret{};
 
-    //Initialize forward pass point vao
-    //TODO: How vbo binding really works inside vertex arrays? Using two different vbo breaks lines drawing
+    ret.common_ebo = res.gen_buffer();
+    // Initialize forward pass point vao
     {
         ret.point_vao = res.gen_vertex_array();
         ret.point_vbo = res.gen_buffer();
         glBindVertexArray(ret.point_vao);
         glBindBuffer(GL_ARRAY_BUFFER, ret.point_vbo);
-        //Point layout of RenderContext: vec4 color, vec2 pos
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ret.common_ebo);
+        // Point layout of RenderContext: vec4 color, vec2 pos
         const size_t stride = 6 * sizeof(float);
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
@@ -62,6 +65,7 @@ RenderContext::context_vao_t RenderContext::create_gl_context(ResourceManager &r
         ret.circle_vbo = res.gen_buffer();
         glBindVertexArray(ret.circle_vao);
         glBindBuffer(GL_ARRAY_BUFFER, ret.circle_vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ret.common_ebo);
         const size_t stride = 7 * sizeof(float);
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, stride, nullptr);
         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, cg::offset<float>(4));
@@ -101,7 +105,8 @@ void RenderContext::add_filled_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3
     impl_->triangle_indicies.push_back(idx + 2);
 }
 
-void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color, bool fill) {
+void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color,
+                                  bool fill) {
     auto top_right = glm::vec2{bottom_right.x, top_left.y};
     auto bottom_left = glm::vec2{top_left.x, bottom_right.y};
 
@@ -112,8 +117,7 @@ void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, gl
         impl_->points.push_back({color, bottom_right});
         impl_->points.push_back({color, bottom_left});
 
-        for (uint8_t t : {0, 1, 3,
-                          1, 2, 3}) {
+        for (uint8_t t : {0, 1, 3, 1, 2, 3}) {
             impl_->triangle_indicies.push_back(idx + t);
         }
     } else {
@@ -130,7 +134,7 @@ void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4
     for (size_t i = 1; i < points.size(); ++i) {
         impl_->points.push_back({color, points[i]});
 
-        //Add line between two points in sequence
+        // Add line between two points in sequence
         GLuint idx = impl_->points.size() - 1;
         impl_->line_indicies.push_back(idx - 1);
         impl_->line_indicies.push_back(idx);
@@ -161,53 +165,56 @@ void RenderContext::clear() {
     (*impl_) = memory_layout_t();
 }
 
-void RenderContext::draw(const RenderContext::context_vao_t &vaos, const ShaderCollection &shaders) const {
-    //glLineWidth(2);
-    //glEnable(GL_LINE_SMOOTH);
+void RenderContext::draw(const RenderContext::context_vao_t &vaos,
+                         const ShaderCollection &shaders) const {
+    // glLineWidth(2);
+    // glEnable(GL_LINE_SMOOTH);
 
-    //Load data
+    LOG_DEBUG("point_layout_t %lu", sizeof(point_layout_t));
+
+    // Load data
     glBindBuffer(GL_ARRAY_BUFFER, vaos.point_vbo);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        impl_->points.size() * sizeof(point_layout_t),
-        impl_->points.data(),
-        GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, impl_->points.size() * sizeof(point_layout_t),
+                 impl_->points.data(), GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, vaos.circle_vbo);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        impl_->circles.size() * sizeof(circle_layout_t),
-        impl_->circles.data(),
-        GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, impl_->circles.size() * sizeof(circle_layout_t),
+                 impl_->circles.data(), GL_DYNAMIC_DRAW);
 
-    //Lines
+    // Lines
     shaders.line.use();
     glBindVertexArray(vaos.point_vao);
     const auto &line_elements = impl_->line_indicies;
-    glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, line_elements.data());
 
-    //Filled triangles, so any polygon
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, line_elements.size() * sizeof(GLuint),
+                 line_elements.data(), GL_DYNAMIC_DRAW);
+    glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, nullptr);
+
+    // Filled triangles, so any polygon
     const auto &triangle_elements = impl_->triangle_indicies;
-    glDrawElements(GL_TRIANGLES, triangle_elements.size(), GL_UNSIGNED_INT, triangle_elements.data());
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangle_elements.size() * sizeof(GLuint),
+                 triangle_elements.data(), GL_DYNAMIC_DRAW);
+    glDrawElements(GL_TRIANGLES, triangle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    //Circles
+    // Circles
     shaders.circle.use();
     glBindVertexArray(vaos.circle_vao);
 
-    //Filled
+    // Filled
     shaders.circle.set_uint("line_width", 0);
-    glDrawElements(
-        GL_POINTS, impl_->filled_circle_indicies.size(),
-        GL_UNSIGNED_INT, impl_->filled_circle_indicies.data());
+    const auto &fill_circle_elements = impl_->filled_circle_indicies;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, fill_circle_elements.size() * sizeof(GLuint),
+                 fill_circle_elements.data(), GL_DYNAMIC_DRAW);
+    glDrawElements(GL_POINTS, fill_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    //Thin
+    // Thin
     shaders.circle.set_uint("line_width", 1);
-    glDrawElements(
-        GL_POINTS, impl_->thin_circle_indicies.size(),
-        GL_UNSIGNED_INT, impl_->thin_circle_indicies.data());
+    const auto &thin_circle_elements = impl_->thin_circle_indicies;
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, thin_circle_elements.size() * sizeof(GLuint),
+                 thin_circle_elements.data(), GL_DYNAMIC_DRAW);
+    glDrawElements(GL_POINTS, thin_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    //glLineWidth(1);
-    //glDisable(GL_LINE_SMOOTH);
+    // glLineWidth(1);
+    // glDisable(GL_LINE_SMOOTH);
     glBindVertexArray(0);
 }
-

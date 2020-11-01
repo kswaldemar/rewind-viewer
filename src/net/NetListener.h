@@ -42,7 +42,6 @@ public:
 private:
     void serve_connection(CActiveSocket *client);
 
-    Scene *scene_;
     std::unique_ptr<CPassiveSocket> socket_;
     ConStatus status_;
 
@@ -51,5 +50,5 @@ private:
 
     std::unique_ptr<ProtoHandler> handler_;
 
-    bool stop_ = false;
+    std::atomic<bool> stop_{false};
 };

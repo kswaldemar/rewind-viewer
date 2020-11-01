@@ -203,5 +203,4 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     conf.save_to_file(CONF_FILENAME);
 
     LOG_INFO("Exit from application");
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }

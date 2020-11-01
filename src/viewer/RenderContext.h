@@ -25,6 +25,8 @@ public:
 
         GLuint point_vbo;
         GLuint circle_vbo;
+
+        GLuint common_ebo;
     };
     static context_vao_t create_gl_context(ResourceManager &res);
 

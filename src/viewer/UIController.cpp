@@ -4,11 +4,11 @@
 
 #include "UIController.h"
 
-#include <imgui_impl/imgui_widgets.h>
+#include <fontawesome.h>
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
+#include <imgui_impl/imgui_widgets.h>
 #include <imgui_impl/style.h>
-#include <fontawesome.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -23,10 +23,7 @@ struct UIController::wnd_t {
     bool show_mouse_pos_tooltip = false;
 };
 
-UIController::UIController(Camera *camera, Config *conf)
-    : camera_(camera)
-    , conf_(conf) {
-
+UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf_(conf) {
     ImGui::CreateContext();
 
     // Setup ImGui binding
@@ -40,14 +37,15 @@ UIController::UIController(Camera *camera, Config *conf)
 
     io.IniFilename = "rewindviewer.ini";
 
-    //Load and merge fontawesome to current font
+    // Load and merge fontawesome to current font
     io.Fonts->AddFontDefault();
     const ImWchar icons_range[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
     icons_config.MergeMode = true;
     icons_config.PixelSnapH = true;
-    io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf", 14.0f, &icons_config, icons_range);
-    //Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
+    io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf", 14.0f, &icons_config,
+                                 icons_range);
+    // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
 
@@ -64,7 +62,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    //Clear data option
+    // Clear data option
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Preferences", true)) {
             ImGui::Checkbox("Close window by Escape key", &conf_->ui.close_with_esc);
@@ -73,7 +71,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::EndMainMenuBar();
     }
 
-    //Update windows status
+    // Update windows status
     main_menu_bar();
 
     if (wnd_->show_fps_overlay) {
@@ -94,13 +92,13 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::ShowMetricsWindow(&wnd_->show_metrics);
     }
     if (wnd_->show_ui_help) {
-        ImGui::Begin(ICON_FA_INFO_CIRCLE " UI guide", &wnd_->show_ui_help, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Begin(ICON_FA_INFO_CIRCLE " UI guide", &wnd_->show_ui_help,
+                     ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::ShowUserGuide();
         ImGui::End();
     }
     if (wnd_->show_shortcuts_help) {
-        ImGui::Begin(ICON_FA_KEYBOARD_O " Controls help",
-                     &wnd_->show_shortcuts_help,
+        ImGui::Begin(ICON_FA_KEYBOARD_O " Controls help", &wnd_->show_shortcuts_help,
                      ImGuiWindowFlags_AlwaysAutoResize);
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
@@ -123,7 +121,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::EndTooltip();
     }
 
-    //Checking hotkeys
+    // Checking hotkeys
     if (!io.WantTextInput) {
         if (key_pressed_once(GLFW_KEY_SPACE)) {
             autoplay_scene_ = !autoplay_scene_;
@@ -153,12 +151,12 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
 
     request_exit_ = conf_->ui.close_with_esc && io.KeysDown[GLFW_KEY_ESCAPE];
 
-    //Hittest for detailed unit info
+    // Hittest for detailed unit info
     if (!ImGui::GetIO().WantCaptureMouse) {
         scene->show_detailed_info(camera_->screen2world(ImGui::GetIO().MousePos));
     }
 
-    //Background color
+    // Background color
     glClearColor(conf_->ui.clear_color.r, conf_->ui.clear_color.g, conf_->ui.clear_color.b, 1.0f);
 }
 
@@ -194,13 +192,14 @@ void UIController::main_menu_bar() {
 
 void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
-    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
-                       | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
-    ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.3);
-    bool show = ImGui::Begin("FPS Overlay", &wnd_->show_fps_overlay, flags);
-    ImGui::PopStyleVar();
+    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                       ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
-    if (show) {
+    if (wnd_->show_fps_overlay) {
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, 0.7);
+        ImGui::Begin("FPS Overlay", nullptr, flags);
+        ImGui::PopStyleVar();
+
         ImGui::BeginGroup();
         ImGui::TextColored({1.0, 1.0, 0.0, 1.0}, "FPS %.1f", ImGui::GetIO().Framerate);
         ImGui::SameLine();
@@ -233,7 +232,8 @@ void UIController::info_widget(Scene *scene) {
     glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
     const float desired_width = 300;
     ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_Always);
-    ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_Always);
+    ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)},
+                             ImGuiCond_Always);
     ImGui::Begin("Info", &wnd_->show_info, ImGuiWindowFlags_NoTitleBar);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
@@ -252,16 +252,14 @@ void UIController::info_widget(Scene *scene) {
         if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
             ImGui::Checkbox("World origin on top left", &conf_->camera.origin_on_top_left);
             ImGui::Checkbox("Draw grid", &conf_->scene.show_grid);
-            static const ImVec4 button_colors[] = {
-                ImVec4(0.5, 0.5, 0.5, 1.0),
-                ImVec4(0.58, 0.941, 0.429, 1.0)
-            };
+            static const ImVec4 button_colors[] = {ImVec4(0.5, 0.5, 0.5, 1.0),
+                                                   ImVec4(0.58, 0.941, 0.429, 1.0)};
             size_t idx = 0;
-            static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)> captions{
-                {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}
-            };
+            static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)>
+                captions{{"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}};
             for (bool &enabled : conf_->scene.enabled_layers) {
-                if (ImGui::ColorButton(captions[idx], button_colors[enabled], ImGuiColorEditFlags_NoTooltip)) {
+                if (ImGui::ColorButton(captions[idx], button_colors[enabled],
+                                       ImGuiColorEditFlags_NoTooltip)) {
                     enabled = !enabled;
                 }
                 ++idx;
@@ -285,22 +283,27 @@ void UIController::playback_control_widget(Scene *scene) {
     auto width = io.DisplaySize.x;
     ImGui::SetNextWindowPos({0, io.DisplaySize.y - 20 - 2 * ImGui::GetStyle().WindowPadding.y});
     ImGui::SetNextWindowSize({width, 30});
-    static const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize
-                              | ImGuiWindowFlags_NoMove
-                              | ImGuiWindowFlags_NoSavedSettings;
+    static const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                              ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
     if (ImGui::Begin("Playback control", &wnd_->show_playback_control, flags)) {
         ImGui::BeginGroup();
 
-        //Tick is one indexed
+        // Tick is one indexed
         int tick = scene->get_frame_index() + 1;
 
         if (!io.WantTextInput) {
+            int prev_tick = tick;
             if (io.KeyCtrl) {
                 tick -= key_pressed_once(GLFW_KEY_LEFT);
                 tick += key_pressed_once(GLFW_KEY_RIGHT);
             } else {
                 tick -= io.KeysDown[GLFW_KEY_LEFT];
                 tick += io.KeysDown[GLFW_KEY_RIGHT];
+            }
+
+            if (prev_tick != tick) {
+                //Manually changed
+                autoplay_scene_ = false;
             }
         }
 
@@ -338,16 +341,13 @@ void UIController::playback_control_widget(Scene *scene) {
         const auto frames_cnt = scene->get_frames_count();
         if (frames_cnt > 0) {
             tick = cg::clamp(tick, 1, frames_cnt);
-            float ftick = tick;
             ImGui::PushItemWidth(-1);
-            if (io.KeyCtrl && io.KeysDown[GLFW_KEY_G]) {
-                ImGui::SetKeyboardFocusHere();
+            if (ImGui::SliderInt("##empty", &tick, 1, frames_cnt, "%d",
+                                 ImGuiSliderFlags_AlwaysClamp)) {
+                autoplay_scene_ = false;
             }
-            //if (ImGui::TickBar("##empty", &ftick, 0, frames_cnt, {0.0f, 0.0f})) {
-            //    tick = static_cast<int>(ftick);
-            //}
-            ImGui::PopItemWidth();
             scene->set_frame_index(tick - 1);
+            ImGui::PopItemWidth();
         } else {
             ImGui::Text("Frame list empty");
         }

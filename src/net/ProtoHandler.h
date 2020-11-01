@@ -35,5 +35,5 @@ private:
 
     Scene *scene_;
     FrameEditor frame_editors_[2];
-    bool use_permanent_;
+    bool use_permanent_ = false;
 };
