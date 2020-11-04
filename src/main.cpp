@@ -2,13 +2,11 @@
 #include <GLFW/glfw3.h>
 
 #include <cgutils/Shader.h>
-#include <cgutils/utils.h>
 #include <cgutils/ResourceManager.h>
 #include <viewer/UIController.h>
 #include <viewer/Config.h>
 #include <net/json_handler/JsonHandler.h>
 #include <common/logger.h>
-#include <imgui_impl/imgui_impl_glfw.h>
 
 #include <stb_image.h>
 
@@ -52,14 +50,14 @@ int main(int argc, char **argv) {
     LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
     LOG_INFO("Driver %s, Renderer %s", glGetString(GL_VENDOR), glGetString(GL_RENDERER));
 
-//#ifdef OPENGL_DEBUG
-//#  if (GL_ARB_debug_output)
-//    LOG_INFO("OpenGL:: Debug output enabled");
-//    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-//    glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
-//    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-//#  endif
-//#endif
+#if defined(OPENGL_DEBUG) && !defined(__APPLE__)
+#  if (GL_ARB_debug_output)
+    LOG_INFO("OpenGL:: Debug output enabled");
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+    glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
+    glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+#  endif
+#endif
 
     LOG_INFO("Setup vertical sync to 60fps")
     glfwSwapInterval(1);

@@ -5,8 +5,6 @@
 #include "RenderContext.h"
 #include "ShaderCollection.h"
 
-#include <common/logger.h>
-
 #include <exception>
 
 namespace {
@@ -169,8 +167,6 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                          const ShaderCollection &shaders) const {
     // glLineWidth(2);
     // glEnable(GL_LINE_SMOOTH);
-
-    LOG_DEBUG("point_layout_t %lu", sizeof(point_layout_t));
 
     // Load data
     glBindBuffer(GL_ARRAY_BUFFER, vaos.point_vbo);
