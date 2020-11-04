@@ -65,7 +65,7 @@ class RewindClient():
 
     def set_permanent(self, value):
         self._send({
-            'type': 'option',
+            'type': 'options',
             'permanent': value
         })
 

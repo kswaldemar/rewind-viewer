@@ -43,7 +43,7 @@ class Scene {
     const char *get_frame_user_message();
 
     /// Called from network listener when next frame is ready
-    void add_frame(const Frame &frame);
+    void add_frame(std::shared_ptr<Frame> frame);
 
     /// Add primitives to permanent frame
     void add_permanent_frame_data(const Frame &data);

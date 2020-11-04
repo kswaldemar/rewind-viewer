@@ -23,7 +23,7 @@ class Frame {
     using context_collection_t = std::array<RenderContext, LAYERS_COUNT>;
     using hittest_t = std::unique_ptr<IPopup>;
 
-    void update_from(const Frame &other);
+    void update_from(const context_collection_t &from_contexts);
 
     const context_collection_t &all_contexts() const;
 

@@ -13,8 +13,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace {}  // anonymous namespace
-
 Camera::Camera(const Config::CameraConf &conf)
     : conf_(conf), pos_{conf.start_position}, viewport_size_{conf.start_viewport_size} {
     update_matrix();

@@ -31,6 +31,7 @@ set(Sources
     net/NetListener.cpp
     net/ProtoHandler.cpp
     net/json_handler/JsonHandler.cpp
+    net/PrimitiveType.cpp
 )
 
 add_executable(${PROJECT_NAME} ${Sources})

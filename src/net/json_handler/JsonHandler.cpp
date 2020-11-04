@@ -146,40 +146,40 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
         auto &ctx = get_frame_editor().context();
 
         switch (type) {
-            case PrimitiveType::end: {
+            case PrimitiveType::END: {
                 LOG_V8("JsonHandler::End");
                 on_frame_end();
                 break;
             }
-            case PrimitiveType::circle: {
+            case PrimitiveType::CIRCLE: {
                 LOG_V8("JsonHandler::Circle detected");
                 auto obj = j.get<pod::Circle>();
                 ctx.add_circle(obj.center, obj.radius, obj.color, obj.fill);
                 break;
             }
-            case PrimitiveType::rectangle: {
+            case PrimitiveType::RECTANGLE: {
                 LOG_V8("JsonHandler::Rectangle detected");
                 auto obj = j.get<pod::Rectangle>();
                 ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.color, obj.fill);
                 break;
             }
-            case PrimitiveType::line: {
+            case PrimitiveType::LINE: {
                 LOG_V8("JsonHandler::Line detected");
                 auto obj = j.get<pod::Line>();
                 ctx.add_polyline({obj.pt_from, obj.pt_to}, obj.color);
                 break;
             }
-            case PrimitiveType::message:
+            case PrimitiveType::MESSAGE:
                 LOG_V8("JsonHandler::Message");
                 get_frame_editor().add_user_text(j["message"].get<std::string>());
                 break;
-            case PrimitiveType::popup: {
+            case PrimitiveType::POPUP: {
                 LOG_V8("JsonHandler::Popup");
                 auto obj = j.get<pod::Popup>();
                 get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
                 break;
             }
-            case PrimitiveType::options: {
+            case PrimitiveType::OPTIONS: {
                 LOG_V8("JsonHandler::Layer");
                 auto it = j.find("permanent");
                 if (it != j.end()) {
@@ -198,7 +198,7 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 }
                 break;
             }
-            case PrimitiveType::types_count: LOG_WARN("Got 'types_count' message"); break;
+            case PrimitiveType::TYPES_COUNT: break;
         }
     } catch (const std::exception &e) {
         LOG_WARN("JsonClient::Exception: %s", e.what());

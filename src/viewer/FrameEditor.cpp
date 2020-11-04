@@ -9,14 +9,11 @@ namespace {
 
 struct rect_popup_t : IPopup {
     rect_popup_t(glm::vec2 top_left, glm::vec2 bottom_right, std::string msg)
-        : top_left(top_left),
-          bottom_right(bottom_right),
-          msg(std::move(msg))
-    { }
+        : top_left(top_left), bottom_right(bottom_right), msg(std::move(msg)) {}
 
     bool hit_test(glm::vec2 point) const override {
-        return point.x >= top_left.x && point.x <= bottom_right.x
-               && point.y >= top_left.y && point.y <= bottom_right.y;
+        return point.x >= top_left.x && point.x <= bottom_right.x && point.y >= top_left.y &&
+               point.y <= bottom_right.y;
     }
 
     const char *text() const override {
@@ -30,10 +27,7 @@ struct rect_popup_t : IPopup {
 
 struct round_popup_t : IPopup {
     round_popup_t(glm::vec2 center, float radius2, std::string msg)
-        : center(center),
-          radius2(radius2),
-          msg(std::move(msg))
-    { }
+        : center(center), radius2(radius2), msg(std::move(msg)) {}
 
     bool hit_test(glm::vec2 point) const override {
         auto diff = point - center;
@@ -50,19 +44,20 @@ struct round_popup_t : IPopup {
     std::string msg;
 };
 
-} // anonymous namespace
-
+}  // anonymous namespace
 
 void FrameEditor::add_box_popup(glm::vec2 top_left, glm::vec2 bottom_right, std::string message) {
-    popups_.emplace_back(std::make_unique<rect_popup_t>(top_left, bottom_right, message));
+    popups_.emplace_back(
+        std::make_unique<rect_popup_t>(top_left, bottom_right, std::move(message)));
 }
 
 void FrameEditor::add_round_popup(glm::vec2 center, float radius, std::string message) {
-    popups_.emplace_back(std::make_unique<round_popup_t>(center, radius, message));
+    popups_.emplace_back(std::make_unique<round_popup_t>(center, radius, std::move(message)));
 }
 
 void FrameEditor::add_user_text(const std::string &msg) {
     user_message_ += msg;
+    user_message_ += '\n';
 }
 
 void FrameEditor::set_layer_id(size_t id) {
@@ -79,4 +74,3 @@ void FrameEditor::clear() {
 RenderContext &FrameEditor::context() {
     return contexts_[layer_id_];
 }
-

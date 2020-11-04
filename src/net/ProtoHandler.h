@@ -34,6 +34,7 @@ class ProtoHandler {
     void reset_state();
 
     Scene *scene_;
-    FrameEditor frame_editors_[2];
+    std::shared_ptr<FrameEditor> frame_;
+    FrameEditor permanent_frame_;
     bool use_permanent_ = false;
 };

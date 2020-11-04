@@ -74,18 +74,15 @@ const char *Scene::get_frame_user_message() {
     return "";
 }
 
-void Scene::add_frame(const Frame &frame) {
-    auto new_frame = std::make_shared<Frame>();
-    new_frame->update_from(frame);
-
+void Scene::add_frame(std::shared_ptr<Frame> frame) {
     std::lock_guard<std::mutex> f(frames_mutex_);
-    frames_.emplace_back(new_frame);
+    frames_.emplace_back(std::move(frame));
 }
 
 void Scene::add_permanent_frame_data(const Frame &data) {
     while (lock_permanent_frame_.test_and_set(std::memory_order_acquire))
         ;
-    permanent_frame_.update_from(data);
+    permanent_frame_.update_from(data.all_contexts());
     lock_permanent_frame_.clear(std::memory_order_release);
 }
 

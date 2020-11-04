@@ -2,17 +2,17 @@
 
 #include <GLFW/glfw3.h>
 
-#include <cgutils/Shader.h>
 #include <cgutils/ResourceManager.h>
-#include <viewer/UIController.h>
-#include <viewer/Config.h>
-#include <net/json_handler/JsonHandler.h>
+#include <cgutils/Shader.h>
 #include <common/logger.h>
+#include <net/json_handler/JsonHandler.h>
+#include <viewer/Config.h>
+#include <viewer/UIController.h>
 
 #include <stb_image.h>
 
-#include <thread>
 #include <exception>
+#include <thread>
 
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
@@ -29,7 +29,7 @@ void prepare_and_run_game_loop(GLFWwindow *window);
 int main(int argc, char **argv) {
     loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
     loguru::init(argc, argv);
-    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::g_stderr_verbosity);
+    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_9);
 
     // Init GLFW
     LOG_INFO("Init GLFW");
@@ -50,16 +50,17 @@ int main(int argc, char **argv) {
         return -2;
     }
 
-    LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION), glGetString(GL_SHADING_LANGUAGE_VERSION));
+    LOG_INFO("OpenGL %s, GLSL %s", glGetString(GL_VERSION),
+             glGetString(GL_SHADING_LANGUAGE_VERSION));
     LOG_INFO("Driver %s, Renderer %s", glGetString(GL_VENDOR), glGetString(GL_RENDERER));
 
 #if defined(OPENGL_DEBUG) && !defined(__APPLE__)
-#  if (GL_ARB_debug_output)
+#if (GL_ARB_debug_output)
     LOG_INFO("OpenGL:: Debug output enabled");
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
     glDebugMessageCallbackARB(cg::debug_output_callback, nullptr);
     glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-#  endif
+#endif
 #endif
 
     LOG_INFO("Setup vertical sync to 60fps");
@@ -92,7 +93,8 @@ GLFWwindow *setup_window() {
 #endif
 
     LOG_INFO("Create main window");
-    GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
+    GLFWwindow *window =
+        glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
     if (!window) {
         return nullptr;
     }
@@ -103,9 +105,10 @@ GLFWwindow *setup_window() {
     const std::string icon_path = "resources/icon.png";
     auto icon_data = stbi_load(icon_path.c_str(), &width, &height, &nr_channels, 0);
     if (!icon_data) {
-        std::string msg = "Cannot find application icon (" + icon_path + "). "
-            "Make sure you launch viewer from directory with 'resources' folder";
-        LOG_ERROR("%s", msg.c_str());
+        LOG_ERROR(
+            "Cannot find application icon (%s). "
+            "Make sure you launch viewer from directory with 'resources' folder",
+            icon_path.c_str());
         return nullptr;
     }
     GLFWimage icon{width, height, icon_data};
@@ -113,9 +116,8 @@ GLFWwindow *setup_window() {
     glfwSetWindowIcon(window, 1, &icon);
 
     glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *, int width, int height) {
-        glViewport(0, 0, width, height);
-    });
+    glfwSetFramebufferSizeCallback(
+        window, [](GLFWwindow *, int width, int height) { glViewport(0, 0, width, height); });
 
     return window;
 }
@@ -123,7 +125,7 @@ GLFWwindow *setup_window() {
 void prepare_and_run_game_loop(GLFWwindow *window) {
     LOG_INFO("Try load configuration file");
     auto conf_ptr = Config::init_with_imgui(CONF_FILENAME);
-    auto& conf = *conf_ptr;
+    auto &conf = *conf_ptr;
 
     LOG_INFO("Create camera");
     Camera cam(conf.camera);
@@ -148,7 +150,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         proto_handler = std::make_unique<JsonHandler>(&scene);
     }
 
-    //Start network listening
+    // Start network listening
     LOG_INFO("Start networking thread");
     NetListener net(NETWORK_HOST, NETWORK_PORT, std::move(proto_handler));
     std::thread network_thread([&net] {
@@ -164,7 +166,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     LOG_INFO("Start render loop");
     while (!glfwWindowShouldClose(window)) {
-        //Read window events
+        // Read window events
         glfwPollEvents();
 
         if (!glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
@@ -177,7 +179,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //Updates
+        // Updates
         ui.next_frame(&scene, net.connection_status());
         cam.update();
 
@@ -185,7 +187,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
             glfwSetWindowShouldClose(window, true);
         }
 
-        //Non Ui related drawing
+        // Non Ui related drawing
         scene.update_and_render(cam);
 
         // Cleanup opengl state

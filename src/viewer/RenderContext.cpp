@@ -145,7 +145,7 @@ void RenderContext::update_from(const RenderContext &other) {
     add_elements(points_cnt, impl_->triangle_indicies, other.impl_->triangle_indicies);
 
     impl_->points.reserve(points_cnt + other.impl_->points.size());
-    for (const auto &obj : other.impl_->points) {
+    for (auto &obj : other.impl_->points) {
         impl_->points.emplace_back(obj);
     }
 
@@ -154,7 +154,7 @@ void RenderContext::update_from(const RenderContext &other) {
     add_elements(circles_cnt, impl_->filled_circle_indicies, other.impl_->filled_circle_indicies);
 
     impl_->circles.reserve(circles_cnt + other.impl_->circles.size());
-    for (const auto &obj : other.impl_->circles) {
+    for (auto &obj : other.impl_->circles) {
         impl_->circles.emplace_back(obj);
     }
 }

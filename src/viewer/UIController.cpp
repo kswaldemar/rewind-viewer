@@ -377,7 +377,7 @@ void UIController::playback_control_widget(Scene *scene) {
             tick = cg::clamp(tick, 1, frames_cnt);
             ImGui::PushItemWidth(-1);
 
-            const std::string slider_fmt = "%d/" + std::to_string(frames_cnt);
+            const std::string slider_fmt = "%5d/" + std::to_string(frames_cnt);
             if (ImGui::SliderInt("##empty", &tick, 1, frames_cnt, slider_fmt.data(),
                                  ImGuiSliderFlags_AlwaysClamp)) {
                 autoplay_scene_ = false;
