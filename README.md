@@ -70,7 +70,7 @@ Sample usage:
 
 ### Create client four your language
 
-You can use [Python3 client](https://github.com/kswaldemar/rewind-viewer/blob/develop/clients/python3/RewindClient.py) as a reference.
+You can use [Python3 client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/python3/RewindClient.py) as a reference.
 
 Documentation for json protocol [can be found here](./clients/protocol_description.md).
 ## License
