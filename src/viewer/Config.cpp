@@ -4,17 +4,14 @@
 
 #include "Config.h"
 
-#include <common/logger.h>
+#include <imgui.h>
+#include <imgui_internal.h>
+
+#include <memory>
 
 namespace {
 
-inline bool read_bool(const char *str) {
-    int flag;
-    sscanf(str, "%d", &flag);
-    return static_cast<bool>(flag);
-}
-
-//Config entries
+// Config entries
 const char *UI_FAST_SKIP_SPEED = "ui.fast_skip_speed";
 const char *UI_CLOSE_WITH_ESC = "ui.close_with_esc";
 const char *UI_CLEAR_COLOR = "ui.clear_color";
@@ -31,125 +28,132 @@ const char *CAMERA_ORIGIN_ON_TOP_LEFT = "camera.origin_on_top_left";
 const char *CAMERA_START_POSITION = "camera.start_position";
 const char *CAMERA_START_VIEWPORT_SIZE = "camera.start_viewport_size";
 
+void *callback_ReadOpen(ImGuiContext *, ImGuiSettingsHandler *handle, const char *) {
+    assert(handle->UserData);
+    return handle->UserData;
 }
 
+void callback_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void *entry, const char *line) {
+    Config &cfg = *static_cast<Config *>(entry);
+    glm::vec4 v;
+    v.a = 1.0f;
+    glm::vec2 p;
+    int d1, d2;
 
-Config Config::load_from_file(const std::string &fname) {
-    FILE *f = fopen(fname.c_str(), "r");
-    if (!f) {
-        LOG_INFO("Cannot open configuration file %s, use default values", fname.c_str());
-        return {};
+    if (sscanf(line, "ui.fast_skip_speed=%d", &d1) == 1) {
+        cfg.ui.fast_skip_speed = d1;
+    } else if (sscanf(line, "ui.close_with_esc=%d", &d1) == 1) {
+        cfg.ui.close_with_esc = d1;
+    } else if (sscanf(line, "ui.clear_color=(%f,%f,%f)", &v.r, &v.g, &v.b) == 3) {
+        cfg.ui.clear_color = v;
+    } else if (sscanf(line, "scene.grid_cells_count=(%d,%d)", &d1, &d2) == 2) {
+        cfg.scene.grid_cells = {d1, d2};
+    } else if (sscanf(line, "scene.grid_dim=(%f,%f)", &p.x, &p.y) == 2) {
+        cfg.scene.grid_dim = p;
+    } else if (sscanf(line, "scene.grid_color=(%f,%f,%f)", &v.r, &v.g, &v.b) == 3) {
+        cfg.scene.grid_color = v;
+    } else if (sscanf(line, "scene.scene_color=(%f,%f,%f)", &v.r, &v.g, &v.b) == 3) {
+        cfg.scene.scene_color = v;
+    } else if (sscanf(line, "scene.show_grid=%d", &d1) == 1) {
+        cfg.scene.show_grid = d1;
+    } else if (sscanf(line, "net.use_binary_protocol=%d", &d1) == 1) {
+        cfg.net.use_binary_protocol = d1;
+    } else if (sscanf(line, "camera.origin_on_top_left=%d", &d1) == 1) {
+        cfg.camera.origin_on_top_left = d1;
+    } else if (sscanf(line, "camera.start_position=(%f,%f)", &p.x, &p.y) == 2) {
+        cfg.camera.start_position = p;
+    } else if (sscanf(line, "camera.start_viewport_size=%f", &v.x) == 1) {
+        cfg.camera.start_viewport_size = v.x;
+    }
+}
+
+void write(ImGuiTextBuffer &to, const char *name, glm::vec3 color) {
+    to.appendf("%s=(%.3f,%.3f,%.3f)\n", name, color.r, color.g, color.b);
+}
+
+void write(ImGuiTextBuffer &to, const char *name, bool value) {
+    to.appendf("%s=%d\n", name, value);
+}
+
+void write(ImGuiTextBuffer &to, const char *name, float value) {
+    to.appendf("%s=%.3f\n", name, value);
+}
+
+void write(ImGuiTextBuffer &to, const char *name, uint16_t value) {
+    to.appendf("%s=%hu\n", name, value);
+}
+
+void write(ImGuiTextBuffer &to, const char *name, glm::vec2 pos) {
+    to.appendf("%s=(%.3f,%.3f)\n", name, pos.x, pos.y);
+}
+
+void write(ImGuiTextBuffer &to, const char *name, glm::u16vec2 pos) {
+    to.appendf("%s=(%hu,%hu)\n", name, pos.x, pos.y);
+}
+
+template <typename T>
+void write(ImGuiTextBuffer &to, const char *name, T value, const char *desc) {
+    if (desc) {
+        to.appendf(";%s\n", desc);
+    }
+    write(to, name, std::move(value));
+}
+
+void callback_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, ImGuiTextBuffer *buf) {
+    assert(handler->UserData);
+    Config &cfg = *static_cast<Config *>(handler->UserData);
+
+    buf->appendf("[%s][%s]\n", handler->TypeName, "Parameters configuration");
+    write(*buf, UI_FAST_SKIP_SPEED, cfg.ui.fast_skip_speed,
+          "How much frame to skip when fast forward arrow pressed");
+    write(*buf, UI_CLOSE_WITH_ESC, cfg.ui.close_with_esc);
+    write(*buf, UI_CLEAR_COLOR, cfg.ui.clear_color, "Background color, rgb format");
+
+    write(*buf, SCENE_GRID_CELLS_COUNT, cfg.scene.grid_cells,
+          "Grid cells count in each dimension (X, Y)");
+    write(*buf, SCENE_GRID_DIM, cfg.scene.grid_dim, "Scene size");
+    write(*buf, SCENE_GRID_COLOR, glm::vec3{cfg.scene.grid_color}, "Grid color, rgb format");
+    write(*buf, SCENE_SCENE_COLOR, glm::vec3{cfg.scene.scene_color},
+          "Scene background color, rgb format");
+    write(*buf, SCENE_SHOW_GRID, cfg.scene.show_grid, "If true, grid will be shown by default");
+
+    write(*buf, NET_USE_BINARY_PROTOCOL, cfg.net.use_binary_protocol,
+          "If true, binary protocol will be used instead of default json one");
+
+    write(*buf, CAMERA_ORIGIN_ON_TOP_LEFT, cfg.camera.origin_on_top_left,
+          "If true, world origin will be in top left corner of screen, like in normal computer "
+          "graphics");
+    write(*buf, CAMERA_START_POSITION, cfg.camera.start_position,
+          "Initial settings for camera. In game camera movement won't rewrite that values");
+    write(*buf, CAMERA_START_VIEWPORT_SIZE, cfg.camera.start_viewport_size);
+
+    buf->append("\n");
+}
+
+}  // namespace
+
+std::unique_ptr<Config> Config::init_with_imgui(const std::string &fname) {
+    auto cfg = std::make_unique<Config>();
+
+    ImGuiContext *context = ImGui::GetCurrentContext();
+    if (!context) {
+        context = ImGui::CreateContext();
     }
 
-    Config cfg;
+    auto &io = ImGui::GetIO();
+    io.IniFilename = fname.c_str();
 
-    char buf[512];
-    std::string line;
+    // Create viewer configuration section
+    ImGuiSettingsHandler ini_handler;
+    ini_handler.TypeName = "Rewindviewer";
+    ini_handler.TypeHash = ImHashStr(ini_handler.TypeName);
+    ini_handler.ReadOpenFn = callback_ReadOpen;
+    ini_handler.ReadLineFn = callback_ReadLine;
+    ini_handler.WriteAllFn = callback_WriteAll;
+    ini_handler.UserData = cfg.get();
+    context->SettingsHandlers.push_back(ini_handler);
 
-    Config::present_keys_t keys;
-
-    while (fgets(buf, sizeof(buf), f)) {
-        line = buf;
-        if (line.back() == '\n') {
-            line.pop_back();
-        }
-
-        if (line.empty() || line[0] == '#') {
-            continue;
-        }
-
-        size_t eq_idx = line.find('=');
-        if (eq_idx == std::string::npos) {
-            LOG_WARN("Invalid config line (%s): '=' sign is missing", line.c_str());
-            continue;
-        }
-
-        std::string value = line.substr(eq_idx + 2); //+2 to skip space
-        std::string key = line.substr(0, eq_idx - 1);
-
-        keys.insert(key);
-
-        if (key == UI_FAST_SKIP_SPEED) {
-            sscanf(value.c_str(), "%hu", &cfg.ui.fast_skip_speed);
-        } else if (key == UI_CLOSE_WITH_ESC) {
-            cfg.ui.close_with_esc = read_bool(value.c_str());
-        } else if (key == UI_CLEAR_COLOR) {
-            auto &v = cfg.ui.clear_color;
-            sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
-        } else if (key == SCENE_GRID_CELLS_COUNT) {
-            sscanf(value.c_str(), "(%hu, %hu)", &cfg.scene.grid_cells.x, &cfg.scene.grid_cells.y);
-        } else if (key == SCENE_GRID_DIM) {
-            auto &v = cfg.scene.grid_dim;
-            sscanf(value.c_str(), "(%f, %f)", &v.x, &v.y);
-        } else if (key == SCENE_GRID_COLOR) {
-            auto &v = cfg.scene.grid_color;
-            sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
-        } else if (key == SCENE_SCENE_COLOR) {
-            auto &v = cfg.scene.scene_color;
-            sscanf(value.c_str(), "(%f, %f, %f)", &v.r, &v.g, &v.b);
-        } else if (key == SCENE_SHOW_GRID) {
-            cfg.scene.show_grid = read_bool(value.c_str());
-        } else if (key == NET_USE_BINARY_PROTOCOL) {
-            cfg.net.use_binary_protocol = read_bool(value.c_str());
-        } else if (key == CAMERA_ORIGIN_ON_TOP_LEFT) {
-            cfg.camera.origin_on_top_left = read_bool(value.c_str());
-        } else if (key == CAMERA_START_POSITION) {
-            auto &v = cfg.camera.start_position;
-            sscanf(value.c_str(), "(%f, %f)", &v.x, &v.y);
-        } else if (key == CAMERA_START_VIEWPORT_SIZE) {
-            sscanf(value.c_str(), "%f", &cfg.camera.start_viewport_size);
-        } else {
-            LOG_WARN("Invalid config line (%s): unknown key '%s'", line.c_str(), key.c_str());
-        }
-    }
-
-    cfg.update_dynamic_values(keys);
+    ImGui::LoadIniSettingsFromDisk(io.IniFilename);
 
     return cfg;
-}
-
-void Config::save_to_file(const std::string &fname) const {
-    FILE *f = fopen(fname.c_str(), "w");
-    if (!f) {
-        LOG_ERROR("Cannot open file %s to write config", fname.c_str());
-        return;
-    }
-
-    fputs("# How much frame to skip when fast forward arrow pressed\n", f);
-    fprintf(f, "%s = %hu\n", UI_FAST_SKIP_SPEED, ui.fast_skip_speed);
-    fputs("\n# If true, visualiser can be closed by Esc key\n", f);
-    fprintf(f, "%s = %d\n", UI_CLOSE_WITH_ESC, ui.close_with_esc);
-    fputs("\n# Background color, rgb format\n", f);
-    fprintf(f, "%s = (%.3f, %.3f, %.3f)\n", UI_CLEAR_COLOR, ui.clear_color.r, ui.clear_color.g, ui.clear_color.b);
-
-    fputs("\n# Grid cells count in each dimension (X, Y)\n", f);
-    fprintf(f, "%s = (%hu, %hu)\n", SCENE_GRID_CELLS_COUNT, scene.grid_cells.x, scene.grid_cells.y);
-    fputs("\n# Scene size\n", f);
-    fprintf(f, "%s = (%.0f, %.0f)\n", SCENE_GRID_DIM, scene.grid_dim.x, scene.grid_dim.y);
-    fputs("\n# Grid color, rgb format\n", f);
-    fprintf(f, "%s = (%.3f, %.3f, %.3f)\n", SCENE_GRID_COLOR,
-            scene.grid_color.r, scene.grid_color.g, scene.grid_color.b);
-    fputs("\n# Scene background color, rgb format\n", f);
-    fprintf(f, "%s = (%.3f, %.3f, %.3f)\n", SCENE_SCENE_COLOR,
-            scene.scene_color.r, scene.scene_color.g, scene.scene_color.b);
-    fputs("\n# If true, grid will be shown by default\n", f);
-    fprintf(f, "%s = %d\n", SCENE_SHOW_GRID, scene.show_grid);
-
-    fputs("\n# If true, binary protocol will be used instead of default json one\n", f);
-    fprintf(f, "%s = %d\n", NET_USE_BINARY_PROTOCOL, net.use_binary_protocol);
-
-    fputs("\n# If true, world origin will be in top left corner of screen, like in normal computer graphics\n", f);
-    fprintf(f, "%s = %d\n", CAMERA_ORIGIN_ON_TOP_LEFT, camera.origin_on_top_left);
-    fputs("\n# Initial settings for camera. In game camera movement won't rewrite that values\n", f);
-    fprintf(f, "%s = (%.3f, %.3f)\n", CAMERA_START_POSITION, camera.start_position.x, camera.start_position.y);
-    fprintf(f, "%s = %.3f\n", CAMERA_START_VIEWPORT_SIZE, camera.start_viewport_size);
-}
-
-void Config::update_dynamic_values(const Config::present_keys_t &keys) {
-    if (keys.find("camera.start_position") == keys.end()) {
-        camera.start_position = scene.grid_dim * 0.5f;
-    }
-    if (keys.find("camera.start_viewport_size") == keys.end()) {
-        camera.start_viewport_size = std::max(scene.grid_dim.x, scene.grid_dim.y);
-    }
 }

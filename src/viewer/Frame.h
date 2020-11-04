@@ -1,77 +1,38 @@
 //
-// Created by valdemar on 22.10.17.
+// Created by valdemar on 22.02.2020.
 //
 
 #pragma once
 
-#include <cgutils/utils.h>
-
-#include <glm/glm.hpp>
-
-#include <cstdint>
-#include <unordered_map>
-#include <vector>
 #include <array>
-#include <string>
+#include <cstdlib>
 
-namespace pod {
-struct Circle;
-struct Rectangle;
-struct Line;
-struct Popup;
-}
+#include <viewer/RenderContext.h>
 
-/**
- * Represent one game frame.
- *  - contains all primitives to be drawn
- *  - contains user message to draw in message window
- */
-struct Frame {
+struct IPopup {
+    virtual ~IPopup() = default;
+    virtual bool hit_test(glm::vec2 pt) const = 0;
+    virtual const char *text() const = 0;
+};
+
+class Frame {
+ public:
     constexpr static size_t LAYERS_COUNT = 5;
     constexpr static size_t DEFAULT_LAYER = 2;
 
-    struct primitives_t {
-        std::vector<pod::Circle> circles;
-        std::vector<pod::Rectangle> rectangles;
-        std::vector<pod::Line> lines;
-    };
+    using context_collection_t = std::array<RenderContext, LAYERS_COUNT>;
+    using hittest_t = std::unique_ptr<IPopup>;
 
-    std::array<primitives_t, LAYERS_COUNT> primitives;
-    std::vector<pod::Popup> popups;
-    std::string user_message;
+    void update_from(const context_collection_t &from_contexts);
+
+    const context_collection_t &all_contexts() const;
+
+    const std::vector<hittest_t> &popups() const;
+
+    const char *user_message() const;
+
+ protected:
+    context_collection_t contexts_;
+    std::vector<hittest_t> popups_;
+    std::string user_message_;
 };
-
-
-namespace pod {
-
-struct Color {
-    glm::vec4 color;
-};
-
-struct Line : Color {
-    float x1;
-    float y1;
-    //TODO: Rewrite it without color duplication
-    glm::vec4 color2;
-    float x2;
-    float y2;
-};
-
-struct Circle : Color {
-    glm::vec2 center;
-    float radius;
-};
-
-struct Rectangle : Color {
-    glm::vec2 center;
-    float w;
-    float h;
-};
-
-struct Popup {
-    glm::vec2 center;
-    float radius;
-    std::string text;
-};
-
-} // namespace pod

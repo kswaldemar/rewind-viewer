@@ -17,14 +17,10 @@ The viewer has several advantages in comparison of local-runner with drawing plu
  - In Pause navigation - zoom and navigate in any game state
  - Handy mouse navigation
 
-Obvious drawbacks:
+Drawbacks:
  - Viewer running as standalone application, it knows nothing about local runner or your strategy, so you need manually 
 send all data (like buildings, units etc.) and you can draw only data visible by your strategy
  - In theory, high memory usage, because it needs to store all drawing primitives for rewinding support
-
-:information_source: Currently viewer reached 1.3 version and developments is on hold.
-There definitely will be building support after round 1 and fog of war support right after round 2.
-Minor bugfixes and optimization may come during the championship, but not so much.
 
 
 ## Binaries
@@ -59,18 +55,24 @@ cmake --build . --config Release
 So you need to manually copy `resources` to build folder, or copy executable to project root directory.
 
 ## Strategy integration
-You need a special client to be able to send messages to the viewer. See [example C++ client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/c%2B%2B/RewindClient.h) for information about JSON based message
-protocol and implement one for your language of choice.
-Also, see [client examples for official local runner](https://github.com/JustAMan/russian-ai-cup-visual/tree/master/clients).
+
+Strategy should send commands in json format via socket. You may use one from `clients` folder or implement your own.
+
+:warning: Json protocol starting from release 2.0 doesn't compatible with older clients (from 1.3 and below). 
+Check that your client is updated. 
 
 Sample usage: 
-
 1. Start the viewer.
 2. Start localrunner, preferably in render_to_screen=false mode.
-3. Start your strategy of choice.
-4. To be able to drew things in the viewer you will need to create a client, send data to the client in your strategy, and **close the frame** with client command. 
+3. Start your strategy.
+4. To be able to drew things in the viewer you will need to create a client, send data to the client in your strategy, and **end the frame** with client command. 
 5. There is no need to close the viewer after the strategy is done, just start from step 2. Old drawn data will be cleaned after new connection.
 
+### Create client four your language
+
+You can use [Python3 client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/python3/RewindClient.py) as a reference.
+
+Documentation for json protocol [can be found here](./clients/protocol_description.md).
 ## License
 Project sources distributed under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), third parties distributed under their own licences
 

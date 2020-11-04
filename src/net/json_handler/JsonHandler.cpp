@@ -2,15 +2,16 @@
 
 #include <common/logger.h>
 #include <net/PrimitiveType.h>
+#include <viewer/FrameEditor.h>
 
 #include <json.hpp>
 
-namespace pod {
-/*
- * Json deserialization
- */
-///Helper function
-template<typename T>
+#include <cassert>
+
+namespace {
+
+/// Helper function
+template <typename T>
 inline T value_or_default(const nlohmann::json &j, const std::string &name, T def_val) {
     const auto it = j.find(name);
     if (it != j.end()) {
@@ -19,59 +20,129 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
     return def_val;
 }
 
-inline void from_json(const nlohmann::json &j, Color &p) {
-    auto color = j["color"].get<uint32_t>();
-    p.color.r = ((color & 0xFF0000) >> 16) / 256.0f;
-    p.color.g = ((color & 0x00FF00) >> 8) / 256.0f;
-    p.color.b = ((color & 0x0000FF)) / 256.0f;
+}  // anonymous namespace
 
-    int alpha = ((color & 0xFF000000) >> 24);
+struct ParsingError : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
+namespace pod {
+
+/// GeoPoints format [x1, y1, x2, y2, ...]
+using GeoPoints = std::vector<float>;
+
+struct ColorShape {
+    glm::vec4 color;
+    bool fill;
+};
+
+struct Circle : ColorShape {
+    glm::vec2 center;
+    float radius;
+};
+
+struct Rectangle : ColorShape {
+    glm::vec2 top_left;
+    glm::vec2 bottom_right;
+};
+
+struct Popup {
+    glm::vec2 center;
+    float radius;
+    std::string text;
+};
+
+struct Polyline : ColorShape {
+    std::vector<glm::vec2> points;
+};
+
+struct Triangle : ColorShape {
+    std::vector<glm::vec2> points;
+};
+
+std::vector<glm::vec2> convert_check(const GeoPoints &points) {
+    if (!points.size() % 2 != 0) {
+        throw ParsingError{
+            "Invalid geopoints format: number of elements should be divisible by 2, got" +
+            std::to_string(points.size())};
+    }
+
+    std::vector<glm::vec2> result;
+    result.reserve(points.size() / 2);
+    for (size_t idx = 0; idx < points.size(); idx += 2) {
+        result.emplace_back(points[idx], points[idx + 1]);
+    }
+    return result;
+}
+
+glm::vec2 convert_position(const GeoPoints &points) {
+    auto pts = convert_check(points);
+    if (pts.size() != 1) {
+        throw ParsingError{"Too many points, expected only one, but got " +
+                           std::to_string(pts.size())};
+    }
+    return pts[0];
+}
+
+/*
+ * Json deserialization
+ */
+
+inline void from_json(const nlohmann::json &j, ColorShape &p) {
+    auto color = j["color"].get<uint32_t>();
+    p.color.r = static_cast<float>((color & 0xFF0000) >> 16) / 256.0f;
+    p.color.g = static_cast<float>((color & 0x00FF00) >> 8) / 256.0f;
+    p.color.b = static_cast<float>((color & 0x0000FF)) / 256.0f;
+
+    uint8_t alpha = ((color & 0xFF000000) >> 24);
     if (alpha > 0) {
-        p.color.a = alpha / 256.0f;
+        p.color.a = static_cast<float>(alpha) / 256.0f;
     } else {
         p.color.a = 1.0f;
     }
+
+    p.fill = value_or_default(j, "fill", true);
 }
 
-inline void from_json(const nlohmann::json &j, Line &p) {
-    from_json(j, static_cast<Color &>(p));
-    p.color2 = p.color;
-
-    p.x1 = j["x1"].get<float>();
-    p.y1 = j["y1"].get<float>();
-    p.x2 = j["x2"].get<float>();
-    p.y2 = j["y2"].get<float>();
-}
-
-inline void from_json(const nlohmann::json &j, Circle &p) {
-    from_json(j, static_cast<Color &>(p));
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Circle &p) {
+    from_json(j, static_cast<ColorShape &>(p));
 
     p.radius = j["r"].get<float>();
-    p.center.x = j["x"].get<float>();
-    p.center.y = j["y"].get<float>();
+    p.center = convert_position(j["p"].get<GeoPoints>());
 }
 
-inline void from_json(const nlohmann::json &j, Popup &p) {
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Popup &p) {
     p.radius = j["r"].get<float>();
-    p.center.x = j["x"].get<float>();
-    p.center.y = j["y"].get<float>();
+    p.center = convert_position(j["p"].get<GeoPoints>());
     p.text = j["text"].get<std::string>();
 }
 
-inline void from_json(const nlohmann::json &j, Rectangle &p) {
-    from_json(j, static_cast<Color &>(p));
-    float x1 = j["x1"].get<float>();
-    float y1 = j["y1"].get<float>();
-    float x2 = j["x2"].get<float>();
-    float y2 = j["y2"].get<float>();
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Rectangle &p) {
+    from_json(j, static_cast<ColorShape &>(p));
 
-    p.w = x2 - x1;
-    p.h = y2 - y1;
-    p.center.x = x1 + p.w * 0.5f;
-    p.center.y = y1 + p.h * 0.5f;
+    p.top_left = convert_position(j["tl"].get<GeoPoints>());
+    p.bottom_right = convert_position(j["br"].get<GeoPoints>());
+    if (p.top_left.x > p.bottom_right.x) {
+        std::swap(p.top_left, p.bottom_right);
+    }
 }
 
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Polyline &p) {
+    from_json(j, static_cast<ColorShape &>(p));
+
+    p.points = convert_check(j["points"].get<GeoPoints>());
 }
+
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Triangle &p) {
+    from_json(j, static_cast<ColorShape &>(p));
+    p.points = convert_check(j["points"].get<GeoPoints>());
+    if (p.points.size() != 3) {
+        throw ParsingError{"Triangle should be created using exactly 3 points, got " +
+                           std::to_string(p.points.size())};
+    }
+}
+
+}  // namespace pod
 
 void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
     const uint8_t *beg = data;
@@ -85,13 +156,14 @@ void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
             break;
         }
         ++end;
-        //Support for fragmented messages
+        // Support fragmented messages
         if (fragment_msg_.empty()) {
             process_json_message(beg, end);
         } else {
             fragment_msg_ += std::string(beg, end);
-            process_json_message(reinterpret_cast<const uint8_t *>(fragment_msg_.data()),
-                                 reinterpret_cast<const uint8_t *>(fragment_msg_.data() + fragment_msg_.size()));
+            process_json_message(
+                reinterpret_cast<const uint8_t *>(fragment_msg_.data()),
+                reinterpret_cast<const uint8_t *>(fragment_msg_.data() + fragment_msg_.size()));
             fragment_msg_.clear();
         }
         beg = end;
@@ -104,63 +176,76 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
     try {
         auto j = json::parse(chunk_begin, chunk_end);
         PrimitiveType type = primitve_type_from_str(j["type"]);
-        auto layer_it = j.find("layer");
-        size_t layer = Frame::DEFAULT_LAYER;
-        if (layer_it != j.end()) {
-            layer = layer_it->get<size_t>();
-            if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
-                LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
-                         layer, static_cast<size_t>(Frame::LAYERS_COUNT));
-            }
-            layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
-        }
 
-        if (!frame_) {
-            frame_ = std::make_unique<Frame>();
-        }
-
-        auto &slice = frame_->primitives[layer];
+        auto &ctx = get_frame_editor().context();
 
         switch (type) {
-            case PrimitiveType::begin:
-                LOG_V8("JsonHandler::Begin");
-                break;
-            case PrimitiveType::end:
+            case PrimitiveType::END: {
                 LOG_V8("JsonHandler::End");
-                send_to_scene(std::move(frame_));
-                frame_ = nullptr;
+                on_frame_end();
                 break;
-            case PrimitiveType::circle:
+            }
+            case PrimitiveType::CIRCLE: {
                 LOG_V8("JsonHandler::Circle detected");
-                slice.circles.emplace_back(j);
+                auto obj = j.get<pod::Circle>();
+                ctx.add_circle(obj.center, obj.radius, obj.color, obj.fill);
                 break;
-            case PrimitiveType::rectangle:
+            }
+            case PrimitiveType::RECTANGLE: {
                 LOG_V8("JsonHandler::Rectangle detected");
-                slice.rectangles.emplace_back(j);
+                auto obj = j.get<pod::Rectangle>();
+                ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.color, obj.fill);
                 break;
-            case PrimitiveType::line:
-                LOG_V8("JsonHandler::Line detected");
-                slice.lines.emplace_back(j);
+            }
+            case PrimitiveType::TRIANGLE: {
+                LOG_V8("JsonHandler::Triangle detected");
+                auto obj = j.get<pod::Triangle>();
+                if (obj.fill) {
+                    ctx.add_filled_triangle(obj.points[0], obj.points[1], obj.points[2], obj.color);
+                } else {
+                    ctx.add_polyline(obj.points, obj.color);
+                }
                 break;
-            case PrimitiveType::message:
+            }
+            case PrimitiveType::POLYLINE: {
+                LOG_V8("JsonHandler::Polyline detected");
+                auto obj = j.get<pod::Polyline>();
+                ctx.add_polyline(obj.points, obj.color);
+                break;
+            }
+            case PrimitiveType::MESSAGE:
                 LOG_V8("JsonHandler::Message");
-                frame_->user_message += j["message"].get<std::string>();
+                get_frame_editor().add_user_text(j["message"].get<std::string>());
                 break;
-            case PrimitiveType::popup:
+            case PrimitiveType::POPUP: {
                 LOG_V8("JsonHandler::Popup");
-                frame_->popups.emplace_back(j);
+                auto obj = j.get<pod::Popup>();
+                get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
                 break;
-            case PrimitiveType::types_count:
-                LOG_WARN("Got 'types_count' message");
+            }
+            case PrimitiveType::OPTIONS: {
+                LOG_V8("JsonHandler::Layer");
+                auto it = j.find("permanent");
+                bool found_option = false;
+                if (it != j.end()) {
+                    use_permanent_frame(it->get<bool>());
+                    found_option = true;
+                }
+
+                it = j.find("layer");
+                if (it != j.end()) {
+                    set_layer(it->get<size_t>());
+                    found_option = true;
+                }
+
+                if (!found_option) {
+                    LOG_ERROR("useless 'options' without any option");
+                }
                 break;
+            }
+            case PrimitiveType::TYPES_COUNT: break;
         }
     } catch (const std::exception &e) {
         LOG_WARN("JsonClient::Exception: %s", e.what());
     }
-}
-
-void JsonHandler::on_new_connection() {
-    ProtoHandler::on_new_connection();
-
-    frame_ = nullptr;
 }

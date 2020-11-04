@@ -4,10 +4,10 @@
 
 #include <stb_image.h>
 
+#include <utility>
 
-ResourceManager::ResourceManager(const std::string &path_to_res_folder)
-    : res_folder_(path_to_res_folder)
-{
+ResourceManager::ResourceManager(std::string path_to_res_folder)
+    : res_folder_(std::move(path_to_res_folder)) {
     if (!res_folder_.empty() && res_folder_.back() != '/') {
         res_folder_ += '/';
     }
@@ -36,7 +36,6 @@ GLuint ResourceManager::gen_buffer() {
 
 GLuint ResourceManager::load_texture(const std::string &path_to_texture, bool gen_mipmap,
                                      GLint wrap_s, GLint wrap_t, GLint flt_min, GLint flt_mag) {
-
     int width;
     int height;
     int nr_channels;

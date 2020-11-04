@@ -1,12 +1,10 @@
 #version 330 core
-layout (location = 0) in vec2 a_pos;
-layout (location = 1) in vec3 a_color;
+layout (location = 0) in vec4 a_color;
+layout (location = 1) in vec2 a_pos;
 
 out VS_OUT {
-    vec3 color;
+    vec4 color;
 } vs_out;
-
-out vec3 color;
 
 layout (std140) uniform MatrixBlock {
     mat4 proj_view;
