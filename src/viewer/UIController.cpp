@@ -99,6 +99,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Preferences", true)) {
             ImGui::Checkbox("Close window by Escape key", &conf_->ui.close_with_esc);
+            ImGui::Checkbox("Update window when not in focus", &conf_->ui.update_unfocused);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();

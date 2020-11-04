@@ -169,7 +169,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         // Read window events
         glfwPollEvents();
 
-        if (!glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
+        if (!conf.ui.update_unfocused && !glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
