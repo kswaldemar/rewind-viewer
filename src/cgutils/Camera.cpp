@@ -13,6 +13,16 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+namespace {
+
+const float VIEWPORT_MIN_SIZE = 1.0f;
+
+bool is_ok_viewport(float viewport) {
+    return viewport >= VIEWPORT_MIN_SIZE;
+}
+
+}  // namespace
+
 Camera::Camera(const Config::CameraConf &conf)
     : conf_(conf), pos_{conf.start_position}, viewport_size_{conf.start_viewport_size} {
     update_matrix();
@@ -33,9 +43,10 @@ void Camera::update() {
             const glm::vec2 rel_mouse_pos = screen2world(io.MousePos) - pos_;
             const glm::vec2 new_mouse_pos = rel_mouse_pos * zoom_k;
 
-            pos_ += rel_mouse_pos - new_mouse_pos;
-
-            viewport_size_ *= zoom_k;
+            if (is_ok_viewport(viewport_size_ * zoom_k)) {
+                pos_ += rel_mouse_pos - new_mouse_pos;
+                viewport_size_ *= zoom_k;
+            }
         }
 
         // Map dragging
@@ -51,9 +62,8 @@ void Camera::update() {
                       static_cast<float>(y_axes_invert());
             pos_ += delta;
         }
-
-        update_matrix();
     }
+    update_matrix();
 }
 
 glm::vec2 Camera::screen2world(const glm::vec2 &coord) const {
@@ -76,6 +86,10 @@ int Camera::y_axes_invert() const {
 }
 
 void Camera::update_matrix() {
+    if (!is_ok_viewport(viewport_size_)) {
+        viewport_size_ = VIEWPORT_MIN_SIZE;
+    }
+
     int width, height;
     glfwGetFramebufferSize(glfwGetCurrentContext(), &width, &height);
 

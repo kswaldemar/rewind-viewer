@@ -273,8 +273,8 @@ void UIController::info_widget(Scene *scene) {
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
         if (ImGui::CollapsingHeader("Camera", flags)) {
             ImGui::PushItemWidth(150);
-            ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
-            ImGui::InputFloat("Viewport size", &camera_->viewport_size_, 50.0, 1000.0, 0);
+            ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), "%.1f");
+            ImGui::InputFloat("Viewport size", &camera_->viewport_size_, 50.0, 1000.0, "%.0f");
             ImGui::PopItemWidth();
         }
         if (ImGui::CollapsingHeader("Colors", flags)) {
