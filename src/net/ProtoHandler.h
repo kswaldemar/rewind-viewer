@@ -30,6 +30,9 @@ class ProtoHandler {
     /// Whenever to use normal or permanent frame for drawing
     void use_permanent_frame(bool use);
 
+    /// Set primitives layer, affect both permanent and normal frames
+    void set_layer(size_t layer);
+
  private:
     void reset_state();
 

@@ -4,19 +4,26 @@ import json
 
 class RewindClient():
     def __init__(self, host=None, port=None):
-        self.socket = _socket.socket()
-        self.socket.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, True)
+        self._socket = _socket.socket()
+        self._socket.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, True)
         if host is None:
             host = "127.0.0.1"
             port = 9111
-        self.socket.connect((host, port))
-
-    def close(self):
-        self.socket.close()
+        self._socket.connect((host, port))
 
     def _send(self, obj):
-        if self.socket:
-            self.socket.sendall(json.dumps(obj).encode('utf-8'))
+        if self._socket:
+            self._socket.sendall(json.dumps(obj).encode('utf-8'))
+
+    def line(self, x1, y1, x2, y2, color):
+        self._send({
+            'type': 'line',
+            'x1': x1,
+            'y1': y1,
+            'x2': x2,
+            'y2': y2,
+            'color': color
+        })
 
     def circle(self, x, y, radius, color, fill=False):
         self._send({
@@ -39,14 +46,13 @@ class RewindClient():
             'fill': fill
         })
 
-    def line(self, x1, y1, x2, y2, color):
+    def popup_message(self, x, y, radius, message):
         self._send({
-            'type': 'line',
-            'x1': x1,
-            'y1': y1,
-            'x2': x2,
-            'y2': y2,
-            'color': color
+            'type': 'popup',
+            'x': x,
+            'y': y,
+            'r': radius,
+            'text': message
         })
 
     def message(self, msg):
@@ -62,12 +68,6 @@ class RewindClient():
         if permanent is not None:
             data['permanent'] = permanent
         self._send(data)
-
-    def set_permanent(self, value):
-        self._send({
-            'type': 'options',
-            'permanent': value
-        })
 
     def end_frame(self):
         self._send({'type': 'end'})

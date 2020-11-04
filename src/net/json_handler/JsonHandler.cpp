@@ -182,19 +182,20 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             case PrimitiveType::OPTIONS: {
                 LOG_V8("JsonHandler::Layer");
                 auto it = j.find("permanent");
+                bool found_option = false;
                 if (it != j.end()) {
                     use_permanent_frame(it->get<bool>());
+                    found_option = true;
                 }
 
                 it = j.find("layer");
                 if (it != j.end()) {
-                    auto layer = it->get<size_t>();
-                    if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
-                        LOG_WARN("Got message with layer %zu, but should be in range 1-%zu", layer,
-                                 static_cast<size_t>(Frame::LAYERS_COUNT));
-                    }
-                    layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
-                    get_frame_editor().set_layer_id(layer);
+                    set_layer(it->get<size_t>());
+                    found_option = true;
+                }
+
+                if (!found_option) {
+                    LOG_ERROR("useless 'options' without any option");
                 }
                 break;
             }

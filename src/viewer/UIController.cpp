@@ -271,35 +271,38 @@ void UIController::info_widget(Scene *scene) {
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
-        if (ImGui::CollapsingHeader(ICON_FA_VIDEO_CAMERA " Camera", flags)) {
+        if (ImGui::CollapsingHeader("Camera", flags)) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), 1);
             ImGui::InputFloat("Viewport size", &camera_->viewport_size_, 50.0, 1000.0, 0);
             ImGui::PopItemWidth();
         }
-        if (ImGui::CollapsingHeader(ICON_FA_EYEDROPPER " Colors", flags)) {
+        if (ImGui::CollapsingHeader("Colors", flags)) {
             ImGui::SetColorEditOptions(ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Background", glm::value_ptr(conf_->ui.clear_color));
             ImGui::ColorEdit3("Grid", glm::value_ptr(conf_->scene.grid_color));
             ImGui::ColorEdit3("Canvas", glm::value_ptr(conf_->scene.scene_color));
         }
-        if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Options", flags)) {
+        if (ImGui::CollapsingHeader("Options", flags)) {
             ImGui::Checkbox("World origin on top left", &conf_->camera.origin_on_top_left);
             ImGui::Checkbox("Draw grid", &conf_->scene.show_grid);
-            static const ImVec4 button_colors[] = {ImVec4(0.5, 0.5, 0.5, 1.0),
-                                                   ImVec4(0.58, 0.941, 0.429, 1.0)};
-            size_t idx = 0;
-            static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)>
-                captions{{"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}};
-            for (bool &enabled : conf_->scene.enabled_layers) {
-                if (ImGui::ColorButton(captions[idx], button_colors[enabled],
-                                       ImGuiColorEditFlags_NoTooltip)) {
-                    enabled = !enabled;
-                }
-                ++idx;
+        }
+    }
+    if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Layer visibility", flags)) {
+        static const ImVec4 button_colors[] = {ImVec4(0.5, 0.5, 0.5, 1.0),
+                                               ImVec4(0.58, 0.941, 0.429, 1.0)};
+        size_t idx = 0;
+        static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)> captions{
+            {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}};
+        for (bool &enabled : conf_->scene.enabled_layers) {
+            if (ImGui::ColorButton(captions[idx], button_colors[enabled],
+                                   ImGuiColorEditFlags_NoTooltip)) {
+                enabled = !enabled;
+            }
+            ++idx;
+            if (idx < Frame::LAYERS_COUNT) {
                 ImGui::SameLine();
             }
-            ImGui::LabelText("##layers", "%s", "Visible layers");
         }
     }
     if (ImGui::CollapsingHeader(ICON_FA_COMMENT_O " Frame message", flags)) {

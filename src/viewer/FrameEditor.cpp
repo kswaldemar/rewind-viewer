@@ -26,8 +26,8 @@ struct rect_popup_t : IPopup {
 };
 
 struct round_popup_t : IPopup {
-    round_popup_t(glm::vec2 center, float radius2, std::string msg)
-        : center(center), radius2(radius2), msg(std::move(msg)) {}
+    round_popup_t(glm::vec2 center, float radius, std::string msg)
+        : center(center), radius2(radius * radius), msg(std::move(msg)) {}
 
     bool hit_test(glm::vec2 point) const override {
         auto diff = point - center;
