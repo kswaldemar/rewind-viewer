@@ -9,9 +9,10 @@
 
 PrimitiveType primitve_type_from_str(const std::string &str) {
     static const std::unordered_map<std::string, PrimitiveType> mapping = {
-        {"line", PrimitiveType::LINE},
         {"circle", PrimitiveType::CIRCLE},
         {"rectangle", PrimitiveType::RECTANGLE},
+        {"triangle", PrimitiveType::TRIANGLE},
+        {"polyline", PrimitiveType::POLYLINE},
         {"message", PrimitiveType::MESSAGE},
         {"popup", PrimitiveType::POPUP},
         {"options", PrimitiveType::OPTIONS},

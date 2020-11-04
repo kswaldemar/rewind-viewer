@@ -125,7 +125,7 @@ void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, gl
 
 void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color) {
     if (points.size() < 2) {
-        throw std::invalid_argument("Got polyline with only one point");
+        throw std::invalid_argument("Cannot create polyline from one point");
     }
 
     impl_->points.push_back({color, points[0]});
@@ -165,8 +165,8 @@ void RenderContext::clear() {
 
 void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                          const ShaderCollection &shaders) const {
-    // glLineWidth(2);
-    // glEnable(GL_LINE_SMOOTH);
+    glLineWidth(2);
+    glEnable(GL_LINE_SMOOTH);
 
     // Load data
     glBindBuffer(GL_ARRAY_BUFFER, vaos.point_vbo);
@@ -210,7 +210,7 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                  thin_circle_elements.data(), GL_DYNAMIC_DRAW);
     glDrawElements(GL_POINTS, thin_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    // glLineWidth(1);
-    // glDisable(GL_LINE_SMOOTH);
+    glLineWidth(1);
+    glDisable(GL_LINE_SMOOTH);
     glBindVertexArray(0);
 }

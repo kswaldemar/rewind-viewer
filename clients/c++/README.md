@@ -11,5 +11,3 @@ int main() {
   }
 }
 ```
-
-Mention `&` before the `rewind` variable. If you forget it, nothing will work properly.

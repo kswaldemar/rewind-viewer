@@ -11,25 +11,36 @@ class RewindClient():
             port = 9111
         self._socket.connect((host, port))
 
+    @staticmethod
+    def _to_geojson(points):
+        flat = []
+        for p in points:
+            flat.append(p[0])
+            flat.append(p[1])
+        return flat
+
     def _send(self, obj):
         if self._socket:
             self._socket.sendall(json.dumps(obj).encode('utf-8'))
 
     def line(self, x1, y1, x2, y2, color):
         self._send({
-            'type': 'line',
-            'x1': x1,
-            'y1': y1,
-            'x2': x2,
-            'y2': y2,
+            'type': 'polyline',
+            'points': [x1, y1, x2, y2],
+            'color': color
+        })
+
+    def polyline(self, points, color):
+        self._send({
+            'type': 'polyline',
+            'points': RewindClient._to_geojson(points),
             'color': color
         })
 
     def circle(self, x, y, radius, color, fill=False):
         self._send({
             'type': 'circle',
-            'x': x,
-            'y': y,
+            'p': [x, y],
             'r': radius,
             'color': color,
             'fill': fill
@@ -38,10 +49,16 @@ class RewindClient():
     def rectangle(self, x1, y1, x2, y2, color, fill=False):
         self._send({
             'type': 'rectangle',
-            'x1': x1,
-            'y1': y1,
-            'x2': x2,
-            'y2': y2,
+            'tl': [x1, y1],
+            'br': [x2, y2],
+            'color': color,
+            'fill': fill
+        })
+
+    def triangle(self, p1, p2, p3, color, fill=False):
+        self._send({
+            'type': 'triangle',
+            'points': RewindClient._to_geojson([p1, p2, p3]),
             'color': color,
             'fill': fill
         })
@@ -49,8 +66,7 @@ class RewindClient():
     def popup_message(self, x, y, radius, message):
         self._send({
             'type': 'popup',
-            'x': x,
-            'y': y,
+            'p': [x, y],
             'r': radius,
             'text': message
         })

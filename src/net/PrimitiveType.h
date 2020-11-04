@@ -8,9 +8,10 @@
 
 //@formatter:off
 enum class PrimitiveType {
-    LINE,
     CIRCLE,
     RECTANGLE,
+    TRIANGLE,
+    POLYLINE,
     MESSAGE,
     POPUP,
     OPTIONS,

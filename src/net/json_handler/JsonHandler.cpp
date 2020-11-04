@@ -22,27 +22,28 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
 
 }  // anonymous namespace
 
+struct ParsingError : std::runtime_error {
+    using std::runtime_error::runtime_error;
+};
+
 namespace pod {
 
-struct Color {
+/// GeoPoints format [x1, y1, x2, y2, ...]
+using GeoPoints = std::vector<float>;
+
+struct ColorShape {
     glm::vec4 color;
+    bool fill;
 };
 
-struct Line : Color {
-    glm::vec2 pt_from;
-    glm::vec2 pt_to;
-};
-
-struct Circle : Color {
+struct Circle : ColorShape {
     glm::vec2 center;
     float radius;
-    bool fill;
 };
 
-struct Rectangle : Color {
+struct Rectangle : ColorShape {
     glm::vec2 top_left;
     glm::vec2 bottom_right;
-    bool fill;
 };
 
 struct Popup {
@@ -51,11 +52,43 @@ struct Popup {
     std::string text;
 };
 
+struct Polyline : ColorShape {
+    std::vector<glm::vec2> points;
+};
+
+struct Triangle : ColorShape {
+    std::vector<glm::vec2> points;
+};
+
+std::vector<glm::vec2> convert_check(const GeoPoints &points) {
+    if (!points.size() % 2 != 0) {
+        throw ParsingError{
+            "Invalid geopoints format: number of elements should be divisible by 2, got" +
+            std::to_string(points.size())};
+    }
+
+    std::vector<glm::vec2> result;
+    result.reserve(points.size() / 2);
+    for (size_t idx = 0; idx < points.size(); idx += 2) {
+        result.emplace_back(points[idx], points[idx + 1]);
+    }
+    return result;
+}
+
+glm::vec2 convert_position(const GeoPoints &points) {
+    auto pts = convert_check(points);
+    if (pts.size() != 1) {
+        throw ParsingError{"Too many points, expected only one, but got " +
+                           std::to_string(pts.size())};
+    }
+    return pts[0];
+}
+
 /*
  * Json deserialization
  */
 
-inline void from_json(const nlohmann::json &j, Color &p) {
+inline void from_json(const nlohmann::json &j, ColorShape &p) {
     auto color = j["color"].get<uint32_t>();
     p.color.r = static_cast<float>((color & 0xFF0000) >> 16) / 256.0f;
     p.color.g = static_cast<float>((color & 0x00FF00) >> 8) / 256.0f;
@@ -67,44 +100,45 @@ inline void from_json(const nlohmann::json &j, Color &p) {
     } else {
         p.color.a = 1.0f;
     }
-}
 
-[[maybe_unused]] inline void from_json(const nlohmann::json &j, Line &p) {
-    from_json(j, static_cast<Color &>(p));
-
-    p.pt_from.x = j["x1"].get<float>();
-    p.pt_from.y = j["y1"].get<float>();
-    p.pt_to.x = j["x2"].get<float>();
-    p.pt_to.y = j["y2"].get<float>();
+    p.fill = value_or_default(j, "fill", true);
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Circle &p) {
-    from_json(j, static_cast<Color &>(p));
+    from_json(j, static_cast<ColorShape &>(p));
 
     p.radius = j["r"].get<float>();
-    p.center.x = j["x"].get<float>();
-    p.center.y = j["y"].get<float>();
-    p.fill = value_or_default(j, "fill", false);
+    p.center = convert_position(j["p"].get<GeoPoints>());
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Popup &p) {
     p.radius = j["r"].get<float>();
-    p.center.x = j["x"].get<float>();
-    p.center.y = j["y"].get<float>();
+    p.center = convert_position(j["p"].get<GeoPoints>());
     p.text = j["text"].get<std::string>();
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Rectangle &p) {
-    from_json(j, static_cast<Color &>(p));
+    from_json(j, static_cast<ColorShape &>(p));
 
-    p.top_left.x = j["x1"].get<float>();
-    p.top_left.y = j["y1"].get<float>();
-    p.bottom_right.x = j["x2"].get<float>();
-    p.bottom_right.y = j["y2"].get<float>();
-    p.fill = value_or_default(j, "fill", true);
-
+    p.top_left = convert_position(j["tl"].get<GeoPoints>());
+    p.bottom_right = convert_position(j["br"].get<GeoPoints>());
     if (p.top_left.x > p.bottom_right.x) {
         std::swap(p.top_left, p.bottom_right);
+    }
+}
+
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Polyline &p) {
+    from_json(j, static_cast<ColorShape &>(p));
+
+    p.points = convert_check(j["points"].get<GeoPoints>());
+}
+
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Triangle &p) {
+    from_json(j, static_cast<ColorShape &>(p));
+    p.points = convert_check(j["points"].get<GeoPoints>());
+    if (p.points.size() != 3) {
+        throw ParsingError{"Triangle should be created using exactly 3 points, got " +
+                           std::to_string(p.points.size())};
     }
 }
 
@@ -163,10 +197,20 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
                 ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.color, obj.fill);
                 break;
             }
-            case PrimitiveType::LINE: {
-                LOG_V8("JsonHandler::Line detected");
-                auto obj = j.get<pod::Line>();
-                ctx.add_polyline({obj.pt_from, obj.pt_to}, obj.color);
+            case PrimitiveType::TRIANGLE: {
+                LOG_V8("JsonHandler::Triangle detected");
+                auto obj = j.get<pod::Triangle>();
+                if (obj.fill) {
+                    ctx.add_filled_triangle(obj.points[0], obj.points[1], obj.points[2], obj.color);
+                } else {
+                    ctx.add_polyline(obj.points, obj.color);
+                }
+                break;
+            }
+            case PrimitiveType::POLYLINE: {
+                LOG_V8("JsonHandler::Polyline detected");
+                auto obj = j.get<pod::Polyline>();
+                ctx.add_polyline(obj.points, obj.color);
                 break;
             }
             case PrimitiveType::MESSAGE:
