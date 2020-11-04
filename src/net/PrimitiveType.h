@@ -7,23 +7,24 @@
 #include <string>
 
 #define X_PRIMITIVE_TYPES_LIST \
-    X(end) \
-    X(circle) \
-    X(rectangle) \
-    X(line) \
-    X(message) \
-    X(popup) \
-    X(options) \
+    X(end)                     \
+    X(circle)                  \
+    X(rectangle)               \
+    X(line)                    \
+    X(message)                 \
+    X(popup)                   \
+    X(options)
 
 enum class PrimitiveType {
 #define X(type) type,
     X_PRIMITIVE_TYPES_LIST
 #undef X
-    types_count
+        types_count
 };
 
 inline PrimitiveType primitve_type_from_str(const std::string &str) {
-#define X(type) if (str == #type) return PrimitiveType::type;
+#define X(type) \
+    if (str == #type) return PrimitiveType::type;
     X_PRIMITIVE_TYPES_LIST
 #undef X
     return PrimitiveType::types_count;

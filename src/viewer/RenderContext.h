@@ -3,14 +3,13 @@
 //
 #pragma once
 
-#include "cgutils/utils.h"
 #include "cgutils/ResourceManager.h"
+#include "cgutils/utils.h"
 
 #include <glm/glm.hpp>
 
-#include <vector>
 #include <memory>
-
+#include <vector>
 
 struct ShaderCollection;
 
@@ -18,7 +17,7 @@ struct ShaderCollection;
  * RenderContext
  */
 class RenderContext {
-public:
+ public:
     struct context_vao_t {
         GLuint point_vao;
         GLuint circle_vao;
@@ -33,26 +32,26 @@ public:
     RenderContext();
     ~RenderContext();
 
-    ///Circle
+    /// Circle
     void add_circle(glm::vec2 center, float r, glm::vec4 color, bool fill);
 
     void add_filled_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color);
 
-    ///Rectangle
+    /// Rectangle
     void add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color, bool fill);
 
-    ///Polyline
+    /// Polyline
     void add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color);
 
-    ///Add all primitves from other RenderContext
+    /// Add all primitves from other RenderContext
     void update_from(const RenderContext &other);
 
-    ///Remove everything
+    /// Remove everything
     void clear();
 
     void draw(const context_vao_t &vaos, const ShaderCollection &shaders) const;
 
-private:
+ private:
     struct memory_layout_t;
     std::unique_ptr<memory_layout_t> impl_;
 };

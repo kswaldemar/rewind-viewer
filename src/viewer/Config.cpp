@@ -7,6 +7,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <memory>
+
 namespace {
 
 // Config entries
@@ -61,7 +63,7 @@ void callback_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void *entry, cons
     } else if (sscanf(line, "camera.start_position=(%f,%f)", &p.x, &p.y) == 2) {
         cfg.camera.start_position = p;
     } else if (sscanf(line, "camera.start_viewport_size=%f", &v.x) == 1) {
-        cfg.camera.start_viewport_size=v.x;
+        cfg.camera.start_viewport_size = v.x;
     }
 }
 
@@ -155,12 +157,3 @@ std::unique_ptr<Config> Config::init_with_imgui(const std::string &fname) {
 
     return cfg;
 }
-
-// void Config::update_dynamic_values(const Config::present_keys_t &keys) {
-//    if (keys.find("camera.start_position") == keys.end()) {
-//        camera.start_position = scene.grid_dim * 0.5f;
-//    }
-//    if (keys.find("camera.start_viewport_size") == keys.end()) {
-//        camera.start_viewport_size = std::max(scene.grid_dim.x, scene.grid_dim.y);
-//    }
-//}

@@ -11,7 +11,7 @@
 #include <stdexcept>
 
 #ifdef __APPLE__
-#include <errno.h>
+#include <cerrno>
 #endif
 
 namespace {
@@ -66,7 +66,8 @@ GLuint create_shader(GLenum type, const std::string &source) {
     glShaderSource(shader, 1, &source_ptr, nullptr);
     glCompileShader(shader);
     if (!validate_shader(shader)) {
-        LOG_ERROR("Validation error, shader type: %s\n", (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment"));
+        LOG_ERROR("Validation error, shader type: %s\n",
+                  (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment"));
         throw std::runtime_error("Compile shader");
     }
     return shader;
@@ -86,8 +87,7 @@ GLuint create_shader_program(GLuint vert_shader, GLuint frag_shader, GLuint geom
     return program;
 }
 
-
-} // anonymous namespace
+}  // anonymous namespace
 
 void Shader::set_shaders_folder(const std::string &path) {
     if (path.empty()) {
@@ -102,7 +102,8 @@ void Shader::set_shaders_folder(const std::string &path) {
 
 std::string Shader::path_to_shaders_;
 
-Shader::Shader(const std::string &vertex, const std::string &fragment, const std::string &geom/*=""*/) {
+Shader::Shader(const std::string &vertex, const std::string &fragment,
+               const std::string &geom /*=""*/) {
     if (!geom.empty()) {
         LOG_INFO("Start compiling shader in directory '%s': vertex=%s, fragment=%s, geometry=%s",
                  path_to_shaders_.c_str(), vertex.c_str(), fragment.c_str(), geom.c_str());
@@ -183,14 +184,13 @@ void Shader::set_float(const std::string &name, float val) const {
     glUniform1f(uniform(name), val);
 }
 
-void Shader::bind_uniform_block(const std::string &name, GLuint binding_point) {
+void Shader::bind_uniform_block(const std::string &name, GLuint binding_point) const {
     auto index = glGetUniformBlockIndex(program_, name.c_str());
     if (index == GL_INVALID_INDEX) {
         LOG_WARN("No such uniform block:: %s", name.c_str());
     } else {
         glUniformBlockBinding(program_, index, binding_point);
     }
-
 }
 
 void Shader::set_int(const std::string &name, GLint val) const {

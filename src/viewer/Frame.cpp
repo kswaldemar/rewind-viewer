@@ -1,7 +1,6 @@
 #include "Frame.h"
 
 #include <cassert>
-#include <memory>
 
 void Frame::update_from(const Frame &other) {
     for (size_t i = 0; i < contexts_.size(); ++i) {

@@ -5,12 +5,13 @@
 #include <net/PrimitiveType.h>
 
 #ifdef __APPLE__
-#include <errno.h>
+#include <cerrno>
+#include <utility>
 #endif
 
-NetListener::NetListener(const std::string &listen_host, uint16_t listen_port,
+NetListener::NetListener(std::string listen_host, uint16_t listen_port,
                          std::unique_ptr<ProtoHandler> &&handler)
-    : host_(listen_host), port_(listen_port), handler_(std::move(handler)) {
+    : host_(std::move(listen_host)), port_(listen_port), handler_(std::move(handler)) {
     socket_ = std::make_unique<CPassiveSocket>(CPassiveSocket::SocketTypeTcp);
     if (socket_->Initialize()) {
         socket_->DisableNagleAlgoritm();
@@ -56,7 +57,7 @@ void NetListener::run() {
 
 void NetListener::stop() {
     if (status_ != ConStatus::CLOSED) {
-        LOG_INFO("Stopping network listening")
+        LOG_INFO("Stopping network listening");
     }
     stop_ = true;
 }
@@ -70,7 +71,7 @@ void NetListener::serve_connection(CActiveSocket *client) {
         if (nbytes > 0) {
             auto data = client->GetData();
             // todo: Maybe remove that zero, because it doesn't make sense in case of binary data
-            // same for debug print
+            //  same for debug print
             data[nbytes] = '\0';
             LOG_V9("NetClient:: Message %d bytes, '%s'", nbytes, data);
             // Strategy can send several messages in one block

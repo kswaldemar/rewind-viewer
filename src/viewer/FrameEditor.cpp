@@ -3,13 +3,15 @@
 //
 #include "FrameEditor.h"
 
+#include <utility>
+
 namespace {
 
 struct rect_popup_t : IPopup {
-    rect_popup_t(glm::vec2 top_left, glm::vec2 bottom_right, const std::string &msg)
+    rect_popup_t(glm::vec2 top_left, glm::vec2 bottom_right, std::string msg)
         : top_left(top_left),
           bottom_right(bottom_right),
-          msg(msg)
+          msg(std::move(msg))
     { }
 
     bool hit_test(glm::vec2 point) const override {
@@ -27,10 +29,10 @@ struct rect_popup_t : IPopup {
 };
 
 struct round_popup_t : IPopup {
-    round_popup_t(glm::vec2 center, float radius2, const std::string &msg)
+    round_popup_t(glm::vec2 center, float radius2, std::string msg)
         : center(center),
           radius2(radius2),
-          msg(msg)
+          msg(std::move(msg))
     { }
 
     bool hit_test(glm::vec2 point) const override {

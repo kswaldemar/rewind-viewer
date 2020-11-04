@@ -10,8 +10,8 @@
 
 namespace {
 
-///Helper function
-template<typename T>
+/// Helper function
+template <typename T>
 inline T value_or_default(const nlohmann::json &j, const std::string &name, T def_val) {
     const auto it = j.find(name);
     if (it != j.end()) {
@@ -20,7 +20,7 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
     return def_val;
 }
 
-} // anonymous namespace
+}  // anonymous namespace
 
 namespace pod {
 
@@ -57,19 +57,19 @@ struct Popup {
 
 inline void from_json(const nlohmann::json &j, Color &p) {
     auto color = j["color"].get<uint32_t>();
-    p.color.r = ((color & 0xFF0000) >> 16) / 256.0f;
-    p.color.g = ((color & 0x00FF00) >> 8) / 256.0f;
-    p.color.b = ((color & 0x0000FF)) / 256.0f;
+    p.color.r = static_cast<float>((color & 0xFF0000) >> 16) / 256.0f;
+    p.color.g = static_cast<float>((color & 0x00FF00) >> 8) / 256.0f;
+    p.color.b = static_cast<float>((color & 0x0000FF)) / 256.0f;
 
-    int alpha = ((color & 0xFF000000) >> 24);
+    uint8_t alpha = ((color & 0xFF000000) >> 24);
     if (alpha > 0) {
-        p.color.a = alpha / 256.0f;
+        p.color.a = static_cast<float>(alpha) / 256.0f;
     } else {
         p.color.a = 1.0f;
     }
 }
 
-inline void from_json(const nlohmann::json &j, Line &p) {
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Line &p) {
     from_json(j, static_cast<Color &>(p));
 
     p.pt_from.x = j["x1"].get<float>();
@@ -78,7 +78,7 @@ inline void from_json(const nlohmann::json &j, Line &p) {
     p.pt_to.y = j["y2"].get<float>();
 }
 
-inline void from_json(const nlohmann::json &j, Circle &p) {
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Circle &p) {
     from_json(j, static_cast<Color &>(p));
 
     p.radius = j["r"].get<float>();
@@ -87,14 +87,14 @@ inline void from_json(const nlohmann::json &j, Circle &p) {
     p.fill = value_or_default(j, "fill", false);
 }
 
-inline void from_json(const nlohmann::json &j, Popup &p) {
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Popup &p) {
     p.radius = j["r"].get<float>();
     p.center.x = j["x"].get<float>();
     p.center.y = j["y"].get<float>();
     p.text = j["text"].get<std::string>();
 }
 
-inline void from_json(const nlohmann::json &j, Rectangle &p) {
+[[maybe_unused]] inline void from_json(const nlohmann::json &j, Rectangle &p) {
     from_json(j, static_cast<Color &>(p));
 
     p.top_left.x = j["x1"].get<float>();
@@ -108,7 +108,7 @@ inline void from_json(const nlohmann::json &j, Rectangle &p) {
     }
 }
 
-} // namespace pod
+}  // namespace pod
 
 void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
     const uint8_t *beg = data;
@@ -122,13 +122,14 @@ void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
             break;
         }
         ++end;
-        //Support fragmented messages
+        // Support fragmented messages
         if (fragment_msg_.empty()) {
             process_json_message(beg, end);
         } else {
             fragment_msg_ += std::string(beg, end);
-            process_json_message(reinterpret_cast<const uint8_t *>(fragment_msg_.data()),
-                                 reinterpret_cast<const uint8_t *>(fragment_msg_.data() + fragment_msg_.size()));
+            process_json_message(
+                reinterpret_cast<const uint8_t *>(fragment_msg_.data()),
+                reinterpret_cast<const uint8_t *>(fragment_msg_.data() + fragment_msg_.size()));
             fragment_msg_.clear();
         }
         beg = end;
@@ -187,20 +188,17 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
 
                 it = j.find("layer");
                 if (it != j.end()) {
-                    size_t layer = it->get<size_t>();
+                    auto layer = it->get<size_t>();
                     if (layer < 1 || layer > static_cast<size_t>(Frame::LAYERS_COUNT)) {
-                        LOG_WARN("Got message with layer %zu, but should be in range 1-%zu",
-                                 layer, static_cast<size_t>(Frame::LAYERS_COUNT));
+                        LOG_WARN("Got message with layer %zu, but should be in range 1-%zu", layer,
+                                 static_cast<size_t>(Frame::LAYERS_COUNT));
                     }
                     layer = cg::clamp<size_t>(layer - 1, 0, Frame::LAYERS_COUNT - 1);
                     get_frame_editor().set_layer_id(layer);
                 }
                 break;
             }
-            case PrimitiveType::types_count:
-                LOG_WARN("Got 'types_count' message");
-                break;
-
+            case PrimitiveType::types_count: LOG_WARN("Got 'types_count' message"); break;
         }
     } catch (const std::exception &e) {
         LOG_WARN("JsonClient::Exception: %s", e.what());

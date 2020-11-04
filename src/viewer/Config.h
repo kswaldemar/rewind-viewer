@@ -8,11 +8,10 @@
 
 #include <glm/glm.hpp>
 
-#include <unordered_set>
 #include <cstdint>
+#include <unordered_set>
 
-class Config {
-public:
+struct Config {
     struct UIConf {
         uint16_t fast_skip_speed = 20;
         bool close_with_esc = false;
@@ -40,9 +39,6 @@ public:
 
     static std::unique_ptr<Config> init_with_imgui(const std::string &fname);
 
-private:
-    using present_keys_t = std::unordered_set<std::string>;
-
-    ///Update config values which depends from other fields
-    //void update_dynamic_values(const present_keys_t &);
+    Config(Config &) = delete;
+    Config() = default;
 };

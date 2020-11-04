@@ -1,4 +1,5 @@
 #include <glad/glad.h>
+
 #include <GLFW/glfw3.h>
 
 #include <cgutils/Shader.h>
@@ -13,23 +14,25 @@
 #include <thread>
 #include <exception>
 
-
 constexpr size_t DEFAULT_WIN_WIDTH = 1200;
 constexpr size_t DEFAULT_WIN_HEIGHT = 800;
 
 constexpr const char *WINDOW_TITLE = "Rewind viewer for Russian AI Cup";
 constexpr const char *CONF_FILENAME = "rewindviewer.ini";
 
+static const char *NETWORK_HOST = "127.0.0.1";
+static const uint16_t NETWORK_PORT = 9111;
+
 GLFWwindow *setup_window();
 void prepare_and_run_game_loop(GLFWwindow *window);
 
 int main(int argc, char **argv) {
+    loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
     loguru::init(argc, argv);
-    loguru::add_file("rewindviewer-debug.log", loguru::Truncate, 9);
-    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_INFO);
+    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::g_stderr_verbosity);
 
     // Init GLFW
-    LOG_INFO("Init GLFW")
+    LOG_INFO("Init GLFW");
     if (glfwInit() != GL_TRUE) {
         LOG_FATAL("Failed to initialize GLFW");
         return -1;
@@ -41,7 +44,7 @@ int main(int argc, char **argv) {
         return -3;
     }
 
-    LOG_INFO("Load OpenGL functions")
+    LOG_INFO("Load OpenGL functions");
     if (!gladLoadGL()) {
         LOG_FATAL("Failed to load opengl");
         return -2;
@@ -59,10 +62,10 @@ int main(int argc, char **argv) {
 #  endif
 #endif
 
-    LOG_INFO("Setup vertical sync to 60fps")
+    LOG_INFO("Setup vertical sync to 60fps");
     glfwSwapInterval(1);
     try {
-        LOG_INFO("Start main draw loop")
+        LOG_INFO("Start main draw loop");
         prepare_and_run_game_loop(window);
     } catch (const std::exception &e) {
         LOG_ERROR("Exception:: %s", e.what());
@@ -88,7 +91,7 @@ GLFWwindow *setup_window() {
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 #endif
 
-    LOG_INFO("Create main window")
+    LOG_INFO("Create main window");
     GLFWwindow *window = glfwCreateWindow(DEFAULT_WIN_WIDTH, DEFAULT_WIN_HEIGHT, WINDOW_TITLE, nullptr, nullptr);
     if (!window) {
         return nullptr;
@@ -106,7 +109,7 @@ GLFWwindow *setup_window() {
         return nullptr;
     }
     GLFWimage icon{width, height, icon_data};
-    LOG_INFO("Setup application icon")
+    LOG_INFO("Setup application icon");
     glfwSetWindowIcon(window, 1, &icon);
 
     glfwMakeContextCurrent(window);
@@ -122,18 +125,18 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     auto conf_ptr = Config::init_with_imgui(CONF_FILENAME);
     auto& conf = *conf_ptr;
 
-    LOG_INFO("Create camera")
-    Camera cam(&conf.camera);
+    LOG_INFO("Create camera");
+    Camera cam(conf.camera);
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-    LOG_INFO("Create Resource manager")
+    LOG_INFO("Create Resource manager");
     ResourceManager res("resources/textures/");
     Shader::set_shaders_folder("resources/shaders/");
 
-    LOG_INFO("Create Scene")
+    LOG_INFO("Create Scene");
     Scene scene(&res, &conf.scene);
 
-    LOG_INFO("Create GUI controller")
+    LOG_INFO("Create GUI controller");
     UIController ui(&cam, &conf);
 
     std::unique_ptr<ProtoHandler> proto_handler;
@@ -146,8 +149,8 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
     }
 
     //Start network listening
-    LOG_INFO("Start networking thread")
-    NetListener net("127.0.0.1", 9111, std::move(proto_handler));
+    LOG_INFO("Start networking thread");
+    NetListener net(NETWORK_HOST, NETWORK_PORT, std::move(proto_handler));
     std::thread network_thread([&net] {
         try {
             net.run();
@@ -159,7 +162,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    LOG_INFO("Start render loop")
+    LOG_INFO("Start render loop");
     while (!glfwWindowShouldClose(window)) {
         //Read window events
         glfwPollEvents();

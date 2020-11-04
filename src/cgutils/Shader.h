@@ -13,7 +13,7 @@
  * Class representing ShaderProgram
  */
 class Shader {
-public:
+ public:
     static void set_shaders_folder(const std::string &path);
 
     Shader(const std::string &vertex, const std::string &fragment, const std::string &geom = "");
@@ -34,14 +34,10 @@ public:
     void set_int(const std::string &name, GLint val) const;
     void set_uint(const std::string &name, GLuint val) const;
 
-    void bind_uniform_block(const std::string &name, GLuint binding_point);
+    void bind_uniform_block(const std::string &name, GLuint binding_point) const;
 
-private:
+ private:
     static std::string path_to_shaders_;
 
     GLuint program_ = 0;
 };
-
-
-
-

@@ -2,26 +2,21 @@
 // Created by valdemar on 18.10.17.
 //
 
+#include "opengl.h"
+
 #include "Camera.h"
 #include "utils.h"
 
 #include <imgui.h>
-#include <imgui_impl/imgui_widgets.h>
 
+#include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <algorithm>
 
+namespace {}  // anonymous namespace
 
-namespace {
-
-} // anonymous namespace
-
-Camera::Camera(const Config::CameraConf *conf)
-    : conf_(*conf)
-{
-    pos_ = conf_.start_position;
-    viewport_size_ = conf_.start_viewport_size;
+Camera::Camera(const Config::CameraConf &conf)
+    : conf_(conf), pos_{conf.start_position}, viewport_size_{conf.start_viewport_size} {
     update_matrix();
 }
 
@@ -34,7 +29,7 @@ void Camera::update() {
     static const float zoom_speed = 0.1;
 
     if (!io.WantCaptureMouse) {
-        //Zoom
+        // Zoom
         if (io.MouseWheel != 0.0) {
             const float zoom_k = 1.0f - zoom_speed * io.MouseWheel;
             const glm::vec2 rel_mouse_pos = screen2world(io.MousePos) - pos_;
@@ -45,7 +40,7 @@ void Camera::update() {
             viewport_size_ *= zoom_k;
         }
 
-        //Map dragging
+        // Map dragging
         if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
             int width, height;
             glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
@@ -53,8 +48,9 @@ void Camera::update() {
             const int min_size = std::min(width, height);
 
             glm::vec2 delta = io.MouseDelta;
-            delta.x = -viewport_size_ * (delta.x / min_size);
-            delta.y =  viewport_size_ * (delta.y / min_size) * y_axes_invert();
+            delta.x = -viewport_size_ * (delta.x / static_cast<float>(min_size));
+            delta.y = viewport_size_ * (delta.y / static_cast<float>(min_size)) *
+                      static_cast<float>(y_axes_invert());
             pos_ += delta;
         }
 
@@ -68,8 +64,8 @@ glm::vec2 Camera::screen2world(const glm::vec2 &coord) const {
 
     const float half_view = viewport_size_ * 0.5f;
     const float min_size = std::min<float>(width, height);
-    const float x_half_view = half_view * width / min_size;
-    const float y_half_view = half_view * height / min_size;
+    const float x_half_view = half_view * static_cast<float>(width) / min_size;
+    const float y_half_view = half_view * static_cast<float>(height) / min_size;
 
     const double proj_x = cg::lerp(coord.x, 0, width, -x_half_view, x_half_view);
     const double proj_y = cg::lerp(coord.y, height, 0, -y_half_view, y_half_view);
@@ -91,6 +87,6 @@ void Camera::update_matrix() {
     const float y_half_view = half_view * height / min_size;
 
     pr_view_ = glm::ortho(pos_.x - x_half_view, pos_.x + x_half_view,
-                          pos_.y - y_half_view * y_axes_invert(), pos_.y + y_half_view * y_axes_invert(),
-                          -1.0f, 1.0f);
+                          pos_.y - y_half_view * y_axes_invert(),
+                          pos_.y + y_half_view * y_axes_invert(), -1.0f, 1.0f);
 }

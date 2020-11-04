@@ -7,5 +7,4 @@
 ShaderCollection::ShaderCollection()
     : line("lines.vert", "lines.frag")
     , circle("circle.vert", "circle.frag", "circle.geom")
-    , color("simple.vert", "uniform_color.frag")
-{ }
+    , color("simple.vert", "uniform_color.frag") {}

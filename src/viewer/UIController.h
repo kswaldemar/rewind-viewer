@@ -4,9 +4,6 @@
 
 #pragma once
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-
 #include <imgui.h>
 
 #include <cgutils/Camera.h>
@@ -21,7 +18,7 @@ class Scene;
  * Class for all ui interaction using ImGui
  */
 class UIController {
-public:
+ public:
     UIController(Camera *camera, Config *conf);
     ~UIController();
 
@@ -31,10 +28,9 @@ public:
     void next_frame(Scene *scene, NetListener::ConStatus client_status);
     void frame_end();
 
-    bool close_requested();
+    bool close_requested() const;
 
-private:
-
+ private:
     void main_menu_bar();
 
     void fps_overlay_widget(NetListener::ConStatus net_status);
@@ -43,7 +39,7 @@ private:
 
     bool key_pressed_once(int key_desc);
 
-    ///Handling flags whenever window should be drawed or not etc.
+    /// Handling flags whenever window should be drawed or not etc.
     struct wnd_t;
     std::unique_ptr<wnd_t> wnd_;
 
@@ -54,6 +50,6 @@ private:
     bool autoplay_scene_ = true;
     bool developer_mode_ = false;
 
-    ///Last remembered state
+    /// Last remembered state
     bool key_pressed_[512] = {};
 };

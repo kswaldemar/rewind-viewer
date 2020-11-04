@@ -4,72 +4,75 @@
 
 #include "Renderer.h"
 
-#include <cgutils/utils.h>
 #include <cgutils/Shader.h>
+#include <cgutils/utils.h>
 #include <common/logger.h>
-
-//#include <imgui.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 namespace {
 
-void write_test_data(RenderContext &to) {
-    const glm::vec4 color_red = {1.0, 0.0, 0.0, 1.0};
-    const glm::vec4 color_blue = {0, 0, 1.0, 1.0};
-    const glm::vec4 color_green = {0, 1.0, 0.0, 1.0};
-    to.add_polyline({{0, 0}, {100, 10}, {10, 100}, {50, 50}, {40, 30}}, color_red);
-    to.add_polyline({{10, 0}, {30, 15}, {40, 60}, {10, 90}, {5, 25}}, color_blue);
+[[maybe_unused]] const RenderContext *test_draw() {
+    static std::unique_ptr<RenderContext> context;
+    if (!context) {
+        context = std::make_unique<RenderContext>();
+        auto &to = *context;
 
-    //for (int i = 0; i < 1200; i += 5) {
-    //    for (int j = 0; j < 800; j += 5) {
-    //        to.add_circle({i, j}, 5, {i / 1200.0, j / 800.0, 0.5, 1.0}, false);
-    //    }
-    //}
+        const glm::vec4 color_red = {1.0, 0.0, 0.0, 1.0};
+        const glm::vec4 color_blue = {0, 0, 1.0, 1.0};
+        const glm::vec4 color_green = {0, 1.0, 0.0, 1.0};
+        to.add_polyline({{0, 0}, {100, 10}, {10, 100}, {50, 50}, {40, 30}}, color_red);
+        to.add_polyline({{10, 0}, {30, 15}, {40, 60}, {10, 90}, {5, 25}}, color_blue);
 
-    to.add_rectangle({5, 5}, {45, 35}, {1.0, 1.0, 0.0, 0.7}, true);
-    to.add_filled_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8});
+        for (int i = 0; i < 1200; i += 5) {
+            for (int j = 0; j < 800; j += 5) {
+                to.add_circle({i, j}, 5, {i / 1200.0, j / 800.0, 0.5, 1.0}, false);
+            }
+        }
 
-    to.add_circle({8, 8}, 8, color_red, true);
-    to.add_circle({20, 10}, 8, color_green, true);
-    to.add_circle({10, 20}, 8, color_blue, false);
+        to.add_rectangle({5, 5}, {45, 35}, {1.0, 1.0, 0.0, 0.7}, true);
+        to.add_filled_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8});
+
+        to.add_circle({8, 8}, 8, color_red, true);
+        to.add_circle({20, 10}, 8, color_green, true);
+        to.add_circle({10, 20}, 8, color_blue, false);
+    }
+
+    return context.get();
 }
 
-RenderContext g_test_context;
-
-} // anonymous namespace
-
+}  // anonymous namespace
 
 struct Renderer::render_attrs_t {
     GLuint grid_vao = 0;
     GLsizei grid_vertex_count = 0;
-    //Vertex array to draw any rectangle and circle
+    // Vertex array to draw any rectangle and circle
     GLuint rect_vao = 0;
-    //Lines designed to dynamic draw
+    // Lines designed to dynamic draw
     GLuint lines_vao = 0;
-    GLuint uniform_buf;
-    glm::mat4 grid_model;
+    GLuint uniform_buf{};
+    glm::mat4 grid_model{};
 };
 
 Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 grid_cells)
-    : mgr_(res),
-      area_size_(area_size),
-      grid_cells_(grid_cells) {
+    : mgr_(res)
+    , ctx_render_params_(RenderContext::create_gl_context(*mgr_))
+    , area_size_(area_size)
+    , grid_cells_(grid_cells) {
+    // TODO: Logger scope for pretty printing
 
-    //TODO: Logger scope for pretty printing
-
-    LOG_INFO("Initialize needed attributes")
+    LOG_INFO("Initialize needed attributes");
     attr_ = std::make_unique<render_attrs_t>();
-    //Init needed attributes
+    // Init needed attributes
     attr_->grid_model = glm::scale(glm::mat4{1.0}, {area_size_.x, area_size_.y, 0.0f});
 
-    //Shaders
-    LOG_INFO("Compile shaders")
+    // Shaders
+    LOG_INFO("Compile shaders");
     shaders_ = std::make_unique<ShaderCollection>();
 
-    //Preload rectangle to memory for further drawing
-    LOG_INFO("Create rectangle for future rendering")
+    // Preload rectangle to memory for further drawing
+    LOG_INFO("Create rectangle for future rendering");
     attr_->rect_vao = mgr_->gen_vertex_array();
     GLuint vbo = mgr_->gen_buffer();
     //@formatter:off
@@ -92,8 +95,8 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     glEnableVertexAttribArray(1);
     glBindVertexArray(0);
 
-    //Uniform buffer
-    LOG_INFO("Create Uniform buffer")
+    // Uniform buffer
+    LOG_INFO("Create Uniform buffer");
     attr_->uniform_buf = mgr_->gen_buffer();
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
     glBufferData(GL_UNIFORM_BUFFER, 64, nullptr, GL_DYNAMIC_DRAW);
@@ -101,27 +104,24 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
 
     glBindBufferBase(GL_UNIFORM_BUFFER, 0, attr_->uniform_buf);
 
-    LOG_INFO("Bind Uniform buffer to shaders")
+    LOG_INFO("Bind Uniform buffer to shaders");
     shaders_->color.bind_uniform_block("MatrixBlock", 0);
     shaders_->line.bind_uniform_block("MatrixBlock", 0);
     shaders_->circle.bind_uniform_block("MatrixBlock", 0);
-
-    //Create one gl context (needed vertex array pointers) for all RenderContext's
-    ctx_render_params_ = RenderContext::create_gl_context(*res);
-    write_test_data(g_test_context);
 }
 
 Renderer::~Renderer() = default;
 
 void Renderer::update_frustum(const Camera &cam) {
-    //Update projection matrix
+    // Update projection matrix
     glBindBuffer(GL_UNIFORM_BUFFER, attr_->uniform_buf);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(cam.proj_view()), GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), glm::value_ptr(cam.proj_view()),
+                 GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void Renderer::render_background(glm::vec3 color) {
-    //Main scene area
+    // Main scene area
     shaders_->color.use();
     auto model = glm::scale(glm::mat4(1.0f), {area_size_ * 0.5f, 1.0f});
     model = glm::translate(model, {1.0f, 1.0f, -0.2f});
@@ -130,8 +130,9 @@ void Renderer::render_background(glm::vec3 color) {
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    //FOR TESTING PURPOSES ONLY
-    //g_test_context.draw(ctx_render_params_, *shaders_);
+    //if (auto context = test_draw()) {
+    //    context->draw(ctx_render_params_, *shaders_);
+    //}
 }
 
 void Renderer::render_grid(glm::vec3 color) {
@@ -145,7 +146,7 @@ void Renderer::render_grid(glm::vec3 color) {
 
         std::vector<float> grid;
 
-        const float step_x = 1.0f / grid_cells_.x;
+        const float step_x = 1.0f / static_cast<float>(grid_cells_.x);
         for (size_t i = 0; i <= grid_cells_.x; ++i) {
             const float shift = step_x * i;
 
@@ -158,7 +159,7 @@ void Renderer::render_grid(glm::vec3 color) {
             grid.push_back(0.0);
         }
 
-        const float step_y = 1.0f / grid_cells_.y;
+        const float step_y = 1.0f / static_cast<float>(grid_cells_.y);
         for (size_t i = 0; i <= grid_cells_.y; ++i) {
             const float shift = step_y * i;
 

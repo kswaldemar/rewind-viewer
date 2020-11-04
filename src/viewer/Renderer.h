@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "ShaderCollection.h"
 #include "RenderContext.h"
+#include "ShaderCollection.h"
 
 #include <cgutils/Camera.h>
 #include <cgutils/ResourceManager.h>
@@ -15,7 +15,7 @@
 #include <memory>
 
 class Renderer {
-public:
+ public:
     Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 grid_cells);
     ~Renderer();
 
@@ -25,7 +25,7 @@ public:
     void render_grid(glm::vec3 color);
     void render_primitives(const RenderContext &ctx);
 
-private:
+ private:
     ResourceManager *mgr_;
 
     std::unique_ptr<ShaderCollection> shaders_;

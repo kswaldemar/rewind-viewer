@@ -5,11 +5,9 @@ namespace {
 const size_t PERMANENT_IDX = 1;
 const size_t NORMAL_IDX = 0;
 
-} // anonymous namespace
+}  // anonymous namespace
 
-ProtoHandler::ProtoHandler(Scene *scene)
-    : scene_(scene)
-{}
+ProtoHandler::ProtoHandler(Scene *scene) : scene_(scene) {}
 
 void ProtoHandler::on_new_connection() {
     scene_->clear_data(false);

@@ -2,12 +2,13 @@
 // Created by valdemar on 14.10.17.
 //
 
+#include <cgutils/opengl.h>
+
 #include "UIController.h"
 
 #include <fontawesome.h>
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
-#include <imgui_impl/imgui_widgets.h>
 #include <imgui_impl/style.h>
 
 #include <glm/gtc/type_ptr.hpp>
@@ -31,11 +32,12 @@ float get_scale_factor() {
     glfwGetWindowSize(window, &w, &h);
     glfwGetFramebufferSize(window, &display_w, &display_h);
 
-    return std::max(display_w / static_cast<float>(w), display_h / static_cast<float>(h));
+    return std::max(static_cast<float>(display_w) / static_cast<float>(w),
+                    static_cast<float>(display_h) / static_cast<float>(h));
 }
 
-const float kDefaultFontSize = 13.0f;
-const float kFontawesomeFontSize = 14.0f;
+const float DEFAULT_FONT_SIZE = 13.0f;
+const float FONT_AWESOME_FONT_SIZE = 14.0f;
 
 }  // namespace
 
@@ -62,7 +64,7 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     const float scale_factor = get_scale_factor();
 
     auto font_cfg = ImFontConfig();
-    font_cfg.SizePixels = kDefaultFontSize * scale_factor;
+    font_cfg.SizePixels = DEFAULT_FONT_SIZE * scale_factor;
     font_cfg.OversampleH = 1;
     font_cfg.OversampleV = 1;
     font_cfg.PixelSnapH = true;
@@ -74,7 +76,7 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     icons_config.MergeMode = true;
     icons_config.PixelSnapH = true;
     io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf",
-                                 kFontawesomeFontSize * scale_factor, &icons_config, icons_range);
+                                 FONT_AWESOME_FONT_SIZE * scale_factor, &icons_config, icons_range);
     io.FontGlobalScale = 1.0f / scale_factor;
     // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
@@ -196,7 +198,7 @@ void UIController::frame_end() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-bool UIController::close_requested() {
+bool UIController::close_requested() const {
     return request_exit_;
 }
 
@@ -261,8 +263,8 @@ void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
 void UIController::info_widget(Scene *scene) {
     int width, height;
     glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
-    const float desired_width = 300;
-    ImGui::SetNextWindowPos({width - desired_width, 20}, ImGuiCond_None);
+    const int desired_width = 300;
+    ImGui::SetNextWindowPos({static_cast<float>(width - desired_width), 20}, ImGuiCond_None);
     ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_None);
     ImGui::Begin(
         "Info", nullptr,

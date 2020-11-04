@@ -6,8 +6,8 @@
 
 #include <viewer/Scene.h>
 
-#include <csimplesocket/PassiveSocket.h>
 #include <csimplesocket/ActiveSocket.h>
+#include <csimplesocket/PassiveSocket.h>
 
 class ProtoHandler;
 
@@ -20,26 +20,23 @@ class ProtoHandler;
  *  - running in personal thread
  */
 class NetListener {
-public:
-    enum class ConStatus {
-        WAIT,
-        ESTABLISHED,
-        CLOSED
-    };
+ public:
+    enum class ConStatus { WAIT, ESTABLISHED, CLOSED };
 
-    NetListener(const std::string &listen_host, uint16_t listen_port, std::unique_ptr<ProtoHandler> &&handler);
+    NetListener(std::string listen_host, uint16_t listen_port,
+                std::unique_ptr<ProtoHandler> &&handler);
 
-    ///Return current connection status.
-    ///Will be wait until first data chunk, established while tcp connection alive
+    /// Return current connection status.
+    /// Will be wait until first data chunk, established while tcp connection alive
     ConStatus connection_status() const;
 
-    ///Start gathering and operating information from socket
-    ///Blocking call, should be running on personal thread
+    /// Start gathering and operating information from socket
+    /// Blocking call, should be running on personal thread
     void run();
 
     void stop();
 
-private:
+ private:
     void serve_connection(CActiveSocket *client);
 
     std::unique_ptr<CPassiveSocket> socket_;

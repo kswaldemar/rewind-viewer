@@ -1,6 +1,7 @@
 import _socket
 import json
 
+
 class RewindClient():
     def __init__(self, host=None, port=None):
         self.socket = _socket.socket()

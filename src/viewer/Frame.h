@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <array>
+#include <cstdlib>
 
 #include <viewer/RenderContext.h>
 
@@ -16,7 +16,7 @@ struct IPopup {
 };
 
 class Frame {
-public:
+ public:
     constexpr static size_t LAYERS_COUNT = 5;
     constexpr static size_t DEFAULT_LAYER = 2;
 
@@ -31,7 +31,7 @@ public:
 
     const char *user_message() const;
 
-protected:
+ protected:
     context_collection_t contexts_;
     std::vector<hittest_t> popups_;
     std::string user_message_;

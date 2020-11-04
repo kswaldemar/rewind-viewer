@@ -6,7 +6,7 @@
 #include "Frame.h"
 
 class FrameEditor : public Frame {
-public:
+ public:
     void add_box_popup(glm::vec2 top_left, glm::vec2 bottom_right, std::string message);
 
     void add_round_popup(glm::vec2 center, float radius, std::string message);
@@ -19,6 +19,6 @@ public:
 
     RenderContext &context();
 
-private:
+ private:
     size_t layer_id_ = DEFAULT_LAYER;
 };
