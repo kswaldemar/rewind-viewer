@@ -276,6 +276,17 @@ void UIController::info_widget(Scene *scene) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), "%.1f");
             ImGui::InputFloat("Viewport size", &camera_->viewport_size_, 50.0, 1000.0, "%.0f");
+            if (ImGui::Button("Save state")) {
+                auto &cam_conf = conf_->camera;
+                cam_conf.start_position = camera_->pos_;
+                cam_conf.start_viewport_size = camera_->viewport_size_;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Restore state")) {
+                auto &cam_conf = conf_->camera;
+                camera_->pos_ = cam_conf.start_position;
+                camera_->viewport_size_ = cam_conf.start_viewport_size;
+            }
             ImGui::PopItemWidth();
         }
         if (ImGui::CollapsingHeader("Colors", flags)) {
