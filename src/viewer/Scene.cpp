@@ -91,11 +91,17 @@ void Scene::show_detailed_info(const glm::vec2 &mouse) const {
         return;
     }
 
-    for (const auto &popup : active_frame_->popups()) {
-        if (popup->hit_test(mouse)) {
-            ImGui::BeginTooltip();
-            ImGui::Text("%s", popup->text());
-            ImGui::EndTooltip();
+    const auto &popups = active_frame_->all_popups();
+    for (size_t idx = 0; idx < popups.size(); ++idx) {
+        if (!conf_.enabled_layers[idx]) {
+            continue;
+        }
+        for (const auto &popup : popups[idx]) {
+            if (popup.hit_test(mouse)) {
+                ImGui::BeginTooltip();
+                ImGui::Text("%s", popup.text());
+                ImGui::EndTooltip();
+            }
         }
     }
 }

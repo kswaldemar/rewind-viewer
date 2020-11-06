@@ -39,7 +39,7 @@ class UIController {
 
     bool key_pressed_once(int key_desc);
 
-    /// Handling flags whenever window should be drawed or not etc.
+    /// Handling flags whenever window should be drawn or not etc.
     struct wnd_t;
     std::unique_ptr<wnd_t> wnd_;
 

@@ -32,7 +32,7 @@ namespace {
         }
 
         to.add_rectangle({5, 5}, {45, 35}, {1.0, 1.0, 0.0, 0.7}, true);
-        to.add_filled_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8});
+        to.add_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8}, true);
 
         to.add_circle({8, 8}, 8, color_red, true);
         to.add_circle({20, 10}, 8, color_green, true);

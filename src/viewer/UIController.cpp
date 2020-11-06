@@ -137,9 +137,10 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
         ImGui::BulletText("Space - play/stop frame playback");
-        ImGui::BulletText("Left, right arrow - manually change frames");
+        ImGui::BulletText(ICON_FA_ARROW_LEFT ", " ICON_FA_ARROW_RIGHT
+                                             " - manually change frames\n"
+                                             "press with modkey to change slowly");
         ImGui::BulletText("Esc - close application");
-        ImGui::BulletText("Ctrl+g - go to tick");
         ImGui::BulletText("g - Toggle grid draw state");
         ImGui::BulletText("p - Show tooltip with cursor world coordinates");
         ImGui::BulletText("1-5 - Toggle layers visibility");
@@ -216,7 +217,7 @@ void UIController::main_menu_bar() {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE_O " Help", true)) {
-            ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI guide", nullptr, &wnd_->show_ui_help);
+            // ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI guide", nullptr, &wnd_->show_ui_help);
             ImGui::MenuItem(ICON_FA_KEYBOARD_O " Controls", nullptr, &wnd_->show_shortcuts_help);
             ImGui::EndMenu();
         }

@@ -22,6 +22,7 @@ set(Sources
     viewer/Scene.cpp
     viewer/Renderer.cpp
     viewer/Config.cpp
+    viewer/Popup.cpp
 
     viewer/RenderContext.cpp
     viewer/ShaderCollection.cpp

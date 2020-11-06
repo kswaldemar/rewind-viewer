@@ -32,15 +32,9 @@ class RenderContext {
     RenderContext();
     ~RenderContext();
 
-    /// Circle
     void add_circle(glm::vec2 center, float r, glm::vec4 color, bool fill);
-
-    void add_filled_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color);
-
-    /// Rectangle
+    void add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color, bool fill);
     void add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color, bool fill);
-
-    /// Polyline
     void add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color);
 
     /// Add all primitves from other RenderContext

@@ -93,14 +93,19 @@ void RenderContext::add_circle(glm::vec2 center, float r, glm::vec4 color, bool 
     }
 }
 
-void RenderContext::add_filled_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color) {
-    GLuint idx = impl_->points.size();
-    impl_->points.push_back({color, p1});
-    impl_->points.push_back({color, p2});
-    impl_->points.push_back({color, p3});
-    impl_->triangle_indicies.push_back(idx);
-    impl_->triangle_indicies.push_back(idx + 1);
-    impl_->triangle_indicies.push_back(idx + 2);
+void RenderContext::add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color,
+                                 bool fill) {
+    if (fill) {
+        GLuint idx = impl_->points.size();
+        impl_->points.push_back({color, p1});
+        impl_->points.push_back({color, p2});
+        impl_->points.push_back({color, p3});
+        impl_->triangle_indicies.push_back(idx);
+        impl_->triangle_indicies.push_back(idx + 1);
+        impl_->triangle_indicies.push_back(idx + 2);
+    } else {
+        add_polyline({p1, p2, p3}, color);
+    }
 }
 
 void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color,
@@ -165,8 +170,8 @@ void RenderContext::clear() {
 
 void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                          const ShaderCollection &shaders) const {
-    glLineWidth(2);
-    glEnable(GL_LINE_SMOOTH);
+    //glLineWidth(2);
+    //glEnable(GL_LINE_SMOOTH);
 
     // Load data
     glBindBuffer(GL_ARRAY_BUFFER, vaos.point_vbo);
@@ -210,7 +215,7 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                  thin_circle_elements.data(), GL_DYNAMIC_DRAW);
     glDrawElements(GL_POINTS, thin_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    glLineWidth(1);
-    glDisable(GL_LINE_SMOOTH);
+    //glLineWidth(1);
+    //glDisable(GL_LINE_SMOOTH);
     glBindVertexArray(0);
 }
