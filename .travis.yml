@@ -1,6 +1,6 @@
 language: cpp
 compiler: clang
-dist: trusty
+dist: bionic
 sudo: false
 
 os:
@@ -17,10 +17,11 @@ addons:
       - libxinerama-dev
       - libxcursor-dev
       - libxi-dev
-      - g++-6
+      - libglu1-mesa-dev
+      - g++-7
 
 script:
-  - CXX=/usr/bin/g++-6 CC=/usr/bin/gcc-6 cmake .
+  - CXX=/usr/bin/g++-7 CC=/usr/bin/gcc-7 cmake .
   - cmake --build . -- -j2
 
 notifications:

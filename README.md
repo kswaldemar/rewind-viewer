@@ -5,6 +5,7 @@
 [![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green.svg?style=flat-square)](https://www.khronos.org/opengl/)
 [![RAIC](https://img.shields.io/badge/Russian%20AI%20Cup-2017-yellow.svg?style=flat-square)](http://russianaicup.ru/)
 [![Build status](https://travis-ci.org/kswaldemar/rewind-viewer.svg?branch=master)](https://travis-ci.org/kswaldemar/rewind-viewer)
+[![Linux](https://github.com/kswaldemar/rewind-viewer/workflows/Linux/badge.svg)](https://github.com/kswaldemar/rewind-viewer/actions?query=workflow%3ALinux)
 
 Fast Russain AI Cup championship match viewer with rewinding support written in OpenGL
 

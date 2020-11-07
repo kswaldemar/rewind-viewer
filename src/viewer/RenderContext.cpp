@@ -5,7 +5,7 @@
 #include "RenderContext.h"
 #include "ShaderCollection.h"
 
-#include <exception>
+#include <stdexcept>
 
 namespace {
 

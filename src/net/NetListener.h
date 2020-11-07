@@ -9,6 +9,8 @@
 #include <csimplesocket/ActiveSocket.h>
 #include <csimplesocket/PassiveSocket.h>
 
+#include <atomic>
+
 class ProtoHandler;
 
 /**
