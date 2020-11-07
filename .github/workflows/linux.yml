@@ -1,0 +1,30 @@
+name: Linux
+
+on:
+  push:
+    branches: 
+      - master
+
+env:
+  BUILD_TYPE: Release
+  PROJECT_NAME: rewindviewer
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      
+    - name: Checkout submodules
+      uses: srt32/git-actions@v0.0.3
+      with:
+        args: git submodule update --init --recursive
+
+    - name: Configure CMake
+      shell: bash
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+    
+    - name: Build
+      shell: bash
+      run: cmake --build . --target $PROJECT_NAME --parallel 6
