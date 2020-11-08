@@ -144,6 +144,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
                                              "press with modkey to change slowly");
         ImGui::BulletText("Esc - close application");
         ImGui::BulletText("g - Toggle grid draw state");
+        ImGui::BulletText("i - Toggle immediate send mode");
         ImGui::BulletText("p - Show tooltip with cursor world coordinates");
         ImGui::BulletText("1-5 - Toggle layers visibility");
 
@@ -168,6 +169,9 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         }
         if (key_pressed_once(GLFW_KEY_G) && !key_modifier(io)) {
             conf_->scene.show_grid = !conf_->scene.show_grid;
+        }
+        if (key_pressed_once(GLFW_KEY_I)) {
+            immediate_send_mode_ = !immediate_send_mode_;
         }
         if (key_pressed_once(GLFW_KEY_P)) {
             wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
