@@ -16,7 +16,8 @@ void main() {
     float delta = fwidth(dist);
 
     float alpha = step(fs_in.radius, dist);
-    alpha += (1.0 - step(fs_in.radius - delta * line_width, dist)) * step(1, line_width);
+    alpha += (1.0 - step(fs_in.radius - delta * line_width, dist)) *
+             step(float(1), float(line_width));
 
     frag_color = mix(fs_in.color, vec4(0.0), alpha);
 }
