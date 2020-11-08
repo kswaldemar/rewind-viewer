@@ -169,7 +169,7 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         // Read window events
         glfwPollEvents();
 
-        if (!glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
+        if (!conf.ui.update_unfocused && !glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
@@ -186,6 +186,9 @@ void prepare_and_run_game_loop(GLFWwindow *window) {
         if (ui.close_requested()) {
             glfwSetWindowShouldClose(window, true);
         }
+
+        // Primitives send mode
+        net.set_immediate_mode(ui.immediate_mode_enabled());
 
         // Non Ui related drawing
         scene.update_and_render(cam);

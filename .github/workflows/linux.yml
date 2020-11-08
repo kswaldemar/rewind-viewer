@@ -12,14 +12,11 @@ jobs:
       run: sudo apt install libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
       
     - uses: actions/checkout@v2
-              
-    - name: Checkout submodules
-      uses: srt32/git-actions@v0.0.3
       with:
-        args: git submodule update --init --recursive
+        submodules: true
 
     - name: Configure CMake
       run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-    
+
     - name: Build
       run: cmake --build build --target rewindviewer --parallel 6

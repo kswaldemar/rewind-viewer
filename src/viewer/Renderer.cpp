@@ -32,7 +32,7 @@ namespace {
         }
 
         to.add_rectangle({5, 5}, {45, 35}, {1.0, 1.0, 0.0, 0.7}, true);
-        to.add_filled_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8});
+        to.add_triangle({10, 10}, {60, 30}, {10, 40}, {0.0, 1.0, 1.0, 0.8}, true);
 
         to.add_circle({8, 8}, 8, color_red, true);
         to.add_circle({20, 10}, 8, color_green, true);
@@ -106,7 +106,7 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
 
     LOG_INFO("Bind Uniform buffer to shaders");
     shaders_->color.bind_uniform_block("MatrixBlock", 0);
-    shaders_->line.bind_uniform_block("MatrixBlock", 0);
+    shaders_->color_pos.bind_uniform_block("MatrixBlock", 0);
     shaders_->circle.bind_uniform_block("MatrixBlock", 0);
 }
 

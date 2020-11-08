@@ -8,12 +8,7 @@
 #include <cstdlib>
 
 #include <viewer/RenderContext.h>
-
-struct IPopup {
-    virtual ~IPopup() = default;
-    virtual bool hit_test(glm::vec2 pt) const = 0;
-    virtual const char *text() const = 0;
-};
+#include <viewer/Popup.h>
 
 class Frame {
  public:
@@ -21,18 +16,18 @@ class Frame {
     constexpr static size_t DEFAULT_LAYER = 2;
 
     using context_collection_t = std::array<RenderContext, LAYERS_COUNT>;
-    using hittest_t = std::unique_ptr<IPopup>;
+    using popup_collection_t = std::array<std::vector<Popup>, LAYERS_COUNT>;
 
     void update_from(const context_collection_t &from_contexts);
+    void update_from(const Frame &other);
 
     const context_collection_t &all_contexts() const;
-
-    const std::vector<hittest_t> &popups() const;
+    const popup_collection_t &all_popups() const;
 
     const char *user_message() const;
 
  protected:
     context_collection_t contexts_;
-    std::vector<hittest_t> popups_;
+    popup_collection_t popups_;
     std::string user_message_;
 };

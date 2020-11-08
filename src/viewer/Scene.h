@@ -6,7 +6,7 @@
 
 #include <cgutils/Camera.h>
 #include <cgutils/ResourceManager.h>
-
+#include <common/Spinlock.h>
 #include <viewer/Config.h>
 #include <viewer/Frame.h>
 
@@ -45,7 +45,10 @@ class Scene {
     /// Called from network listener when next frame is ready
     void add_frame(std::shared_ptr<Frame> frame);
 
-    /// Add primitives to permanent frame
+    /// Add data to last appended frame. Called from network listener
+    void add_frame_data(const Frame &data);
+
+    /// Add primitives to permanent frame. Called from network listener
     void add_permanent_frame_data(const Frame &data);
 
     /// Show detailed info in tooltip if mouse hover unit
@@ -64,12 +67,12 @@ class Scene {
 
     std::mutex frames_mutex_;
     std::vector<std::shared_ptr<Frame>> frames_;
+    Spinlock frame_modification_lock_;
+
     int cur_frame_idx_ = 0;
     int frames_count_ = 0;
     std::shared_ptr<Frame> active_frame_ = nullptr;
 
     // Permanent frame get rendered each time before active_frame
     Frame permanent_frame_;
-
-    std::atomic_flag lock_permanent_frame_ = ATOMIC_FLAG_INIT;
 };

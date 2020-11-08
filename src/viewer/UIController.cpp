@@ -38,6 +38,7 @@ float get_scale_factor() {
 
 const float DEFAULT_FONT_SIZE = 13.0f;
 const float FONT_AWESOME_FONT_SIZE = 14.0f;
+constexpr const char *APP_VERSION = "2.0";
 
 }  // namespace
 
@@ -99,6 +100,9 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Preferences", true)) {
             ImGui::Checkbox("Close window by Escape key", &conf_->ui.close_with_esc);
+            ImGui::Checkbox("Update window when not in focus", &conf_->ui.update_unfocused);
+            ImGui::Separator();
+            ImGui::Checkbox("Immediate mode", &immediate_send_mode_);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -136,10 +140,12 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::BulletText("Mouse drag on map to move camera");
         ImGui::BulletText("Mouse wheel to zoom");
         ImGui::BulletText("Space - play/stop frame playback");
-        ImGui::BulletText("Left, right arrow - manually change frames");
+        ImGui::BulletText(ICON_FA_ARROW_LEFT ", " ICON_FA_ARROW_RIGHT
+                                             " - manually change frames\n"
+                                             "press with modkey to change slowly");
         ImGui::BulletText("Esc - close application");
-        ImGui::BulletText("Ctrl+g - go to tick");
         ImGui::BulletText("g - Toggle grid draw state");
+        ImGui::BulletText("i - Toggle immediate send mode");
         ImGui::BulletText("p - Show tooltip with cursor world coordinates");
         ImGui::BulletText("1-5 - Toggle layers visibility");
 
@@ -164,6 +170,9 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         }
         if (key_pressed_once(GLFW_KEY_G) && !key_modifier(io)) {
             conf_->scene.show_grid = !conf_->scene.show_grid;
+        }
+        if (key_pressed_once(GLFW_KEY_I)) {
+            immediate_send_mode_ = !immediate_send_mode_;
         }
         if (key_pressed_once(GLFW_KEY_P)) {
             wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
@@ -202,6 +211,10 @@ bool UIController::close_requested() const {
     return request_exit_;
 }
 
+bool UIController::immediate_mode_enabled() const {
+    return immediate_send_mode_;
+}
+
 void UIController::main_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(ICON_FA_EYE " View", true)) {
@@ -215,17 +228,18 @@ void UIController::main_menu_bar() {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu(ICON_FA_QUESTION_CIRCLE_O " Help", true)) {
-            ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI guide", nullptr, &wnd_->show_ui_help);
+            // ImGui::MenuItem(ICON_FA_INFO_CIRCLE " UI guide", nullptr, &wnd_->show_ui_help);
             ImGui::MenuItem(ICON_FA_KEYBOARD_O " Controls", nullptr, &wnd_->show_shortcuts_help);
             ImGui::EndMenu();
         }
+        ImGui::TextDisabled(ICON_FA_CODE_FORK " v%s", APP_VERSION);
         ImGui::EndMainMenuBar();
     }
 }
 
 void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
-    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize |
                        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
     if (wnd_->show_fps_overlay) {
@@ -256,6 +270,11 @@ void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
                 break;
         }
         ImGui::TextColored(color, ICON_FA_PLUG " %s", strstatus.c_str());
+        const ImVec4 mode_color = {0.3f, 0.0f, 0.0f, 1.000f};
+        if (immediate_mode_enabled()) {
+            ImGui::TextColored(mode_color,
+                               ICON_FA_EXCLAMATION_CIRCLE " Immediate send mode enabled");
+        }
         ImGui::End();
     }
 }
@@ -275,6 +294,17 @@ void UIController::info_widget(Scene *scene) {
             ImGui::PushItemWidth(150);
             ImGui::InputFloat2("Position", glm::value_ptr(camera_->pos_), "%.1f");
             ImGui::InputFloat("Viewport size", &camera_->viewport_size_, 50.0, 1000.0, "%.0f");
+            if (ImGui::Button("Save state")) {
+                auto &cam_conf = conf_->camera;
+                cam_conf.start_position = camera_->pos_;
+                cam_conf.start_viewport_size = camera_->viewport_size_;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Restore state")) {
+                auto &cam_conf = conf_->camera;
+                camera_->pos_ = cam_conf.start_position;
+                camera_->viewport_size_ = cam_conf.start_viewport_size;
+            }
             ImGui::PopItemWidth();
         }
         if (ImGui::CollapsingHeader("Colors", flags)) {

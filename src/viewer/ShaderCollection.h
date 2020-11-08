@@ -8,7 +8,7 @@
 struct ShaderCollection {
     ShaderCollection();
 
-    Shader line;
+    Shader color_pos;
     Shader circle;
     // Forward pass vertices with uniform-specified color
     Shader color;

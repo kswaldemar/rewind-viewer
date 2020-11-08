@@ -12,21 +12,6 @@
 namespace {
 
 // Config entries
-const char *UI_FAST_SKIP_SPEED = "ui.fast_skip_speed";
-const char *UI_CLOSE_WITH_ESC = "ui.close_with_esc";
-const char *UI_CLEAR_COLOR = "ui.clear_color";
-
-const char *SCENE_GRID_CELLS_COUNT = "scene.grid_cells_count";
-const char *SCENE_GRID_DIM = "scene.grid_dim";
-const char *SCENE_GRID_COLOR = "scene.grid_color";
-const char *SCENE_SCENE_COLOR = "scene.scene_color";
-const char *SCENE_SHOW_GRID = "scene.show_grid";
-
-const char *NET_USE_BINARY_PROTOCOL = "net.use_binary_protocol";
-
-const char *CAMERA_ORIGIN_ON_TOP_LEFT = "camera.origin_on_top_left";
-const char *CAMERA_START_POSITION = "camera.start_position";
-const char *CAMERA_START_VIEWPORT_SIZE = "camera.start_viewport_size";
 
 void *callback_ReadOpen(ImGuiContext *, ImGuiSettingsHandler *handle, const char *) {
     assert(handle->UserData);
@@ -46,6 +31,8 @@ void callback_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void *entry, cons
         cfg.ui.close_with_esc = d1;
     } else if (sscanf(line, "ui.clear_color=(%f,%f,%f)", &v.r, &v.g, &v.b) == 3) {
         cfg.ui.clear_color = v;
+    } else if (sscanf(line, "ui.update_unfocused=%d", &d1) == 1) {
+        cfg.ui.update_unfocused = d1;
     } else if (sscanf(line, "scene.grid_cells_count=(%d,%d)", &d1, &d2) == 2) {
         cfg.scene.grid_cells = {d1, d2};
     } else if (sscanf(line, "scene.grid_dim=(%f,%f)", &p.x, &p.y) == 2) {
@@ -104,28 +91,34 @@ void callback_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, ImGuiTextB
     Config &cfg = *static_cast<Config *>(handler->UserData);
 
     buf->appendf("[%s][%s]\n", handler->TypeName, "Parameters configuration");
-    write(*buf, UI_FAST_SKIP_SPEED, cfg.ui.fast_skip_speed,
-          "How much frame to skip when fast forward arrow pressed");
-    write(*buf, UI_CLOSE_WITH_ESC, cfg.ui.close_with_esc);
-    write(*buf, UI_CLEAR_COLOR, cfg.ui.clear_color, "Background color, rgb format");
 
-    write(*buf, SCENE_GRID_CELLS_COUNT, cfg.scene.grid_cells,
-          "Grid cells count in each dimension (X, Y)");
-    write(*buf, SCENE_GRID_DIM, cfg.scene.grid_dim, "Scene size");
-    write(*buf, SCENE_GRID_COLOR, glm::vec3{cfg.scene.grid_color}, "Grid color, rgb format");
-    write(*buf, SCENE_SCENE_COLOR, glm::vec3{cfg.scene.scene_color},
+#define P(param) #param, param
+    const auto &ui = cfg.ui;
+    write(*buf, P(ui.fast_skip_speed), "How much frame to skip when fast forward arrow pressed");
+    write(*buf, P(ui.close_with_esc));
+    write(*buf, P(ui.clear_color), "Background color, rgb format");
+    write(*buf, P(ui.update_unfocused), "Update when not in focus, consumes extra CPU");
+
+    const auto &scene = cfg.scene;
+    write(*buf, P(scene.grid_cells), "Grid cells count in each dimension (X, Y)");
+    write(*buf, P(scene.grid_dim), "Scene size");
+    write(*buf, "scene.grid_color", glm::vec3{cfg.scene.grid_color}, "Grid color, rgb format");
+    write(*buf, "scene.scene_color", glm::vec3{cfg.scene.scene_color},
           "Scene background color, rgb format");
-    write(*buf, SCENE_SHOW_GRID, cfg.scene.show_grid, "If true, grid will be shown by default");
+    write(*buf, P(scene.show_grid), "If true, grid will be shown by default");
 
-    write(*buf, NET_USE_BINARY_PROTOCOL, cfg.net.use_binary_protocol,
-          "If true, binary protocol will be used instead of default json one");
+    // const auto &net = cfg.net;
+    // write(*buf, P(net.use_binary_protocol),
+    //      "If true, binary protocol will be used instead of default json one");
 
-    write(*buf, CAMERA_ORIGIN_ON_TOP_LEFT, cfg.camera.origin_on_top_left,
+    const auto &camera = cfg.camera;
+    write(*buf, P(camera.origin_on_top_left),
           "If true, world origin will be in top left corner of screen, like in normal computer "
           "graphics");
-    write(*buf, CAMERA_START_POSITION, cfg.camera.start_position,
+    write(*buf, P(camera.start_position),
           "Initial settings for camera. In game camera movement won't rewrite that values");
-    write(*buf, CAMERA_START_VIEWPORT_SIZE, cfg.camera.start_viewport_size);
+    write(*buf, P(camera.start_viewport_size));
+#undef P
 
     buf->append("\n");
 }

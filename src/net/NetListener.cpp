@@ -55,6 +55,10 @@ void NetListener::run() {
     }
 }
 
+void NetListener::set_immediate_mode(bool enable) {
+    immediate_mode_.store(enable);
+}
+
 void NetListener::stop() {
     if (status_ != ConStatus::CLOSED) {
         LOG_INFO("Stopping network listening");
@@ -74,6 +78,7 @@ void NetListener::serve_connection(CActiveSocket *client) {
             //  same for debug print
             data[nbytes] = '\0';
             LOG_V9("NetClient:: Message %d bytes, '%s'", nbytes, data);
+            handler_->set_immediate_mode(immediate_mode_.load());
             // Strategy can send several messages in one block
             handler_->handle_message(data, static_cast<uint32_t>(nbytes));
         } else {

@@ -16,6 +16,7 @@ struct Config {
         uint16_t fast_skip_speed = 20;
         bool close_with_esc = false;
         glm::vec3 clear_color = {0.2, 0.3, 0.3};
+        bool update_unfocused = false;
     } ui;
 
     struct SceneConf {

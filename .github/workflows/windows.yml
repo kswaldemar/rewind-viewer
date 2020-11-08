@@ -1,0 +1,32 @@
+name: Windows
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: true
+
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Build
+      run: cmake --build build --target rewindviewer --parallel 6 --config Release
+    
+    - name: Upload binary
+      uses: actions/upload-artifact@v2
+      with:
+        name: rewindviewer
+        path: build/Release/rewindviewer.exe
+        retention-days: 7
+
+    - name: Upload resources folder
+      uses: actions/upload-artifact@v2
+      with:
+        name: resources
+        path: resources
+        retention-days: 7
