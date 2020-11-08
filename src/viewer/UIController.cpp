@@ -38,6 +38,7 @@ float get_scale_factor() {
 
 const float DEFAULT_FONT_SIZE = 13.0f;
 const float FONT_AWESOME_FONT_SIZE = 14.0f;
+constexpr const char *APP_VERSION = "2.0";
 
 }  // namespace
 
@@ -231,6 +232,7 @@ void UIController::main_menu_bar() {
             ImGui::MenuItem(ICON_FA_KEYBOARD_O " Controls", nullptr, &wnd_->show_shortcuts_help);
             ImGui::EndMenu();
         }
+        ImGui::TextDisabled(ICON_FA_CODE_FORK " v%s", APP_VERSION);
         ImGui::EndMainMenuBar();
     }
 }
