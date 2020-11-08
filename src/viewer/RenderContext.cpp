@@ -173,6 +173,7 @@ void RenderContext::clear() {
 
 void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                          const ShaderCollection &shaders) const {
+    glCheckError();
     // glLineWidth(2);
     // glEnable(GL_LINE_SMOOTH);
 
@@ -186,7 +187,7 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                  impl_->circles.data(), GL_DYNAMIC_DRAW);
 
     // Simple pass shader - triangles and lines
-    shaders.line.use();
+    shaders.color_pos.use();
     glBindVertexArray(vaos.point_vao);
     {
         // Filled triangles, so any polygon
@@ -224,4 +225,5 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos,
     // glLineWidth(1);
     // glDisable(GL_LINE_SMOOTH);
     glBindVertexArray(0);
+    glCheckError();
 }

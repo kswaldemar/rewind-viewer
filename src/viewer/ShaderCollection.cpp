@@ -5,6 +5,6 @@
 #include "ShaderCollection.h"
 
 ShaderCollection::ShaderCollection()
-    : line("lines.vert", "lines.frag")
+    : color_pos("color_pos.vert", "color_pos.frag")
     , circle("circle.vert", "circle.frag", "circle.geom")
     , color("simple.vert", "uniform_color.frag") {}
