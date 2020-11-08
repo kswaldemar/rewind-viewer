@@ -28,5 +28,5 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: resources
-        path: resources       
+        path: resources
         retention-days: 7
