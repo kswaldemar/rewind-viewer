@@ -30,6 +30,8 @@ class UIController {
 
     bool close_requested() const;
 
+    bool immediate_mode_enabled() const;
+
  private:
     void main_menu_bar();
 
@@ -49,6 +51,7 @@ class UIController {
     bool request_exit_ = false;
     bool autoplay_scene_ = true;
     bool developer_mode_ = false;
+    bool immediate_send_mode_ = false;
 
     /// Last remembered state
     bool key_pressed_[512] = {};

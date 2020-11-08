@@ -69,6 +69,18 @@ void Scene::add_frame(std::shared_ptr<Frame> frame) {
     frames_.emplace_back(std::move(frame));
 }
 
+void Scene::add_frame_data(const Frame &data) {
+    if (frames_count_ == 0) {
+        throw std::runtime_error("called add_frame_data, but frames list is empty");
+    }
+
+    std::lock_guard<std::mutex> f(frames_mutex_);
+    auto &last = frames_.back();
+
+    std::lock_guard<Spinlock> m(frame_modification_lock_);
+    last->update_from(data);
+}
+
 void Scene::add_permanent_frame_data(const Frame &data) {
     std::unique_lock<Spinlock> _(frame_modification_lock_);
     permanent_frame_.update_from(data.all_contexts());

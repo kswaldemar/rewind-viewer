@@ -100,6 +100,8 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (ImGui::BeginMenu(ICON_FA_PENCIL_SQUARE_O " Preferences", true)) {
             ImGui::Checkbox("Close window by Escape key", &conf_->ui.close_with_esc);
             ImGui::Checkbox("Update window when not in focus", &conf_->ui.update_unfocused);
+            ImGui::Separator();
+            ImGui::Checkbox("Immediate mode", &immediate_send_mode_);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
@@ -204,6 +206,10 @@ bool UIController::close_requested() const {
     return request_exit_;
 }
 
+bool UIController::immediate_mode_enabled() const {
+    return immediate_send_mode_;
+}
+
 void UIController::main_menu_bar() {
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu(ICON_FA_EYE " View", true)) {
@@ -227,7 +233,7 @@ void UIController::main_menu_bar() {
 
 void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
     ImGui::SetNextWindowPos(ImVec2(10, 20));
-    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+    const auto flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize |
                        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings;
 
     if (wnd_->show_fps_overlay) {
@@ -258,6 +264,11 @@ void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
                 break;
         }
         ImGui::TextColored(color, ICON_FA_PLUG " %s", strstatus.c_str());
+        const ImVec4 mode_color = {0.3f, 0.0f, 0.0f, 1.000f};
+        if (immediate_mode_enabled()) {
+            ImGui::TextColored(mode_color,
+                               ICON_FA_EXCLAMATION_CIRCLE " Immediate send mode enabled");
+        }
         ImGui::End();
     }
 }

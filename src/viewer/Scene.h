@@ -45,7 +45,10 @@ class Scene {
     /// Called from network listener when next frame is ready
     void add_frame(std::shared_ptr<Frame> frame);
 
-    /// Add primitives to permanent frame
+    /// Add data to last appended frame. Called from network listener
+    void add_frame_data(const Frame &data);
+
+    /// Add primitives to permanent frame. Called from network listener
     void add_permanent_frame_data(const Frame &data);
 
     /// Show detailed info in tooltip if mouse hover unit

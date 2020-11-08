@@ -182,7 +182,6 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
         switch (type) {
             case PrimitiveType::END: {
                 LOG_V8("JsonHandler::End");
-                on_frame_end();
                 break;
             }
             case PrimitiveType::CIRCLE: {
@@ -241,6 +240,8 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             }
             case PrimitiveType::TYPES_COUNT: break;
         }
+
+        on_message_processed(type == PrimitiveType::END);
     } catch (const std::exception &e) {
         LOG_WARN("JsonClient::Exception: %s", e.what());
     }

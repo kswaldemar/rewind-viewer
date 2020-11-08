@@ -36,6 +36,11 @@ class NetListener {
     /// Blocking call, should be running on personal thread
     void run();
 
+    /// Immediate mode
+    /// Send primitives as soon as they come, do not wait 'end'
+    /// Called from render thread
+    void set_immediate_mode(bool enable);
+
     void stop();
 
  private:
@@ -50,4 +55,5 @@ class NetListener {
     std::unique_ptr<ProtoHandler> handler_;
 
     std::atomic<bool> stop_{false};
+    std::atomic<bool> immediate_mode_{false};
 };
