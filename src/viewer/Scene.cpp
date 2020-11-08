@@ -16,7 +16,7 @@ Scene::~Scene() = default;
 void Scene::update_and_render(const Camera &cam) {
     // Update current frame
     {
-        std::lock_guard<std::mutex> f(frames_mutex_);
+        std::lock_guard<std::mutex> _(frames_mutex_);
         frames_count_ = static_cast<int>(frames_.size());
         if (cur_frame_idx_ >= 0 && cur_frame_idx_ < frames_count_) {
             active_frame_ = frames_[cur_frame_idx_];
@@ -31,25 +31,15 @@ void Scene::update_and_render(const Camera &cam) {
         renderer_->render_grid(conf_.grid_color);
     }
 
-    // Draw permanent frame
-    {
-        while (lock_permanent_frame_.test_and_set(std::memory_order_acquire))
-            ;
-        const auto &contexts = permanent_frame_.all_contexts();
-        for (size_t idx = 0; idx < contexts.size(); ++idx) {
-            if (conf_.enabled_layers[idx]) {
-                renderer_->render_primitives(contexts[idx]);
-            }
-        }
-        lock_permanent_frame_.clear(std::memory_order_release);
-    }
-
     // Draw currently selected frame
     if (active_frame_) {
-        const auto &contexts = active_frame_->all_contexts();
-        for (size_t idx = 0; idx < contexts.size(); ++idx) {
+        std::lock_guard<Spinlock> _(frame_modification_lock_);
+        const auto &perm_frame_contexts = permanent_frame_.all_contexts();
+        const auto &frame_contexts = active_frame_->all_contexts();
+        for (size_t idx = 0; idx < Frame::LAYERS_COUNT; ++idx) {
             if (conf_.enabled_layers[idx]) {
-                renderer_->render_primitives(contexts[idx]);
+                renderer_->render_primitives(perm_frame_contexts[idx]);
+                renderer_->render_primitives(frame_contexts[idx]);
             }
         }
     }
@@ -80,10 +70,8 @@ void Scene::add_frame(std::shared_ptr<Frame> frame) {
 }
 
 void Scene::add_permanent_frame_data(const Frame &data) {
-    while (lock_permanent_frame_.test_and_set(std::memory_order_acquire))
-        ;
+    std::unique_lock<Spinlock> _(frame_modification_lock_);
     permanent_frame_.update_from(data.all_contexts());
-    lock_permanent_frame_.clear(std::memory_order_release);
 }
 
 void Scene::show_detailed_info(const glm::vec2 &mouse) const {

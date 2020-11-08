@@ -12,18 +12,21 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(Sources
     main.cpp
+
     imgui_impl/imgui_impl_glfw.cpp
     imgui_impl/imgui_impl_opengl3.cpp
+
     cgutils/Shader.cpp
     cgutils/Camera.cpp
     cgutils/utils.cpp
     cgutils/ResourceManager.cpp
+    common/Spinlock.cpp
+
     viewer/UIController.cpp
     viewer/Scene.cpp
     viewer/Renderer.cpp
     viewer/Config.cpp
     viewer/Popup.cpp
-
     viewer/RenderContext.cpp
     viewer/ShaderCollection.cpp
     viewer/Frame.cpp

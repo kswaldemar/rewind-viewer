@@ -173,8 +173,8 @@ void RenderContext::clear() {
 
 void RenderContext::draw(const RenderContext::context_vao_t &vaos,
                          const ShaderCollection &shaders) const {
-    //glLineWidth(2);
-    //glEnable(GL_LINE_SMOOTH);
+    // glLineWidth(2);
+    // glEnable(GL_LINE_SMOOTH);
 
     // Load data
     glBindBuffer(GL_ARRAY_BUFFER, vaos.point_vbo);
@@ -185,40 +185,43 @@ void RenderContext::draw(const RenderContext::context_vao_t &vaos,
     glBufferData(GL_ARRAY_BUFFER, impl_->circles.size() * sizeof(circle_layout_t),
                  impl_->circles.data(), GL_DYNAMIC_DRAW);
 
-    // Lines
+    // Simple pass shader - triangles and lines
     shaders.line.use();
     glBindVertexArray(vaos.point_vao);
-    const auto &line_elements = impl_->line_indicies;
+    {
+        // Filled triangles, so any polygon
+        const auto &triangle_elements = impl_->triangle_indicies;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangle_elements.size() * sizeof(GLuint),
+                     triangle_elements.data(), GL_DYNAMIC_DRAW);
+        glDrawElements(GL_TRIANGLES, triangle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, line_elements.size() * sizeof(GLuint),
-                 line_elements.data(), GL_DYNAMIC_DRAW);
-    glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, nullptr);
+        // Lines
+        const auto &line_elements = impl_->line_indicies;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, line_elements.size() * sizeof(GLuint),
+                     line_elements.data(), GL_DYNAMIC_DRAW);
+        glDrawElements(GL_LINES, line_elements.size(), GL_UNSIGNED_INT, nullptr);
+    }
 
-    // Filled triangles, so any polygon
-    const auto &triangle_elements = impl_->triangle_indicies;
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangle_elements.size() * sizeof(GLuint),
-                 triangle_elements.data(), GL_DYNAMIC_DRAW);
-    glDrawElements(GL_TRIANGLES, triangle_elements.size(), GL_UNSIGNED_INT, nullptr);
-
-    // Circles
+    // Circles shader
     shaders.circle.use();
     glBindVertexArray(vaos.circle_vao);
+    {
+        // Filled
+        shaders.circle.set_uint("line_width", 0);
+        const auto &fill_circle_elements = impl_->filled_circle_indicies;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, fill_circle_elements.size() * sizeof(GLuint),
+                     fill_circle_elements.data(), GL_DYNAMIC_DRAW);
+        glDrawElements(GL_POINTS, fill_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
 
-    // Filled
-    shaders.circle.set_uint("line_width", 0);
-    const auto &fill_circle_elements = impl_->filled_circle_indicies;
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, fill_circle_elements.size() * sizeof(GLuint),
-                 fill_circle_elements.data(), GL_DYNAMIC_DRAW);
-    glDrawElements(GL_POINTS, fill_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
+        // Thin
+        shaders.circle.set_uint("line_width", 1);
+        const auto &thin_circle_elements = impl_->thin_circle_indicies;
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, thin_circle_elements.size() * sizeof(GLuint),
+                     thin_circle_elements.data(), GL_DYNAMIC_DRAW);
+        glDrawElements(GL_POINTS, thin_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
+    }
 
-    // Thin
-    shaders.circle.set_uint("line_width", 1);
-    const auto &thin_circle_elements = impl_->thin_circle_indicies;
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, thin_circle_elements.size() * sizeof(GLuint),
-                 thin_circle_elements.data(), GL_DYNAMIC_DRAW);
-    glDrawElements(GL_POINTS, thin_circle_elements.size(), GL_UNSIGNED_INT, nullptr);
-
-    //glLineWidth(1);
-    //glDisable(GL_LINE_SMOOTH);
+    // glLineWidth(1);
+    // glDisable(GL_LINE_SMOOTH);
     glBindVertexArray(0);
 }
