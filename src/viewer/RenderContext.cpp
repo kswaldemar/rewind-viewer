@@ -107,7 +107,7 @@ void RenderContext::add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::
         impl_->triangle_indicies.push_back(idx + 1);
         impl_->triangle_indicies.push_back(idx + 2);
     } else {
-        add_polyline({p1, p2, p3}, color);
+        add_polyline({p1, p2, p3, p1}, color);
     }
 }
 
