@@ -9,16 +9,19 @@
 
 namespace {
 
+#pragma pack(push, 1)
 struct point_layout_t {
     glm::vec4 color;
     glm::vec2 point;
-} __attribute__((packed));
+};
 
 struct circle_layout_t {
     glm::vec4 color;
     glm::vec2 point;
     float radius;
-} __attribute__((packed));
+};
+
+#pragma pack(pop)
 
 void add_elements(size_t shift, std::vector<GLuint> &to, const std::vector<GLuint> &from) {
     to.reserve(to.size() + from.size());
