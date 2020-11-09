@@ -29,7 +29,7 @@ void prepare_and_run_game_loop(GLFWwindow *window);
 int main(int argc, char **argv) {
     loguru::g_stderr_verbosity = loguru::Verbosity_INFO;
     loguru::init(argc, argv);
-    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::Verbosity_9);
+    loguru::add_file("rewindviewer.log", loguru::Truncate, loguru::g_stderr_verbosity);
 
     // Init GLFW
     LOG_INFO("Init GLFW");
