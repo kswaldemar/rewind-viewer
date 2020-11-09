@@ -6,6 +6,8 @@
 
 #include "UIController.h"
 
+#include <version.h>
+
 #include <fontawesome.h>
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
@@ -38,7 +40,6 @@ float get_scale_factor() {
 
 const float DEFAULT_FONT_SIZE = 13.0f;
 const float FONT_AWESOME_FONT_SIZE = 14.0f;
-constexpr const char *APP_VERSION = "2.0";
 
 }  // namespace
 
