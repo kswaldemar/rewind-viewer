@@ -6,12 +6,12 @@
 
 #include "UIController.h"
 
+#include <common/logger.h>
 #include <version.h>
 
 #include <fontawesome.h>
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
-#include <imgui_impl/style.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -41,6 +41,25 @@ float get_scale_factor() {
 const float DEFAULT_FONT_SIZE = 13.0f;
 const float FONT_AWESOME_FONT_SIZE = 14.0f;
 
+const char *THEMES_COMBO = "Light\0Grey\0Dark\0";
+void set_style_by_theme_id(int theme_id) {
+    switch (theme_id) {
+        case 0: ImGui::StyleColorsLight(); break;
+        case 1: ImGui::StyleColorsClassic(); break;
+        case 2: ImGui::StyleColorsDark(); break;
+        default: LOG_WARN("Incorrect theme_id=%d", theme_id);
+    }
+
+    // Custom changes
+    auto &style = ImGui::GetStyle();
+    style.Alpha = 1.0f;
+    style.FrameRounding = 3.0f;
+    style.WindowPadding.y = 7;
+    style.WindowRounding = 4;
+    style.GrabRounding = 2;
+    style.WindowBorderSize = 0.0f;
+}
+
 }  // namespace
 
 struct UIController::wnd_t {
@@ -60,7 +79,7 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     ImGui_ImplOpenGL3_Init();
     wnd_ = std::make_unique<wnd_t>();
 
-    setup_custom_style(false);
+    set_style_by_theme_id(conf_->ui.imgui_theme_id);
 
     auto &io = ImGui::GetIO();
     const float scale_factor = get_scale_factor();
@@ -321,6 +340,9 @@ void UIController::info_widget(Scene *scene) {
             ImGui::ColorEdit3("Background", glm::value_ptr(conf_->ui.clear_color));
             ImGui::ColorEdit3("Grid", glm::value_ptr(conf_->scene.grid_color));
             ImGui::ColorEdit3("Canvas", glm::value_ptr(conf_->scene.scene_color));
+            if (ImGui::Combo("Theme", &conf_->ui.imgui_theme_id, THEMES_COMBO)) {
+                set_style_by_theme_id(conf_->ui.imgui_theme_id);
+            }
         }
         if (ImGui::CollapsingHeader("Options", flags)) {
             ImGui::Checkbox("World origin on top left", &conf_->camera.origin_on_top_left);

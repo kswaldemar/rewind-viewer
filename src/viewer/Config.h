@@ -17,6 +17,7 @@ struct Config {
         bool close_with_esc = false;
         glm::vec3 clear_color = {0.2, 0.3, 0.3};
         bool update_unfocused = false;
+        int imgui_theme_id = 0;
     } ui;
 
     struct SceneConf {
