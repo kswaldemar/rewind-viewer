@@ -147,6 +147,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::BulletText("Esc - close application");
         ImGui::BulletText("g - Toggle grid draw state");
         ImGui::BulletText("i - Toggle immediate send mode");
+        ImGui::BulletText("modkey + g - Go to tick");
         ImGui::BulletText("p - Show tooltip with cursor world coordinates");
         ImGui::BulletText("1-5 - Toggle layers visibility");
 
@@ -410,7 +411,9 @@ void UIController::playback_control_widget(Scene *scene) {
         if (frames_cnt > 0) {
             tick = cg::clamp(tick, 1, frames_cnt);
             ImGui::PushItemWidth(-1);
-
+            if (key_modifier(io) && io.KeysDown[GLFW_KEY_G]) {
+                ImGui::SetKeyboardFocusHere();
+            }
             const std::string slider_fmt = "%5d/" + std::to_string(frames_cnt);
             if (ImGui::SliderInt("##empty", &tick, 1, frames_cnt, slider_fmt.data(),
                                  ImGuiSliderFlags_AlwaysClamp)) {
