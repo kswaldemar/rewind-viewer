@@ -44,7 +44,8 @@ type: 'rectangle'
 tl: [float, float]                  # top-left point
 br: [float, float]                  # bottom-right point
 color: color                        # color, integer format
-       [color, color, color, color] #  you also may specify different color for each vertex
+       [color, color, color, color] #  or you may specify different color for each vertex 
+                                    #    (field should be either color or array of colors)
                                     #  vertex order for colors is top_left, bottom_left, top_right, bottom_right  
 ```
 :info: If you mix up `tl` and `br` positions they will be normalized
@@ -55,7 +56,8 @@ type: 'triangle'
 points: [float, float, float, 
          float, float, float]  # exactly 3 points (6 floats)
 color: color                   # color, integer format
-       [color, color, color]   #   you also may specify different colors for each vertex
+       [color, color, color]   #   or you may specify different colors for each vertex
+                               #    (field should be either color or array of colors)
 fill: boolean                  # whenever to fill with color
 ```
 
@@ -96,7 +98,7 @@ text: string        # text to be displayed (escape characters as \n are allowed)
 
 ### options
 Frame options
-- `layer` Set active layer (1-5) for primitives. 
+- `layer` Set active layer (1-10) for primitives.
 _Note:_ `end` primitive reset layer to its default value
 - `permanent` Primitives from permanent frame drawn before each frame, thus allow to once draw unchanged data, like map border
 ```yaml
