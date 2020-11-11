@@ -5,7 +5,7 @@
 ProtoHandler::ProtoHandler(Scene *scene) : scene_(scene) {}
 
 void ProtoHandler::on_new_connection() {
-    scene_->clear_data(false);
+    scene_->clear_data();
     reset_state();
 }
 

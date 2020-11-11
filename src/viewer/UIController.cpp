@@ -215,7 +215,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         }
 
         if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && key_modifier(io)) {
-            scene->clear_data(false);
+            scene->clear_data();
         }
     }
 
