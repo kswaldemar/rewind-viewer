@@ -48,7 +48,7 @@ color: color                        # color, integer format
                                     #    (field should be either color or array of colors)
                                     #  vertex order for colors is top_left, bottom_left, top_right, bottom_right  
 ```
-:info: If you mix up `tl` and `br` positions they will be normalized
+:information_source: If you mix up `tl` and `br` positions they will be normalized
 
 ### triangle
 ```yaml
