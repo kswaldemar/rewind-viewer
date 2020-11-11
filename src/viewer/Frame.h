@@ -7,8 +7,8 @@
 #include <array>
 #include <cstdlib>
 
-#include <viewer/RenderContext.h>
 #include <viewer/Popup.h>
+#include <viewer/RenderContext.h>
 
 class Frame {
  public:

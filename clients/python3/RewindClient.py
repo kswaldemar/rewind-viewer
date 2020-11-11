@@ -8,7 +8,8 @@ class RewindClient():
     DARK_RED = 0x770000
     DARK_GREEN = 0x007700
     DARK_BLUE = 0x000077
-    TRANSPARENT = 0x88000000
+    TRANSPARENT = 0x7f000000
+    INVISIBLE = 0x01000000
 
     def __init__(self, host=None, port=None):
         self._socket = _socket.socket()

@@ -10,7 +10,6 @@
 
 class Popup {
  public:
-
     static Popup create_circle(glm::vec2 center, float radius, std::string text);
     static Popup create_rect(glm::vec2 center, glm::vec2 size, std::string text);
 
