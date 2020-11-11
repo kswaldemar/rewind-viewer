@@ -80,7 +80,7 @@ public:
         send(format(fmt, x1, y1, x2, y2, color));
     }
 
-    void polyline(std::vector<double> &points, uint32_t color) {
+    void polyline(const std::vector<double> &points, uint32_t color) {
         std::string s = R"({"type": "polyline", "points": [)";
         bool first = true;
         for (double p : points) {
