@@ -5,8 +5,8 @@
 
 #include <utility>
 
-void FrameEditor::add_box_popup(glm::vec2 top_left, glm::vec2 bottom_right, std::string message) {
-    popups_[layer_id_].push_back(Popup::create_rect(top_left, bottom_right, std::move(message)));
+void FrameEditor::add_box_popup(glm::vec2 center, glm::vec2 size, std::string message) {
+    popups_[layer_id_].push_back(Popup::create_rect(center, size, std::move(message)));
 }
 
 void FrameEditor::add_round_popup(glm::vec2 center, float radius, std::string message) {

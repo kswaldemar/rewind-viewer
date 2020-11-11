@@ -7,7 +7,7 @@
 
 class FrameEditor : public Frame {
  public:
-    void add_box_popup(glm::vec2 top_left, glm::vec2 bottom_right, std::string message);
+    void add_box_popup(glm::vec2 center, glm::vec2 size, std::string message);
 
     void add_round_popup(glm::vec2 center, float radius, std::string message);
 

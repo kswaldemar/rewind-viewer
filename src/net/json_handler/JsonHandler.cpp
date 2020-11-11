@@ -20,6 +20,19 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
     return def_val;
 }
 
+bool contains(const nlohmann::json &j, const std::string &key) {
+    return j.find(key) != j.end();
+}
+
+void normalize(glm::vec2 &min_corner, glm::vec2 &max_corner) {
+    if (min_corner.x > max_corner.x) {
+        std::swap(min_corner.x, max_corner.x);
+    }
+    if (min_corner.y > max_corner.y) {
+        std::swap(min_corner.y, max_corner.y);
+    }
+}
+
 }  // anonymous namespace
 
 struct ParsingError : std::runtime_error {
@@ -47,9 +60,19 @@ struct Rectangle : ColorShape {
 };
 
 struct Popup {
-    glm::vec2 center;
-    float radius;
+    bool is_round;
     std::string text;
+    glm::vec2 center;
+    union {
+        struct {
+            float radius;
+        };
+        struct {
+            float w;
+            float h;
+        };
+    };
+
 };
 
 struct Polyline : ColorShape {
@@ -112,8 +135,24 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Popup &p) {
-    p.radius = j["r"].get<float>();
-    p.center = convert_position(j["p"].get<GeoPoints>());
+    if (contains(j, "tl") && contains(j, "br")) {
+        p.is_round = false;
+        auto min_corner = convert_position(j["tl"].get<GeoPoints>());
+        auto max_corner = convert_position(j["br"].get<GeoPoints>());
+        normalize(min_corner, max_corner);
+
+        const auto diff = max_corner - min_corner;
+        p.center = min_corner + diff * 0.5f;
+        p.w = diff.x;
+        p.h = diff.y;
+    } else if (contains(j, "r") && contains(j, "p")) {
+        p.is_round = true;
+        p.radius = j["r"].get<float>();
+        p.center = convert_position(j["p"].get<GeoPoints>());
+    } else {
+        throw ParsingError{"Popup should contain either fields [p, r] or [tl, br]"};
+    }
+
     p.text = j["text"].get<std::string>();
 }
 
@@ -122,9 +161,7 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
 
     p.top_left = convert_position(j["tl"].get<GeoPoints>());
     p.bottom_right = convert_position(j["br"].get<GeoPoints>());
-    if (p.top_left.x > p.bottom_right.x) {
-        std::swap(p.top_left, p.bottom_right);
-    }
+    normalize(p.top_left, p.bottom_right);
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Polyline &p) {
@@ -215,7 +252,11 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             case PrimitiveType::POPUP: {
                 LOG_V8("JsonHandler::Popup");
                 auto obj = j.get<pod::Popup>();
-                get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
+                if (obj.is_round) {
+                    get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
+                } else {
+                    get_frame_editor().add_box_popup(obj.center, {obj.w, obj.h}, std::move(obj.text));
+                }
                 break;
             }
             case PrimitiveType::OPTIONS: {
