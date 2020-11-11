@@ -41,18 +41,21 @@ fill: boolean       # whenever to fill with color
 ### rectangle
 ```yaml
 type: 'rectangle'
-tl: [float, float]  # top-left
-br: [float, float]  # bottom-right point
-color: color        # color, integer format
+tl: [float, float]                  # top-left point
+br: [float, float]                  # bottom-right point
+color: color                        # color, integer format
+       [color, color, color, color] #  you also may specify different color for each vertex
+                                    #  vertex order for colors is top_left, bottom_left, top_right, bottom_right  
 ```
-:note: If you mix up `tl` and `br` positions they will be swaped
+:info: If you mix up `tl` and `br` positions they will be normalized
 
 ### triangle
 ```yaml
-type: 'rectangle'
+type: 'triangle'
 points: [float, float, float, 
          float, float, float]  # exactly 3 points (6 floats)
 color: color                   # color, integer format
+       [color, color, color]   #   you also may specify different colors for each vertex
 fill: boolean                  # whenever to fill with color
 ```
 
@@ -73,13 +76,24 @@ type: 'message'
 message: string
 ```
 ### popup
-Show popup window with message when cursor overlaps with given `circle`
+Show popup window with message when cursor overlaps with given shape
+
+Round popup:
 ```yaml
 type: 'popup'
 p: [float, float]   # circle center position
 r: float            # circle radius
 text: string        # text to be displayed (escape characters as \n are allowed)
 ```
+
+Rectangular popup:
+```yaml
+type: 'popup'
+tl: [float, float]  # top-left
+br: [float, float]  # bottom-right point
+text: string        # text to be displayed (escape characters as \n are allowed)
+```
+
 ### options
 Frame options
 - `layer` Set active layer (1-5) for primitives. 
