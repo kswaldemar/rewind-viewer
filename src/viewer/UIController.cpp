@@ -149,7 +149,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::BulletText("i - Toggle immediate send mode");
         ImGui::BulletText("modkey + g - Go to tick");
         ImGui::BulletText("p - Show tooltip with cursor world coordinates");
-        ImGui::BulletText("1-5 - Toggle layers visibility");
+        ImGui::BulletText("1-0 - Toggle layers visibility");
 
         ImGui::End();
     }
@@ -182,12 +182,19 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (io.KeysDown[GLFW_KEY_D] && key_modifier(io)) {
             developer_mode_ = true;
         }
+
+        // Layer toggle shortcuts
         auto &enabled_layers = conf_->scene.enabled_layers;
-        for (size_t layer_idx = 0; layer_idx < enabled_layers.size(); ++layer_idx) {
-            if (key_pressed_once(static_cast<int>(GLFW_KEY_1 + layer_idx))) {
-                enabled_layers[layer_idx] = !enabled_layers[layer_idx];
+        static const std::array<int, Frame::LAYERS_COUNT> layer_shortcuts = {
+            GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5,
+            GLFW_KEY_6, GLFW_KEY_7, GLFW_KEY_8, GLFW_KEY_9, GLFW_KEY_0,
+        };
+        for (size_t i = 0; i < layer_shortcuts.size(); ++i) {
+            if (key_pressed_once(layer_shortcuts[i])) {
+                enabled_layers[i] = !enabled_layers[i];
             }
         }
+
         if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && key_modifier(io)) {
             scene->clear_data(false);
         }
@@ -322,10 +329,11 @@ void UIController::info_widget(Scene *scene) {
     }
     if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Layer visibility", flags)) {
         static const ImVec4 button_colors[] = {ImVec4(0.5, 0.5, 0.5, 1.0),
-                                               ImVec4(0.58, 0.941, 0.429, 1.0)};
+                                               ImVec4(0.38, 0.741, 0.229, 1.0)};
         size_t idx = 0;
         static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)> captions{
-            {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}};
+            {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4", "##layer5", "##layer6",
+             "##layer7", "##layer8", "##layer9"}};
         for (bool &enabled : conf_->scene.enabled_layers) {
             if (ImGui::ColorButton(captions[idx], button_colors[enabled],
                                    ImGuiColorEditFlags_NoTooltip)) {

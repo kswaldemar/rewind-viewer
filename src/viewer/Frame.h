@@ -12,7 +12,7 @@
 
 class Frame {
  public:
-    constexpr static size_t LAYERS_COUNT = 5;
+    constexpr static size_t LAYERS_COUNT = 10;
     constexpr static size_t DEFAULT_LAYER = 2;
 
     using context_collection_t = std::array<RenderContext, LAYERS_COUNT>;
