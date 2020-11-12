@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -10,16 +11,16 @@
 
 /**
  *  Class for interaction with rewind-viewer from your own strategy class
- *  
+ *
  *  Implemented using CActiveSocket, which is shipped with cpp-cgdk
  *  For each frame (game tick) rewind-viewer expect "end" command at frame end
- *  All objects should be represented as json string, 
+ *  All objects should be represented as json string,
  *  and will be decoded at viewer side to corresponding structures
  *
  *  Every object has mandatory field "type" and arbitrary number of additional fields
  *  For example end will looks like
  *      {"type": "end"}
- *  
+ *
  *  For available types see enum PrimitiveType in Frame.h header
  *
  *  Colors has ARGB format, if you set only RGB component alpha channel will be set to full opaque value 255.
@@ -68,10 +69,22 @@ public:
         send(format(fmt, x1, y1, x2, y2, color, fill ? "true" : "false"));
     }
 
+    void rectangle(double x1, double y1, double x2, double y2, const std::array<uint32_t, 4> &colors, bool fill = true) {
+        static const char *fmt =
+            R"({"type": "rectangle", "tl": [%lf, %lf], "br": [%lf, %lf], "color": [%u, %u, %u, %u], "fill": %s})";
+        send(format(fmt, x1, y1, x2, y2, colors[0], colors[1], colors[2], colors[3], fill ? "true" : "false"));
+    }
+
     void triangle(double x1, double y1, double x2, double y2, double x3, double y3, uint32_t color, bool fill = false) {
         static const char *fmt =
             R"({"type": "triangle", "points": [%lf, %lf, %lf, %lf, %lf, %lf], "color": %u, "fill": %s})";
         send(format(fmt, x1, y1, x2, y2, x3, y3, color, fill ? "true" : "false"));
+    }
+
+    void triangle(double x1, double y1, double x2, double y2, double x3, double y3, const std::array<uint32_t, 3> &colors, bool fill = true) {
+        static const char *fmt =
+            R"({"type": "triangle", "points": [%lf, %lf, %lf, %lf, %lf, %lf], "color": [%u, %u, %u], "fill": %s})";
+        send(format(fmt, x1, y1, x2, y2, x3, y3, colors[0], colors[1], colors[2], fill ? "true" : "false"));
     }
 
     void line(double x1, double y1, double x2, double y2, uint32_t color) {
@@ -110,6 +123,12 @@ public:
         static const char *fmt =
             R"({"type": "popup", "p": [%lf, %lf], "r": %lf, "text": "%s"})";
         send(format(fmt, x, y, r, text.c_str()));
+    }
+
+    void popup(double x1, double y1, double x2, double y2, const std::string& text) {
+        static const char *fmt =
+            R"({"type": "popup", "tl": [%lf, %lf], "br": [%lf, %lf], "text": "%s"})";
+        send(format(fmt, x1, y1, x2, y2, text.c_str()));
     }
 
     void set_options(int layer, bool permanent = false) {
