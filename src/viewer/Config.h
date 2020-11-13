@@ -39,7 +39,7 @@ struct Config {
         float start_viewport_size = 10.0;
     } camera;
 
-    static std::unique_ptr<Config> init_with_imgui(const std::string &fname);
+    static std::unique_ptr<Config> init_with_imgui(const char* fname);
 
     Config(Config &) = delete;
     Config() = default;
