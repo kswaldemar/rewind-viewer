@@ -6,10 +6,12 @@
 
 #include "UIController.h"
 
+#include <common/logger.h>
+#include <version.h>
+
 #include <fontawesome.h>
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
-#include <imgui_impl/style.h>
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -38,7 +40,25 @@ float get_scale_factor() {
 
 const float DEFAULT_FONT_SIZE = 13.0f;
 const float FONT_AWESOME_FONT_SIZE = 14.0f;
-constexpr const char *APP_VERSION = "2.0";
+
+const char *THEMES_COMBO = "Light\0Grey\0Dark\0";
+void set_style_by_theme_id(int theme_id) {
+    switch (theme_id) {
+        case 0: ImGui::StyleColorsLight(); break;
+        case 1: ImGui::StyleColorsClassic(); break;
+        case 2: ImGui::StyleColorsDark(); break;
+        default: LOG_WARN("Incorrect theme_id=%d", theme_id);
+    }
+
+    // Custom changes
+    auto &style = ImGui::GetStyle();
+    style.Alpha = 1.0f;
+    style.FrameRounding = 3.0f;
+    style.WindowPadding.y = 7;
+    style.WindowRounding = 4;
+    style.GrabRounding = 2;
+    style.WindowBorderSize = 0.0f;
+}
 
 }  // namespace
 
@@ -59,7 +79,7 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     ImGui_ImplOpenGL3_Init();
     wnd_ = std::make_unique<wnd_t>();
 
-    setup_custom_style(false);
+    set_style_by_theme_id(conf_->ui.imgui_theme_id);
 
     auto &io = ImGui::GetIO();
     const float scale_factor = get_scale_factor();
@@ -146,8 +166,9 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         ImGui::BulletText("Esc - close application");
         ImGui::BulletText("g - Toggle grid draw state");
         ImGui::BulletText("i - Toggle immediate send mode");
+        ImGui::BulletText("modkey + g - Go to tick");
         ImGui::BulletText("p - Show tooltip with cursor world coordinates");
-        ImGui::BulletText("1-5 - Toggle layers visibility");
+        ImGui::BulletText("1-0 - Toggle layers visibility");
 
         ImGui::End();
     }
@@ -180,14 +201,21 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (io.KeysDown[GLFW_KEY_D] && key_modifier(io)) {
             developer_mode_ = true;
         }
+
+        // Layer toggle shortcuts
         auto &enabled_layers = conf_->scene.enabled_layers;
-        for (size_t layer_idx = 0; layer_idx < enabled_layers.size(); ++layer_idx) {
-            if (key_pressed_once(static_cast<int>(GLFW_KEY_1 + layer_idx))) {
-                enabled_layers[layer_idx] = !enabled_layers[layer_idx];
+        static const std::array<int, Frame::LAYERS_COUNT> layer_shortcuts = {
+            GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5,
+            GLFW_KEY_6, GLFW_KEY_7, GLFW_KEY_8, GLFW_KEY_9, GLFW_KEY_0,
+        };
+        for (size_t i = 0; i < layer_shortcuts.size(); ++i) {
+            if (key_pressed_once(layer_shortcuts[i])) {
+                enabled_layers[i] = !enabled_layers[i];
             }
         }
+
         if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && key_modifier(io)) {
-            scene->clear_data(false);
+            scene->clear_data();
         }
     }
 
@@ -312,6 +340,9 @@ void UIController::info_widget(Scene *scene) {
             ImGui::ColorEdit3("Background", glm::value_ptr(conf_->ui.clear_color));
             ImGui::ColorEdit3("Grid", glm::value_ptr(conf_->scene.grid_color));
             ImGui::ColorEdit3("Canvas", glm::value_ptr(conf_->scene.scene_color));
+            if (ImGui::Combo("Theme", &conf_->ui.imgui_theme_id, THEMES_COMBO)) {
+                set_style_by_theme_id(conf_->ui.imgui_theme_id);
+            }
         }
         if (ImGui::CollapsingHeader("Options", flags)) {
             ImGui::Checkbox("World origin on top left", &conf_->camera.origin_on_top_left);
@@ -320,10 +351,11 @@ void UIController::info_widget(Scene *scene) {
     }
     if (ImGui::CollapsingHeader(ICON_FA_MAP_O " Layer visibility", flags)) {
         static const ImVec4 button_colors[] = {ImVec4(0.5, 0.5, 0.5, 1.0),
-                                               ImVec4(0.58, 0.941, 0.429, 1.0)};
+                                               ImVec4(0.38, 0.741, 0.229, 1.0)};
         size_t idx = 0;
         static const std::array<const char *, static_cast<size_t>(Frame::LAYERS_COUNT)> captions{
-            {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4"}};
+            {"##layer0", "##layer1", "##layer2", "##layer3", "##layer4", "##layer5", "##layer6",
+             "##layer7", "##layer8", "##layer9"}};
         for (bool &enabled : conf_->scene.enabled_layers) {
             if (ImGui::ColorButton(captions[idx], button_colors[enabled],
                                    ImGuiColorEditFlags_NoTooltip)) {
@@ -409,7 +441,9 @@ void UIController::playback_control_widget(Scene *scene) {
         if (frames_cnt > 0) {
             tick = cg::clamp(tick, 1, frames_cnt);
             ImGui::PushItemWidth(-1);
-
+            if (key_modifier(io) && io.KeysDown[GLFW_KEY_G]) {
+                ImGui::SetKeyboardFocusHere();
+            }
             const std::string slider_fmt = "%5d/" + std::to_string(frames_cnt);
             if (ImGui::SliderInt("##empty", &tick, 1, frames_cnt, slider_fmt.data(),
                                  ImGuiSliderFlags_AlwaysClamp)) {

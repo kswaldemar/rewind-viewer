@@ -17,16 +17,12 @@ jobs:
     - name: Build
       run: cmake --build build --target rewindviewer --parallel 6 --config Release
     
+    - name: Copy assets
+      run: cp -R ./resources ./build/Release
+      shell: bash
+    
     - name: Upload binary
       uses: actions/upload-artifact@v2
       with:
-        name: rewindviewer
-        path: build/Release/rewindviewer.exe
-        retention-days: 7
-
-    - name: Upload resources folder
-      uses: actions/upload-artifact@v2
-      with:
-        name: resources
-        path: resources
-        retention-days: 7
+        name: rewindviewer_win
+        path: build/Release

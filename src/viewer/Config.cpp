@@ -33,6 +33,8 @@ void callback_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void *entry, cons
         cfg.ui.clear_color = v;
     } else if (sscanf(line, "ui.update_unfocused=%d", &d1) == 1) {
         cfg.ui.update_unfocused = d1;
+    } else if (sscanf(line, "ui.imgui_theme_id=%d", &d1) == 1) {
+        cfg.ui.imgui_theme_id = cg::clamp(d1, 0, 2);
     } else if (sscanf(line, "scene.grid_cells_count=(%d,%d)", &d1, &d2) == 2) {
         cfg.scene.grid_cells = {d1, d2};
     } else if (sscanf(line, "scene.grid_dim=(%f,%f)", &p.x, &p.y) == 2) {
@@ -58,7 +60,7 @@ void write(ImGuiTextBuffer &to, const char *name, glm::vec3 color) {
     to.appendf("%s=(%.3f,%.3f,%.3f)\n", name, color.r, color.g, color.b);
 }
 
-void write(ImGuiTextBuffer &to, const char *name, bool value) {
+void write(ImGuiTextBuffer &to, const char *name, int value) {
     to.appendf("%s=%d\n", name, value);
 }
 
@@ -95,9 +97,10 @@ void callback_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, ImGuiTextB
 #define P(param) #param, param
     const auto &ui = cfg.ui;
     write(*buf, P(ui.fast_skip_speed), "How much frame to skip when fast forward arrow pressed");
-    write(*buf, P(ui.close_with_esc));
+    write(*buf, P(ui.close_with_esc), "If true, visualiser can be closed by Esc key");
     write(*buf, P(ui.clear_color), "Background color, rgb format");
     write(*buf, P(ui.update_unfocused), "Update when not in focus, consumes extra CPU");
+    write(*buf, P(ui.imgui_theme_id));
 
     const auto &scene = cfg.scene;
     write(*buf, P(scene.grid_cells), "Grid cells count in each dimension (X, Y)");
@@ -125,7 +128,7 @@ void callback_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, ImGuiTextB
 
 }  // namespace
 
-std::unique_ptr<Config> Config::init_with_imgui(const std::string &fname) {
+std::unique_ptr<Config> Config::init_with_imgui(const char* fname) {
     auto cfg = std::make_unique<Config>();
 
     ImGuiContext *context = ImGui::GetCurrentContext();
@@ -134,7 +137,7 @@ std::unique_ptr<Config> Config::init_with_imgui(const std::string &fname) {
     }
 
     auto &io = ImGui::GetIO();
-    io.IniFilename = fname.c_str();
+    io.IniFilename = fname;
 
     // Create viewer configuration section
     ImGuiSettingsHandler ini_handler;

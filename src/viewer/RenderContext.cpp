@@ -5,6 +5,7 @@
 #include "RenderContext.h"
 #include "ShaderCollection.h"
 
+#include <array>
 #include <stdexcept>
 
 namespace {
@@ -98,37 +99,14 @@ void RenderContext::add_circle(glm::vec2 center, float r, glm::vec4 color, bool 
 
 void RenderContext::add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color,
                                  bool fill) {
-    if (fill) {
-        GLuint idx = impl_->points.size();
-        impl_->points.push_back({color, p1});
-        impl_->points.push_back({color, p2});
-        impl_->points.push_back({color, p3});
-        impl_->triangle_indicies.push_back(idx);
-        impl_->triangle_indicies.push_back(idx + 1);
-        impl_->triangle_indicies.push_back(idx + 2);
-    } else {
-        add_polyline({p1, p2, p3}, color);
-    }
+    add_triangle(p1, p2, p3, {color, color, color}, fill);
 }
 
 void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color,
                                   bool fill) {
-    auto top_right = glm::vec2{bottom_right.x, top_left.y};
-    auto bottom_left = glm::vec2{top_left.x, bottom_right.y};
-
-    if (fill) {
-        GLuint idx = impl_->points.size();
-        impl_->points.push_back({color, top_left});
-        impl_->points.push_back({color, top_right});
-        impl_->points.push_back({color, bottom_right});
-        impl_->points.push_back({color, bottom_left});
-
-        for (uint8_t t : {0, 1, 3, 1, 2, 3}) {
-            impl_->triangle_indicies.push_back(idx + t);
-        }
-    } else {
-        add_polyline({top_left, top_right, bottom_right, bottom_left, top_left}, color);
-    }
+    RectangleColors colors;
+    colors.fill(color);
+    add_rectangle(top_left, bottom_right, colors, fill);
 }
 
 void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color) {
@@ -144,6 +122,41 @@ void RenderContext::add_polyline(const std::vector<glm::vec2> &points, glm::vec4
         GLuint idx = impl_->points.size() - 1;
         impl_->line_indicies.push_back(idx - 1);
         impl_->line_indicies.push_back(idx);
+    }
+}
+
+void RenderContext::add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3,
+                                 const TriangleColors &colors, bool fill) {
+    if (fill) {
+        GLuint idx = impl_->points.size();
+        impl_->points.push_back({colors[0], p1});
+        impl_->points.push_back({colors[1], p2});
+        impl_->points.push_back({colors[2], p3});
+        impl_->triangle_indicies.push_back(idx);
+        impl_->triangle_indicies.push_back(idx + 1);
+        impl_->triangle_indicies.push_back(idx + 2);
+    } else {
+        add_polyline({p1, p2, p3, p1}, colors[0]);
+    }
+}
+
+void RenderContext::add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right,
+                                  const RectangleColors &colors, bool fill) {
+    auto top_right = glm::vec2{bottom_right.x, top_left.y};
+    auto bottom_left = glm::vec2{top_left.x, bottom_right.y};
+
+    if (fill) {
+        GLuint idx = impl_->points.size();
+        impl_->points.push_back({colors[0], top_left});
+        impl_->points.push_back({colors[1], bottom_left});
+        impl_->points.push_back({colors[2], top_right});
+        impl_->points.push_back({colors[3], bottom_right});
+
+        for (uint8_t t : {0, 2, 1, 2, 3, 1}) {
+            impl_->triangle_indicies.push_back(idx + t);
+        }
+    } else {
+        add_polyline({top_left, top_right, bottom_right, bottom_left, top_left}, colors[0]);
     }
 }
 

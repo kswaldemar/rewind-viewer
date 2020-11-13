@@ -20,6 +20,34 @@ inline T value_or_default(const nlohmann::json &j, const std::string &name, T de
     return def_val;
 }
 
+bool contains(const nlohmann::json &j, const std::string &key) {
+    return j.find(key) != j.end();
+}
+
+void normalize(glm::vec2 &min_corner, glm::vec2 &max_corner) {
+    if (min_corner.x > max_corner.x) {
+        std::swap(min_corner.x, max_corner.x);
+    }
+    if (min_corner.y > max_corner.y) {
+        std::swap(min_corner.y, max_corner.y);
+    }
+}
+
+glm::vec4 convert_color(uint32_t value) {
+    glm::vec4 result;
+    result.r = static_cast<float>((value & 0xFF0000) >> 16) / 255.0f;
+    result.g = static_cast<float>((value & 0x00FF00) >> 8) / 255.0f;
+    result.b = static_cast<float>((value & 0x0000FF)) / 255.0f;
+
+    uint8_t alpha = ((value & 0xFF000000) >> 24);
+    if (alpha > 0) {
+        result.a = static_cast<float>(alpha) / 255.0f;
+    } else {
+        result.a = 1.0f;
+    }
+    return result;
+}
+
 }  // anonymous namespace
 
 struct ParsingError : std::runtime_error {
@@ -41,22 +69,35 @@ struct Circle : ColorShape {
     float radius;
 };
 
-struct Rectangle : ColorShape {
+struct Rectangle {
+    RenderContext::RectangleColors colors;
+    bool fill;
     glm::vec2 top_left;
     glm::vec2 bottom_right;
 };
 
 struct Popup {
-    glm::vec2 center;
-    float radius;
+    bool is_round;
     std::string text;
+    glm::vec2 center;
+    union {
+        struct {
+            float radius;
+        };
+        struct {
+            float w;
+            float h;
+        };
+    };
 };
 
 struct Polyline : ColorShape {
     std::vector<glm::vec2> points;
 };
 
-struct Triangle : ColorShape {
+struct Triangle {
+    RenderContext::TriangleColors colors;
+    bool fill;
     std::vector<glm::vec2> points;
 };
 
@@ -89,42 +130,57 @@ glm::vec2 convert_position(const GeoPoints &points) {
  */
 
 inline void from_json(const nlohmann::json &j, ColorShape &p) {
-    auto color = j["color"].get<uint32_t>();
-    p.color.r = static_cast<float>((color & 0xFF0000) >> 16) / 256.0f;
-    p.color.g = static_cast<float>((color & 0x00FF00) >> 8) / 256.0f;
-    p.color.b = static_cast<float>((color & 0x0000FF)) / 256.0f;
-
-    uint8_t alpha = ((color & 0xFF000000) >> 24);
-    if (alpha > 0) {
-        p.color.a = static_cast<float>(alpha) / 256.0f;
-    } else {
-        p.color.a = 1.0f;
-    }
-
+    p.color = convert_color(j["color"].get<uint32_t>());
     p.fill = value_or_default(j, "fill", true);
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Circle &p) {
     from_json(j, static_cast<ColorShape &>(p));
-
     p.radius = j["r"].get<float>();
     p.center = convert_position(j["p"].get<GeoPoints>());
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Popup &p) {
-    p.radius = j["r"].get<float>();
-    p.center = convert_position(j["p"].get<GeoPoints>());
+    if (contains(j, "tl") && contains(j, "br")) {
+        p.is_round = false;
+        auto min_corner = convert_position(j["tl"].get<GeoPoints>());
+        auto max_corner = convert_position(j["br"].get<GeoPoints>());
+        normalize(min_corner, max_corner);
+
+        const auto diff = max_corner - min_corner;
+        p.center = min_corner + diff * 0.5f;
+        p.w = diff.x;
+        p.h = diff.y;
+    } else if (contains(j, "r") && contains(j, "p")) {
+        p.is_round = true;
+        p.radius = j["r"].get<float>();
+        p.center = convert_position(j["p"].get<GeoPoints>());
+    } else {
+        throw ParsingError{"Popup should contain either fields [p, r] or [tl, br]"};
+    }
+
     p.text = j["text"].get<std::string>();
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Rectangle &p) {
-    from_json(j, static_cast<ColorShape &>(p));
+    if (j["color"].is_array()) {
+        const auto colors = j["color"].get<std::vector<uint32_t>>();
+        if (colors.size() != 4) {
+            throw ParsingError{"Rectangle expect exactly 4 colors for gradient setup, got " +
+                               std::to_string(colors.size())};
+        }
+        for (size_t i = 0; i < colors.size(); ++i) {
+            p.colors[i] = convert_color(colors[i]);
+        }
+    } else {
+        auto color = convert_color(j["color"].get<uint32_t>());
+        p.colors.fill(color);
+    }
+    p.fill = value_or_default(j, "fill", true);
 
     p.top_left = convert_position(j["tl"].get<GeoPoints>());
     p.bottom_right = convert_position(j["br"].get<GeoPoints>());
-    if (p.top_left.x > p.bottom_right.x) {
-        std::swap(p.top_left, p.bottom_right);
-    }
+    normalize(p.top_left, p.bottom_right);
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Polyline &p) {
@@ -134,7 +190,21 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
 }
 
 [[maybe_unused]] inline void from_json(const nlohmann::json &j, Triangle &p) {
-    from_json(j, static_cast<ColorShape &>(p));
+    if (j["color"].is_array()) {
+        const auto colors = j["color"].get<std::vector<uint32_t>>();
+        if (colors.size() != 3) {
+            throw ParsingError{"Triangle expect exactly 3 colors for gradient setup, got " +
+                               std::to_string(colors.size())};
+        }
+        for (size_t i = 0; i < colors.size(); ++i) {
+            p.colors[i] = convert_color(colors[i]);
+        }
+    } else {
+        auto color = convert_color(j["color"].get<uint32_t>());
+        p.colors.fill(color);
+    }
+    p.fill = value_or_default(j, "fill", true);
+
     p.points = convert_check(j["points"].get<GeoPoints>());
     if (p.points.size() != 3) {
         throw ParsingError{"Triangle should be created using exactly 3 points, got " +
@@ -193,13 +263,13 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             case PrimitiveType::RECTANGLE: {
                 LOG_V8("JsonHandler::Rectangle detected");
                 auto obj = j.get<pod::Rectangle>();
-                ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.color, obj.fill);
+                ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.colors, obj.fill);
                 break;
             }
             case PrimitiveType::TRIANGLE: {
                 LOG_V8("JsonHandler::Triangle detected");
                 auto obj = j.get<pod::Triangle>();
-                ctx.add_triangle(obj.points[0], obj.points[1], obj.points[2], obj.color, obj.fill);
+                ctx.add_triangle(obj.points[0], obj.points[1], obj.points[2], obj.colors, obj.fill);
                 break;
             }
             case PrimitiveType::POLYLINE: {
@@ -215,7 +285,12 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             case PrimitiveType::POPUP: {
                 LOG_V8("JsonHandler::Popup");
                 auto obj = j.get<pod::Popup>();
-                get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
+                if (obj.is_round) {
+                    get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
+                } else {
+                    get_frame_editor().add_box_popup(obj.center, {obj.w, obj.h},
+                                                     std::move(obj.text));
+                }
                 break;
             }
             case PrimitiveType::OPTIONS: {

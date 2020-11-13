@@ -75,7 +75,7 @@ Sample usage:
 
 You can use [Python3 client](https://github.com/kswaldemar/rewind-viewer/blob/master/clients/python3/RewindClient.py) as a reference.
 
-Documentation for json protocol [can be found here](./clients/protocol_description.md).
+Documentation for json protocol [can be found here](./clients/README.md).
 ## License
 Project sources distributed under [MIT license](https://github.com/kswaldemar/rewind-viewer/blob/master/LICENSE), third parties distributed under their own licences
 

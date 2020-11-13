@@ -32,10 +32,19 @@ class RenderContext {
     RenderContext();
     ~RenderContext();
 
+    using TriangleColors = std::array<glm::vec4, 3>;
+    using RectangleColors = std::array<glm::vec4, 4>;
+
     void add_circle(glm::vec2 center, float r, glm::vec4 color, bool fill);
     void add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, glm::vec4 color, bool fill);
     void add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, glm::vec4 color, bool fill);
     void add_polyline(const std::vector<glm::vec2> &points, glm::vec4 color);
+
+    // Versions with gradient support
+    void add_triangle(glm::vec2 p1, glm::vec2 p2, glm::vec2 p3, const TriangleColors &colors,
+                      bool fill);
+    void add_rectangle(glm::vec2 top_left, glm::vec2 bottom_right, const RectangleColors &colors,
+                       bool fill);
 
     /// Add all primitves from other RenderContext
     void update_from(const RenderContext &other);

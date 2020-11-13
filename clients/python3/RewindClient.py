@@ -1,8 +1,16 @@
 import _socket
 import json
 
-
 class RewindClient():
+    RED = 0xff0000
+    GREEN = 0x00ff00
+    BLUE = 0x0000ff
+    DARK_RED = 0x770000
+    DARK_GREEN = 0x007700
+    DARK_BLUE = 0x000077
+    TRANSPARENT = 0x7f000000
+    INVISIBLE = 0x01000000
+
     def __init__(self, host=None, port=None):
         self._socket = _socket.socket()
         self._socket.setsockopt(_socket.IPPROTO_TCP, _socket.TCP_NODELAY, True)
@@ -63,11 +71,19 @@ class RewindClient():
             'fill': fill
         })
 
-    def popup_message(self, x, y, radius, message):
+    def circle_popup(self, x, y, radius, message):
         self._send({
             'type': 'popup',
             'p': [x, y],
             'r': radius,
+            'text': message
+        })
+
+    def rect_popup(self, tl, br, message):
+        self._send({
+            'type': 'popup',
+            'tl': RewindClient._to_geojson([tl]),
+            'br': RewindClient._to_geojson([br]),
             'text': message
         })
 
