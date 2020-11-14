@@ -127,7 +127,7 @@ public class RewindClient {
         String data =
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.MESSAGE.getName()) +
-                String.format("\"text\": \"%s\"", message) +
+                String.format("\"message\": \"%s\"", message) +
             "}";
         sendCustomData(data);
     }
@@ -198,7 +198,7 @@ public class RewindClient {
             rc.triangle(getRandomPoint(),  getRandomPoint(), getRandomPoint(), Color.BLUE, true);
             rc.circlePopup(getRandomPoint(), 200, "bla bla");
             rc.rectPopup(getRandomPoint(),  getRandomPoint(), "bla bla 2");
-            rc.message("Hello World");
+            rc.message("Hello World" + i);
 
             rc.endFrame();
         }
