@@ -6,6 +6,7 @@ import java.net.Socket;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -55,11 +56,11 @@ public class RewindClient {
     }
 
     public void polyline(List<Point> points, Color color) {
-        String polyline = getPointsString(points);
+        String polyline = getJsonString(points, p -> Stream.of(p.getX(), p.getY()));
         String data =
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.POLYLINE.getName()) +
-                String.format("\"points\": [%s],", polyline) +
+                String.format("\"points\": %s,", polyline) +
                 String.format("\"color\": %d", color.getRGB()) +
             "}";
         sendCustomData(data);
@@ -77,25 +78,27 @@ public class RewindClient {
         sendCustomData(data);
     }
 
-    public void rectangle(Point tl, Point br, Color color, boolean fill) {
+    public void rectangle(Point tl, Point br, boolean fill, Color... color) {
+        String colors = getJsonString(Arrays.asList(color), c -> Stream.of(c.getRGB()));
         String data =
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.RECTANGLE.getName()) +
                 String.format("\"tl\": [%f, %f],", tl.getX(), tl.getY()) +
                 String.format("\"br\": [%f, %f],", br.getX(), br.getY()) +
-                String.format("\"color\": %d,", color.getRGB()) +
+                String.format("\"color\": %s,", colors) +
                 String.format("\"fill\": %b", fill) +
             "}";
         sendCustomData(data);
     }
 
-    public void triangle(Point p1, Point p2, Point p3, Color color, boolean fill) {
-        String polyline = getPointsString(Arrays.asList(p1, p2, p3));
+    public void triangle(Point p1, Point p2, Point p3, boolean fill, Color... color) {
+        String polyline = getJsonString(Arrays.asList(p1, p2, p3), p -> Stream.of(p.getX(), p.getY()));
+        String colors = getJsonString(Arrays.asList(color), c -> Stream.of(c.getRGB()));
         String data =
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.TRIANGLE.getName()) +
-                String.format("\"points\": [%s],", polyline) +
-                String.format("\"color\": %d,", color.getRGB()) +
+                String.format("\"points\": %s,", polyline) +
+                String.format("\"color\": %s,", colors) +
                 String.format("\"fill\": %b", fill) +
             "}";
         sendCustomData(data);
@@ -167,11 +170,16 @@ public class RewindClient {
         }
     }
 
-    private String getPointsString(List<Point> points) {
+    private <T, E extends Stream<?>> String getJsonString(List<T> points, Function<T, E> mapper) {
+        if (points.size() == 1) {
+            return points.stream()
+                .flatMap(mapper)
+                .findFirst().orElseThrow().toString();
+        }
         return points.stream()
-            .flatMap(point -> Stream.of(point.getX(), point.getY()))
-            .map(d -> String.format("%f", d))
-            .collect(Collectors.joining(","));
+            .flatMap(mapper)
+            .map(Object::toString)
+            .collect(Collectors.joining(",", "[", "]"));
     }
 
     private RewindClient(String DEFAULT_HOST, int DEFAULT_PORT) {
@@ -188,14 +196,14 @@ public class RewindClient {
         RewindClient rc = RewindClient.createClient();
         rc.options(1, true);
         for (int i = 0; i < 100; i++) {
-            rc.rectangle(getRandomPoint(), getRandomPoint(), Color.BLACK, true);
+            rc.rectangle(getRandomPoint(), getRandomPoint(), true, Color.BLACK);
             rc.circle(getRandomPoint(), 3, Color.GREEN, true);
             rc.line(getRandomPoint(),  getRandomPoint(), Color.YELLOW);
             rc.polyline(
                 Arrays.asList(getRandomPoint(),  getRandomPoint(), getRandomPoint()),
                 Color.RED
             );
-            rc.triangle(getRandomPoint(),  getRandomPoint(), getRandomPoint(), Color.BLUE, true);
+            rc.triangle(getRandomPoint(),  getRandomPoint(), getRandomPoint(), true, Color.BLUE, Color.BLACK, Color.GREEN);
             rc.circlePopup(getRandomPoint(), 200, "bla bla");
             rc.rectPopup(getRandomPoint(),  getRandomPoint(), "bla bla 2");
             rc.message("Hello World" + i);
@@ -205,8 +213,6 @@ public class RewindClient {
     }
 
     private static Point getRandomPoint() {
-        ThreadLocalRandom.current().nextInt(1, 400);
-
         return new Point(
             ThreadLocalRandom.current().nextInt(1, 400),
             ThreadLocalRandom.current().nextInt(1, 400)
