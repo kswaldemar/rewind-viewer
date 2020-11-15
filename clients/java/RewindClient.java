@@ -50,7 +50,7 @@ public class RewindClient {
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.POLYLINE.getName()) +
                 String.format("\"points\": [%f, %f, %f, %f],", p1.getX(), p1.getY(), p2.getX(), p2.getY()) +
-                String.format("\"color\": %d", color.getRGB()) +
+                String.format("\"color\": %d", getArgb(color)) +
                 "}";
         sendCustomData(data);
     }
@@ -61,7 +61,7 @@ public class RewindClient {
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.POLYLINE.getName()) +
                 String.format("\"points\": %s,", polyline) +
-                String.format("\"color\": %d", color.getRGB()) +
+                String.format("\"color\": %d", getArgb(color)) +
             "}";
         sendCustomData(data);
     }
@@ -72,14 +72,14 @@ public class RewindClient {
                 String.format("\"type\": \"%s\",", PrimitiveType.CIRCLE.getName()) +
                 String.format("\"p\": [%f, %f],", p.getX(), p.getY()) +
                 String.format("\"r\": %f,", radius) +
-                String.format("\"color\": %d,", color.getRGB()) +
+                String.format("\"color\": %d,", getArgb(color)) +
                 String.format("\"fill\": %b", fill) +
             "}";
         sendCustomData(data);
     }
 
     public void rectangle(Point tl, Point br, boolean fill, Color... color) {
-        String colors = getJsonString(Arrays.asList(color), c -> Stream.of(c.getRGB()));
+        String colors = getJsonString(Arrays.asList(color), c -> Stream.of(getArgb(c)));
         String data =
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.RECTANGLE.getName()) +
@@ -93,7 +93,7 @@ public class RewindClient {
 
     public void triangle(Point p1, Point p2, Point p3, boolean fill, Color... color) {
         String polyline = getJsonString(Arrays.asList(p1, p2, p3), p -> Stream.of(p.getX(), p.getY()));
-        String colors = getJsonString(Arrays.asList(color), c -> Stream.of(c.getRGB()));
+        String colors = getJsonString(Arrays.asList(color), c -> Stream.of(getArgb(c)));
         String data =
             "{" +
                 String.format("\"type\": \"%s\",", PrimitiveType.TRIANGLE.getName()) +
@@ -180,6 +180,10 @@ public class RewindClient {
             .flatMap(mapper)
             .map(Object::toString)
             .collect(Collectors.joining(",", "[", "]"));
+    }
+
+    private int getArgb(Color color) {
+        return (color.getAlpha() << 24) | color.getRGB();
     }
 
     private RewindClient(String DEFAULT_HOST, int DEFAULT_PORT) {
