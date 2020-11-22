@@ -12,34 +12,34 @@ class RewindClient(val host: String = "127.0.0.1", val port: Int = 9111) {
         socket.tcpNoDelay = true
     }
 
-    fun line(p1: Pair<Double, Double>, p2: Pair<Double, Double>, color: Color) {
+    fun line(p1: Point, p2: Point, color: Color) {
         val type = PrimitiveType.POLYLINE
         val polyline = getJsonArray(listOf(p1, p2)) { p -> listOf(p.first, p.second) }
         val data = """{"type": "${type.value}", "points": $polyline, "color": ${getArgb(color)}}"""
         sendCustomData(data)
     }
 
-    fun polyline(points: List<Pair<Double, Double>>, color: Color) {
+    fun polyline(points: List<Point>, color: Color) {
         val type = PrimitiveType.POLYLINE
         val polyline = getJsonArray(points) { p -> listOf(p.first, p.second) }
         val data = """{"type": "${type.value}", "points": $polyline, "color": ${getArgb(color)}}"""
         sendCustomData(data)
     }
 
-    fun circle(p: Pair<Double, Double>, radius: Double, color: Color, fill: Boolean) {
+    fun circle(p: Point, radius: Double, color: Color, fill: Boolean) {
         val type = PrimitiveType.CIRCLE
         val data = """{"type": "${type.value}", "p": [${p.first}, ${p.second}], "radius": $radius, "color": "${getArgb(color)}", "fill": $fill}"""
         sendCustomData(data)
     }
 
-    fun rectangle(tl: Pair<Double, Double>, br: Pair<Double, Double>, fill: Boolean, vararg color: Color) {
+    fun rectangle(tl: Point, br: Point, fill: Boolean, vararg color: Color) {
         val type = PrimitiveType.RECTANGLE
         val colors = getJsonArray(color.asList()) { c -> listOf(getArgb(c)) }
         val data = """{"type": "${type.value}", "tl": [${tl.first}, ${tl.second}], "br": [${br.first}, ${br.second}], "color": $colors, "fill": $fill}"""
         sendCustomData(data)
     }
 
-    fun triangle(p1: Pair<Double, Double>, p2: Pair<Double, Double>, p3: Pair<Double, Double>, fill: Boolean, vararg color: Color) {
+    fun triangle(p1: Point, p2: Point, p3: Point, fill: Boolean, vararg color: Color) {
         val points = getJsonArray(listOf(p1, p2, p3)) { p -> listOf(p.first, p.second) }
         val colors = getJsonArray(color.asList()) { c -> listOf(getArgb(c)) }
         val type = PrimitiveType.TRIANGLE
@@ -47,13 +47,13 @@ class RewindClient(val host: String = "127.0.0.1", val port: Int = 9111) {
         sendCustomData(data)
     }
 
-    fun circlePopup(p: Pair<Double, Double>, radius: Double, message: String?) {
+    fun circlePopup(p: Point, radius: Double, message: String?) {
         val type = PrimitiveType.POPUP
         val data = """{"type": "${type.value}", "p": [${p.first}, ${p.second}], "r": $radius, "text": "$message"}"""
         sendCustomData(data)
     }
 
-    fun rectPopup(tl: Pair<Double, Double>, br: Pair<Double, Double>, message: String?) {
+    fun rectPopup(tl: Point, br: Point, message: String?) {
         val type = PrimitiveType.POPUP
         val data = """{"type": "${type.value}", "tl": [${tl.first}, ${tl.second}], "br": [${br.first}, ${br.second}], "text": "$message"}"""
         sendCustomData(data)
@@ -137,9 +137,11 @@ fun main() {
     rc.close()
 }
 
-fun getRandomPoint(): Pair<Double, Double> {
+fun getRandomPoint(): Point {
     return Pair(
             Random.nextDouble(1.0, 400.0),
             ThreadLocalRandom.current().nextDouble(1.0, 400.0)
     )
 }
+
+typealias Point = Pair<Double, Double>
