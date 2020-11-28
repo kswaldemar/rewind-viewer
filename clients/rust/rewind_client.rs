@@ -75,10 +75,27 @@ impl RewindClient {
         })
     }
 
+    pub fn rectangle_with_colors(&mut self, x1: f64, y1: f64, x2: f64, y2: f64, colors: [u32; 4], fill: bool) -> io::Result<()> {
+        self.send(&Request::RectangleWithColors {
+            tl: [x1, y1],
+            br: [x2, y2],
+            color: colors,
+            fill,
+        })
+    }
+
     pub fn triangle(&mut self, x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64, color: u32, fill: bool) -> io::Result<()> {
         self.send(&Request::Triangle {
             points: [x1, y1, x2, y2, x3, y3],
             color,
+            fill,
+        })
+    }
+
+    pub fn triangle_with_colors(&mut self, x1: f64, y1: f64, x2: f64, y2: f64, x3: f64, y3: f64, colors: [u32; 3], fill: bool) -> io::Result<()> {
+        self.send(&Request::TriangleWithColors {
+            points: [x1, y1, x2, y2, x3, y3],
+            color: colors,
             fill,
         })
     }
@@ -125,7 +142,11 @@ enum Request {
     Polyline { points: Vec<f64>, color: u32 },
     Circle { p: [f64; 2], r: f64, color: u32, fill: bool },
     Rectangle { tl: [f64; 2], br: [f64; 2], color: u32, fill: bool },
+    #[serde(rename = "rectangle")]
+    RectangleWithColors { tl: [f64; 2], br: [f64; 2], color: [u32; 4], fill: bool },
     Triangle { points: [f64; 6], color: u32, fill: bool },
+    #[serde(rename = "triangle")]
+    TriangleWithColors { points: [f64; 6], color: [u32; 3], fill: bool },
     #[serde(rename = "popup")]
     CirclePopup { p: [f64; 2], r: f64, text: String },
     #[serde(rename = "popup")]
