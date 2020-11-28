@@ -40,6 +40,7 @@ set(Sources
 
 add_executable(${PROJECT_NAME} ${Sources})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
+target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLAD)
 
 target_link_libraries(${PROJECT_NAME}
     Glad glfw glm

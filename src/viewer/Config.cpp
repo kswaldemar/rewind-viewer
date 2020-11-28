@@ -35,7 +35,7 @@ void callback_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void *entry, cons
         cfg.ui.update_unfocused = d1;
     } else if (sscanf(line, "ui.imgui_theme_id=%d", &d1) == 1) {
         cfg.ui.imgui_theme_id = cg::clamp(d1, 0, 2);
-    } else if (sscanf(line, "scene.grid_cells_count=(%d,%d)", &d1, &d2) == 2) {
+    } else if (sscanf(line, "scene.grid_cells=(%d,%d)", &d1, &d2) == 2) {
         cfg.scene.grid_cells = {d1, d2};
     } else if (sscanf(line, "scene.grid_dim=(%f,%f)", &p.x, &p.y) == 2) {
         cfg.scene.grid_dim = p;
