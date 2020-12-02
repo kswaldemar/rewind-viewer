@@ -35,6 +35,8 @@ void callback_ReadLine(ImGuiContext *, ImGuiSettingsHandler *, void *entry, cons
         cfg.ui.update_unfocused = d1;
     } else if (sscanf(line, "ui.imgui_theme_id=%d", &d1) == 1) {
         cfg.ui.imgui_theme_id = cg::clamp(d1, 0, 2);
+    } else if (sscanf(line, "ui.info_widget_width=%d", &d1) == 1) {
+        cfg.ui.info_widget_width = std::max(d1, 50);
     } else if (sscanf(line, "scene.grid_cells=(%d,%d)", &d1, &d2) == 2) {
         cfg.scene.grid_cells = {d1, d2};
     } else if (sscanf(line, "scene.grid_dim=(%f,%f)", &p.x, &p.y) == 2) {
@@ -101,6 +103,7 @@ void callback_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, ImGuiTextB
     write(*buf, P(ui.clear_color), "Background color, rgb format");
     write(*buf, P(ui.update_unfocused), "Update when not in focus, consumes extra CPU");
     write(*buf, P(ui.imgui_theme_id));
+    write(*buf, P(ui.info_widget_width));
 
     const auto &scene = cfg.scene;
     write(*buf, P(scene.grid_cells), "Grid cells count in each dimension (X, Y)");

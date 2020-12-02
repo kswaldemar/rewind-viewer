@@ -1026,6 +1026,7 @@ ImGuiIO::ImGuiIO()
 #endif
     ConfigInputTextCursorBlink = true;
     ConfigWindowsResizeFromEdges = true;
+    ConfigWindowsResizeFromGrip = true;
     ConfigWindowsMoveFromTitleBarOnly = false;
     ConfigWindowsMemoryCompactTimer = 60.0f;
 
@@ -5144,6 +5145,9 @@ static bool ImGui::UpdateWindowManualResize(ImGuiWindow* window, const ImVec2& s
 
     // Manual resize grips
     PushID("#RESIZE");
+    if (!g.IO.ConfigWindowsResizeFromGrip) {
+        resize_grip_count = 0;
+    }
     for (int resize_grip_n = 0; resize_grip_n < resize_grip_count; resize_grip_n++)
     {
         const ImGuiResizeGripDef& grip = resize_grip_def[resize_grip_n];

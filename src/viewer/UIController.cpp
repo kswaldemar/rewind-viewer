@@ -82,8 +82,8 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     set_style_by_theme_id(conf_->ui.imgui_theme_id);
 
     auto &io = ImGui::GetIO();
+    io.ConfigWindowsResizeFromGrip = false;
     const float scale_factor = get_scale_factor();
-
     auto font_cfg = ImFontConfig();
     font_cfg.SizePixels = DEFAULT_FONT_SIZE * scale_factor;
     font_cfg.OversampleH = 1;
@@ -310,12 +310,10 @@ void UIController::fps_overlay_widget(NetListener::ConStatus net_status) {
 void UIController::info_widget(Scene *scene) {
     int width, height;
     glfwGetWindowSize(glfwGetCurrentContext(), &width, &height);
-    const int desired_width = 300;
-    ImGui::SetNextWindowPos({static_cast<float>(width - desired_width), 20}, ImGuiCond_None);
+    const float desired_width = static_cast<float>(conf_->ui.info_widget_width);
+    ImGui::SetNextWindowPos({static_cast<float>(width) - desired_width, 20}, ImGuiCond_None);
     ImGui::SetNextWindowSize({desired_width, static_cast<float>(height - 20 - 30)}, ImGuiCond_None);
-    ImGui::Begin(
-        "Info", nullptr,
-        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+    ImGui::Begin("Info", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
     const auto flags = ImGuiTreeNodeFlags_DefaultOpen;
     if (ImGui::CollapsingHeader(ICON_FA_COGS " Settings")) {
         if (ImGui::CollapsingHeader("Camera", flags)) {
@@ -372,6 +370,9 @@ void UIController::info_widget(Scene *scene) {
         ImGui::TextWrapped("%s", scene->get_frame_user_message());
         ImGui::EndChild();
     }
+
+    conf_->ui.info_widget_width = static_cast<int>(ImGui::GetWindowWidth());
+
     ImGui::End();
 }
 

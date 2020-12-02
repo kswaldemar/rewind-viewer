@@ -18,6 +18,7 @@ struct Config {
         glm::vec3 clear_color = {0.2, 0.3, 0.3};
         bool update_unfocused = false;
         int imgui_theme_id = 0;
+        int info_widget_width = 300;
     } ui;
 
     struct SceneConf {
