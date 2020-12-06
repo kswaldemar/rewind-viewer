@@ -11,7 +11,7 @@
 
 Fast Russain AI Cup championship match viewer with rewinding support written in OpenGL
 
-![](https://user-images.githubusercontent.com/10009947/33450137-e71f641e-d61b-11e7-9802-e14575e63b75.png)
+![](https://user-images.githubusercontent.com/10009947/101282773-06be3080-37e8-11eb-9edd-47e30e58e2a0.png)
 
 ## Overview
 The viewer has several advantages in comparison of local-runner with drawing plugin:
