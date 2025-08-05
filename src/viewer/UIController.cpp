@@ -18,11 +18,8 @@
 namespace {
 
 bool key_modifier(const ImGuiIO &io) {
-#ifdef __APPLE__
-    return io.KeySuper;
-#else
-    return io.KeyCtrl;
-#endif
+    bool result = (io.KeyMods & ImGuiMod_Ctrl) != 0;
+    return result;
 }
 
 float get_scale_factor() {
@@ -70,6 +67,7 @@ struct UIController::wnd_t {
     bool show_ui_help = false;
     bool show_shortcuts_help = false;
     bool show_metrics = false;
+    bool show_demo_window = false;
     bool show_mouse_pos_tooltip = false;
 };
 
@@ -85,20 +83,29 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     io.ConfigWindowsResizeFromEdges = false;
     const float scale_factor = get_scale_factor();
     auto font_cfg = ImFontConfig();
-    font_cfg.SizePixels = DEFAULT_FONT_SIZE * scale_factor;
-    font_cfg.OversampleH = 1;
-    font_cfg.OversampleV = 1;
-    font_cfg.PixelSnapH = true;
+    font_cfg.SizePixels = DEFAULT_FONT_SIZE;  // Use base size, not scaled
+    font_cfg.RasterizerDensity = scale_factor;  // ImGui 1.92+ way for Retina/high-DPI
+    font_cfg.OversampleH = 0;  // Auto (ImGui 1.92+ default for better quality)
+    font_cfg.OversampleV = 0;  // Auto (ImGui 1.92+ default for better quality)
+    font_cfg.PixelSnapH = true;  // Better antialiasing
 
     // Load and merge fontawesome to current font
+    // NOTE: ImGui 1.92+ changed font merging behavior - now searches FIRST font with glyph
+    // We exclude FontAwesome range from default font to ensure icons come from FontAwesome
+    static const ImWchar exclude_fa_range[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
+    font_cfg.GlyphExcludeRanges = exclude_fa_range;
     io.Fonts->AddFontDefault(&font_cfg);
+
     const ImWchar icons_range[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
     icons_config.MergeMode = true;
-    icons_config.PixelSnapH = true;
+    icons_config.RasterizerDensity = scale_factor;  // Same Retina handling for icons
+    icons_config.OversampleH = 0;  // Auto for better quality
+    icons_config.OversampleV = 0;  // Auto for better quality
+    icons_config.PixelSnapH = false;  // Better antialiasing for icons
     io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf",
-                                 FONT_AWESOME_FONT_SIZE * scale_factor, &icons_config, icons_range);
-    ImGui::GetStyle().FontScaleMain = 1.0f / scale_factor;
+                                 FONT_AWESOME_FONT_SIZE, &icons_config, icons_range);
+    // No need for FontScaleMain with RasterizerDensity approach
     // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
@@ -147,6 +154,9 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
     }
     if (wnd_->show_metrics) {
         ImGui::ShowMetricsWindow(&wnd_->show_metrics);
+    }
+    if (wnd_->show_demo_window) {
+        ImGui::ShowDemoWindow(&wnd_->show_demo_window);
     }
     if (wnd_->show_ui_help) {
         ImGui::Begin(ICON_FA_INFO_CIRCLE " UI guide", &wnd_->show_ui_help,
@@ -198,7 +208,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
         if (key_pressed_once(ImGuiKey_P)) {
             wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
         }
-        if (ImGui::IsKeyDown(ImGuiKey_D) && key_modifier(io)) {
+        if (key_pressed_once(ImGuiKey_D) && key_modifier(io)) {
             developer_mode_ = true;
         }
 
@@ -214,7 +224,7 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
             }
         }
 
-        if (scene->has_data() && ImGui::IsKeyDown(ImGuiKey_R) && key_modifier(io)) {
+        if (scene->has_data() && key_pressed_once(ImGuiKey_R) && key_modifier(io)) {
             scene->clear_data();
         }
     }
@@ -252,6 +262,7 @@ void UIController::main_menu_bar() {
                 ImGui::Separator();
                 ImGui::Checkbox("Style editor", &wnd_->show_style_editor);
                 ImGui::Checkbox("Metrics", &wnd_->show_metrics);
+                ImGui::Checkbox("Demo Window", &wnd_->show_demo_window);
             }
             ImGui::EndMenu();
         }
@@ -442,7 +453,7 @@ void UIController::playback_control_widget(Scene *scene) {
         if (frames_cnt > 0) {
             tick = cg::clamp(tick, 1, frames_cnt);
             ImGui::PushItemWidth(-1);
-            if (key_modifier(io) && ImGui::IsKeyDown(ImGuiKey_G)) {
+            if (key_modifier(io) && key_pressed_once(ImGuiKey_G)) {
                 ImGui::SetKeyboardFocusHere();
             }
             const std::string slider_fmt = "%5d/" + std::to_string(frames_cnt);
