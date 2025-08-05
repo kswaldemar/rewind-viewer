@@ -39,7 +39,7 @@ class UIController {
     void info_widget(Scene *scene);
     void playback_control_widget(Scene *scene);
 
-    bool key_pressed_once(int key_desc);
+    bool key_pressed_once(ImGuiKey key_desc);
 
     /// Handling flags whenever window should be drawn or not etc.
     struct wnd_t;
@@ -54,5 +54,5 @@ class UIController {
     bool immediate_send_mode_ = false;
 
     /// Last remembered state
-    bool key_pressed_[512] = {};
+    bool key_pressed_[ImGuiKey_NamedKey_COUNT] = {};
 };

@@ -82,7 +82,7 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     set_style_by_theme_id(conf_->ui.imgui_theme_id);
 
     auto &io = ImGui::GetIO();
-    io.ConfigWindowsResizeFromGrip = false;
+    io.ConfigWindowsResizeFromEdges = false;
     const float scale_factor = get_scale_factor();
     auto font_cfg = ImFontConfig();
     font_cfg.SizePixels = DEFAULT_FONT_SIZE * scale_factor;
@@ -98,7 +98,7 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     icons_config.PixelSnapH = true;
     io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf",
                                  FONT_AWESOME_FONT_SIZE * scale_factor, &icons_config, icons_range);
-    io.FontGlobalScale = 1.0f / scale_factor;
+    ImGui::GetStyle().FontScaleMain = 1.0f / scale_factor;
     // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
 }
@@ -183,30 +183,30 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
 
     // Checking hotkeys
     if (!io.WantTextInput) {
-        if (key_pressed_once(GLFW_KEY_SPACE)) {
+        if (key_pressed_once(ImGuiKey_Space)) {
             autoplay_scene_ = !autoplay_scene_;
         }
-        if (io.KeysDown[GLFW_KEY_LEFT]) {
+        if (ImGui::IsKeyDown(ImGuiKey_LeftArrow)) {
             autoplay_scene_ = false;
         }
-        if (key_pressed_once(GLFW_KEY_G) && !key_modifier(io)) {
+        if (key_pressed_once(ImGuiKey_G) && !key_modifier(io)) {
             conf_->scene.show_grid = !conf_->scene.show_grid;
         }
-        if (key_pressed_once(GLFW_KEY_I)) {
+        if (key_pressed_once(ImGuiKey_I)) {
             immediate_send_mode_ = !immediate_send_mode_;
         }
-        if (key_pressed_once(GLFW_KEY_P)) {
+        if (key_pressed_once(ImGuiKey_P)) {
             wnd_->show_mouse_pos_tooltip = !wnd_->show_mouse_pos_tooltip;
         }
-        if (io.KeysDown[GLFW_KEY_D] && key_modifier(io)) {
+        if (ImGui::IsKeyDown(ImGuiKey_D) && key_modifier(io)) {
             developer_mode_ = true;
         }
 
         // Layer toggle shortcuts
         auto &enabled_layers = conf_->scene.enabled_layers;
-        static const std::array<int, Frame::LAYERS_COUNT> layer_shortcuts = {
-            GLFW_KEY_1, GLFW_KEY_2, GLFW_KEY_3, GLFW_KEY_4, GLFW_KEY_5,
-            GLFW_KEY_6, GLFW_KEY_7, GLFW_KEY_8, GLFW_KEY_9, GLFW_KEY_0,
+        static const std::array<ImGuiKey, Frame::LAYERS_COUNT> layer_shortcuts = {
+            ImGuiKey_1, ImGuiKey_2, ImGuiKey_3, ImGuiKey_4, ImGuiKey_5,
+            ImGuiKey_6, ImGuiKey_7, ImGuiKey_8, ImGuiKey_9, ImGuiKey_0,
         };
         for (size_t i = 0; i < layer_shortcuts.size(); ++i) {
             if (key_pressed_once(layer_shortcuts[i])) {
@@ -214,12 +214,12 @@ void UIController::next_frame(Scene *scene, NetListener::ConStatus client_status
             }
         }
 
-        if (scene->has_data() && io.KeysDown[GLFW_KEY_R] && key_modifier(io)) {
+        if (scene->has_data() && ImGui::IsKeyDown(ImGuiKey_R) && key_modifier(io)) {
             scene->clear_data();
         }
     }
 
-    request_exit_ = conf_->ui.close_with_esc && io.KeysDown[GLFW_KEY_ESCAPE];
+    request_exit_ = conf_->ui.close_with_esc && ImGui::IsKeyDown(ImGuiKey_Escape);
 
     // Hittest for detailed unit info
     if (!ImGui::GetIO().WantCaptureMouse) {
@@ -394,11 +394,11 @@ void UIController::playback_control_widget(Scene *scene) {
         if (!io.WantTextInput) {
             int prev_tick = tick;
             if (key_modifier(io)) {
-                tick -= key_pressed_once(GLFW_KEY_LEFT);
-                tick += key_pressed_once(GLFW_KEY_RIGHT);
+                tick -= key_pressed_once(ImGuiKey_LeftArrow);
+                tick += key_pressed_once(ImGuiKey_RightArrow);
             } else {
-                tick -= io.KeysDown[GLFW_KEY_LEFT];
-                tick += io.KeysDown[GLFW_KEY_RIGHT];
+                tick -= ImGui::IsKeyDown(ImGuiKey_LeftArrow);
+                tick += ImGui::IsKeyDown(ImGuiKey_RightArrow);
             }
 
             if (prev_tick != tick) {
@@ -442,7 +442,7 @@ void UIController::playback_control_widget(Scene *scene) {
         if (frames_cnt > 0) {
             tick = cg::clamp(tick, 1, frames_cnt);
             ImGui::PushItemWidth(-1);
-            if (key_modifier(io) && io.KeysDown[GLFW_KEY_G]) {
+            if (key_modifier(io) && ImGui::IsKeyDown(ImGuiKey_G)) {
                 ImGui::SetKeyboardFocusHere();
             }
             const std::string slider_fmt = "%5d/" + std::to_string(frames_cnt);
@@ -461,15 +461,16 @@ void UIController::playback_control_widget(Scene *scene) {
     }
 }
 
-bool UIController::key_pressed_once(int key_desc) {
-    const auto &io = ImGui::GetIO();
-    if (io.KeysDown[key_desc]) {
-        if (!key_pressed_[key_desc]) {
-            key_pressed_[key_desc] = true;
+bool UIController::key_pressed_once(ImGuiKey key_desc) {
+    IM_ASSERT(key_desc >= ImGuiKey_NamedKey_BEGIN && key_desc < ImGuiKey_NamedKey_END);
+    const int index = key_desc - ImGuiKey_NamedKey_BEGIN;
+    if (ImGui::IsKeyDown(key_desc)) {
+        if (!key_pressed_[index]) {
+            key_pressed_[index] = true;
             return true;
         }
     } else {
-        key_pressed_[key_desc] = false;
+        key_pressed_[index] = false;
     }
     return false;
 }
