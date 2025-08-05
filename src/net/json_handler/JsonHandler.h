@@ -1,6 +1,6 @@
 #include <net/ProtoHandler.h>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cstdint>
 

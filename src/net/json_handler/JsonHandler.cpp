@@ -4,7 +4,7 @@
 #include <net/PrimitiveType.h>
 #include <viewer/FrameEditor.h>
 
-#include <json.hpp>
+#include <nlohmann/json.hpp>
 
 #include <cassert>
 

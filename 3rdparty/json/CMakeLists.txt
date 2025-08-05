@@ -2,8 +2,12 @@ cmake_minimum_required(VERSION 3.11)
 
 project(nljson)
 
-include(utils)
-LoadDependency(https://github.com/nlohmann/json/releases/download/v2.1.1/json.hpp include/json.hpp)
+include(FetchContent)
+FetchContent_Declare(nlohmann_json
+    URL https://github.com/nlohmann/json/releases/download/v3.12.0/include.zip
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
 add_library(${PROJECT_NAME} INTERFACE)
-target_include_directories(${PROJECT_NAME} INTERFACE ${PROJECT_SOURCE_DIR}/include)
+target_include_directories(${PROJECT_NAME} INTERFACE ${nlohmann_json_SOURCE_DIR}/include)
