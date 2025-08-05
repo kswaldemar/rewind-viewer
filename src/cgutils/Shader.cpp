@@ -140,6 +140,35 @@ Shader::Shader(const std::string &vertex, const std::string &fragment,
     }
 }
 
+Shader::Shader(const EmbeddedShaders& shaders) {
+    if (shaders.geometry_source) {
+        LOG_INFO("Start compiling embedded shader: vertex, fragment, geometry");
+    } else {
+        LOG_INFO("Start compiling embedded shader: vertex, fragment");
+    }
+
+    LOG_INFO("Compile embedded Vertex shader");
+    auto v_shader = create_shader(GL_VERTEX_SHADER, shaders.vertex_source);
+
+    LOG_INFO("Compile embedded Fragment shader");
+    auto f_shader = create_shader(GL_FRAGMENT_SHADER, shaders.fragment_source);
+
+    GLuint geom_shader = 0;
+    if (shaders.geometry_source) {
+        LOG_INFO("Compile embedded Geometry shader");
+        geom_shader = create_shader(GL_GEOMETRY_SHADER, shaders.geometry_source);
+    }
+
+    LOG_INFO("Link shader program");
+    program_ = create_shader_program(v_shader, f_shader, geom_shader);
+
+    glDeleteShader(v_shader);
+    glDeleteShader(f_shader);
+    if (geom_shader != 0) {
+        glDeleteShader(geom_shader);
+    }
+}
+
 Shader::~Shader() {
     glDeleteProgram(program_);
 }

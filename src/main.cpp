@@ -10,6 +10,7 @@
 #include <viewer/UIController.h>
 
 #include <stb_image.h>
+#include "resources/icon_png.h"
 
 #include <exception>
 #include <thread>
@@ -102,18 +103,16 @@ GLFWwindow *setup_window() {
     int width;
     int height;
     int nr_channels;
-    const std::string icon_path = "resources/icon.png";
-    auto icon_data = stbi_load(icon_path.c_str(), &width, &height, &nr_channels, 0);
+    // Load embedded icon
+    auto icon_data = stbi_load_from_memory(icon_png, icon_png_size, &width, &height, &nr_channels, 0);
     if (!icon_data) {
-        LOG_ERROR(
-            "Cannot find application icon (%s). "
-            "Make sure you launch viewer from directory with 'resources' folder",
-            icon_path.c_str());
+        LOG_ERROR("Cannot load embedded application icon");
         return nullptr;
     }
     GLFWimage icon{width, height, icon_data};
     LOG_INFO("Setup application icon");
     glfwSetWindowIcon(window, 1, &icon);
+    stbi_image_free(icon_data);
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(

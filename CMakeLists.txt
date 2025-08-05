@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.11)
 project(rewind-viewer LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+include(EmbedResources)
 
 #3rdparites
 add_subdirectory(3rdparty/glad)
@@ -27,9 +28,18 @@ else()
     set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
     set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
     add_subdirectory(3rdparty/glfw)
+    set_target_properties(glfw PROPERTIES
+      MAP_IMPORTED_CONFIG_DEBUG Release
+      MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+    )
 endif()
 
 add_subdirectory(3rdparty/glm)
+set_target_properties(glm PROPERTIES
+    MAP_IMPORTED_CONFIG_DEBUG Release
+    MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+)
+
 add_subdirectory(3rdparty/imgui) # Depends from glm
 
 

@@ -10,6 +10,26 @@ endif()
 
 set(CMAKE_CXX_STANDARD 20)
 
+file(GLOB SHADER_FILES "${CMAKE_SOURCE_DIR}/resources/shaders/*")
+embed_shaders(${SHADER_FILES})
+
+embed_binary_resource(generated/resources/fontawesome_ttf.h resources/fonts/fontawesome-webfont.ttf)
+embed_binary_resource(generated/resources/icon_png.h resources/icon.png)
+
+# Create custom target for all generated resources
+add_custom_target(Embedded_resources
+    DEPENDS
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/circle.frag.h
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/circle.geom.h
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/circle.vert.h
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/color_pos.frag.h
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/color_pos.vert.h
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/simple.vert.h
+        ${CMAKE_BINARY_DIR}/generated/resources/shaders/uniform_color.frag.h
+        ${CMAKE_BINARY_DIR}/generated/resources/fontawesome_ttf.h
+        ${CMAKE_BINARY_DIR}/generated/resources/icon_png.h
+)
+
 set(Sources
     main.cpp
 
@@ -40,7 +60,10 @@ set(Sources
 
 add_executable(${PROJECT_NAME} ${Sources})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_BINARY_DIR}/generated)
 target_compile_definitions(${PROJECT_NAME} PRIVATE IMGUI_IMPL_OPENGL_LOADER_GLAD)
+
+add_dependencies(${PROJECT_NAME} Embedded_resources)
 
 target_link_libraries(${PROJECT_NAME}
     Glad glfw glm

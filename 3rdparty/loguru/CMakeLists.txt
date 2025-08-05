@@ -19,6 +19,11 @@ FetchContent_MakeAvailable(loguru_header loguru_source)
 add_library(${PROJECT_NAME} STATIC ${loguru_source_SOURCE_DIR}/loguru.cpp)
 target_include_directories(${PROJECT_NAME} PUBLIC ${loguru_header_SOURCE_DIR})
 
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    MAP_IMPORTED_CONFIG_DEBUG Release
+    MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release
+)
+
 if (UNIX)
     target_link_libraries(${PROJECT_NAME} PRIVATE dl pthread)
 endif()

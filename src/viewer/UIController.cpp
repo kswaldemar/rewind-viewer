@@ -10,6 +10,7 @@
 #include <version.h>
 
 #include <fontawesome.h>
+#include "resources/fontawesome_ttf.h"
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
 
@@ -103,8 +104,9 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     icons_config.OversampleH = 0;  // Auto for better quality
     icons_config.OversampleV = 0;  // Auto for better quality
     icons_config.PixelSnapH = false;  // Better antialiasing for icons
-    io.Fonts->AddFontFromFileTTF("resources/fonts/fontawesome-webfont.ttf",
-                                 FONT_AWESOME_FONT_SIZE, &icons_config, icons_range);
+    icons_config.FontDataOwnedByAtlas = false;  // Don't free embedded data
+    io.Fonts->AddFontFromMemoryTTF(const_cast<void*>(static_cast<const void*>(fontawesome_ttf)),
+                                   fontawesome_ttf_size, FONT_AWESOME_FONT_SIZE, &icons_config, icons_range);
     // No need for FontScaleMain with RasterizerDensity approach
     // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
