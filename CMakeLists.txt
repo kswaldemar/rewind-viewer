@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.0)
-project(rewind-viewer)
+cmake_minimum_required(VERSION 3.11)
+project(rewind-viewer LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -29,7 +29,7 @@ else()
     add_subdirectory(3rdparty/glfw)
 endif()
 
-set(GLM_TEST_ENABLE OFF)
+set(GLM_ENABLE_CXX_20 ON)
 add_subdirectory(3rdparty/glm)
 add_subdirectory(3rdparty/imgui) # Depends from glm
 

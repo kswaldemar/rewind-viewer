@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.11)
 project(rewindviewer LANGUAGES C CXX)
 
 add_compile_options(-Wall)
@@ -8,7 +8,7 @@ else()
     add_compile_options(-Wextra)
 endif()
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 20)
 
 set(Sources
     main.cpp

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.11)
 
 project(ImGui)
 
@@ -17,5 +17,4 @@ add_library(${PROJECT_NAME} STATIC
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 #Dependency for implicit vector conversions
-get_target_property(glm_includes glm INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(${PROJECT_NAME} PRIVATE ${glm_includes})
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
