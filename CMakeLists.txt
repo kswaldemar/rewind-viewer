@@ -29,7 +29,6 @@ else()
     add_subdirectory(3rdparty/glfw)
 endif()
 
-set(GLM_ENABLE_CXX_20 ON)
 add_subdirectory(3rdparty/glm)
 add_subdirectory(3rdparty/imgui) # Depends from glm
 

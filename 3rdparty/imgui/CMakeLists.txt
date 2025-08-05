@@ -17,4 +17,4 @@ add_library(${PROJECT_NAME} STATIC
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 #Dependency for implicit vector conversions
-target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm)
+target_link_libraries(${PROJECT_NAME} PRIVATE glm::glm-header-only)
