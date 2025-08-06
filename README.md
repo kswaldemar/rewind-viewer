@@ -21,7 +21,7 @@ The viewer has several advantages in comparison of local-runner with drawing plu
  - Handy mouse navigation
 
 Drawbacks:
- - Viewer running as standalone application, it knows nothing about local runner or your strategy, so you need manually 
+ - Viewer running as standalone application, it knows nothing about local runner or your strategy, so you need manually
 send all data (like buildings, units etc.) and you can draw only data visible by your strategy
  - In theory, high memory usage, because it needs to store all drawing primitives for rewinding support
 
@@ -52,23 +52,21 @@ mkdir build && cd build
 cmake ..
 cmake --build . --config Release
 ```
-*Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows. 
+*Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows.
 
-:warning: **Note**: Viewer should be launched from the same folder, where `resources` is located. 
-So you need to manually copy `resources` to build folder, or copy executable to project root directory.
 
 ## Strategy integration
 
 Strategy should send commands in json format via socket. You may use one from `clients` folder or implement your own.
 
-:warning: Json protocol starting from release 2.0 doesn't compatible with older clients (from 1.3 and below). 
-Check that your client is updated. 
+:warning: Json protocol starting from release 2.0 doesn't compatible with older clients (from 1.3 and below).
+Check that your client is updated.
 
-Sample usage: 
+Sample usage:
 1. Start the viewer.
 2. Start localrunner, preferably in render_to_screen=false mode.
 3. Start your strategy.
-4. To be able to drew things in the viewer you will need to create a client, send data to the client in your strategy, and **end the frame** with client command. 
+4. To be able to drew things in the viewer you will need to create a client, send data to the client in your strategy, and **end the frame** with client command.
 5. There is no need to close the viewer after the strategy is done, just start from step 2. Old drawn data will be cleaned after new connection.
 
 ### Create client four your language
@@ -90,7 +88,7 @@ Project created with help of many great libraries:
  - [stb_image](https://github.com/nothings/stb) for images processing
  - [loguru](https://github.com/emilk/loguru) for logging support
 
-Resources: 
+Resources:
  - [fontawesome](http://fontawesome.io/) icon font, embedded inside text in many UI elements
- - Application icon by [Laura Reen](https://www.iconfinder.com/laurareen)  
- 
+ - Application icon by [Laura Reen](https://www.iconfinder.com/laurareen)
+

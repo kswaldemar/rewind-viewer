@@ -15,8 +15,6 @@ cmake --CMAKE_BUILD_TYPE=Release ..
 cmake --build .
 ```
 
-**Important:** The executable must be run from the directory containing the `resources/` folder. Either copy `resources/` to the build directory or run the executable from the project root.
-
 **Debug build:**
 ```bash
 cmake -DCMAKE_BUILD_TYPE=Debug ..
@@ -33,7 +31,7 @@ Network Data → JsonHandler → FrameEditor → Frame → Scene → Renderer �
 ### Key Subsystems
 
 **Networking** (`src/net/`):
-- `NetListener`: TCP server on `127.0.0.1:9111` 
+- `NetListener`: TCP server on `127.0.0.1:9111`
 - `JsonHandler`: Parses JSON protocol into primitives
 - Runs in separate thread with spinlock synchronization
 
@@ -45,7 +43,7 @@ Network Data → JsonHandler → FrameEditor → Frame → Scene → Renderer �
 
 **Rendering** (`src/viewer/` + `src/cgutils/`):
 - `Renderer`: OpenGL rendering implementation
-- `RenderContext`: Accumulates primitives for batched drawing  
+- `RenderContext`: Accumulates primitives for batched drawing
 - `ShaderCollection`: Manages OpenGL shaders (color_pos, circle, uniform_color)
 - `Camera`: 2D camera with configurable coordinate system
 - `ResourceManager`: RAII-based OpenGL resource management
@@ -90,12 +88,13 @@ JSON-based protocol supporting primitives: circle, rectangle, triangle, polyline
 **Adding New Primitives:**
 1. Add enum to `PrimitiveType.h`
 2. Implement parsing in `JsonHandler`
-3. Add rendering in `RenderContext`  
+3. Add rendering in `RenderContext`
 4. Update protocol documentation
 
 **Shader Management:**
-- Shaders loaded from `resources/shaders/`
-- Hot-reload capability in debug builds
+- Shaders embedded at compile time from `resources/shaders/` into generated headers
+- CMake automatically embeds all shaders using `embed_shaders()` function
+- Runtime loading via `Shader::EmbeddedShaders` struct instead of file paths
 - Uniform management via `ShaderCollection`
 
 **Resource Cleanup:**
@@ -107,7 +106,7 @@ JSON-based protocol supporting primitives: circle, rectangle, triangle, polyline
 
 Key 3rd party libraries in `3rdparty/`:
 - **GLFW**: Window management and input
-- **ImGui**: Immediate mode UI framework  
+- **ImGui**: Immediate mode UI framework
 - **GLM**: Mathematics library for graphics
 - **nlohmann/json**: JSON parsing
 - **loguru**: Structured logging
@@ -120,8 +119,9 @@ Key 3rd party libraries in `3rdparty/`:
 - `src/main.cpp`: Application entry point and main loop
 - `src/viewer/`: Core rendering and UI components
 - `src/net/`: Networking and protocol handling
-- `src/cgutils/`: Computer graphics utilities  
+- `src/cgutils/`: Computer graphics utilities
 - `src/common/`: Shared utilities (spinlock, logging)
 - `src/imgui_impl/`: ImGui platform integration
-- `resources/`: Shaders, fonts, and assets
+- `resources/`: Source assets (embedded at build time)
+- `cmake/`: CMake modules for resource embedding (`EmbedResources.cmake`, `embed_shader.cmake`, `embed_binary.cmake`)
 - `clients/`: Protocol clients for various languages
