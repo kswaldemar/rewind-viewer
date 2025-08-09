@@ -15,12 +15,12 @@ void gl_check_error(const char *file, int line);
 
 }  // namespace details
 
-template <typename T>
+template<typename T>
 constexpr void *offset(uint16_t shift) {
     return reinterpret_cast<void *>(shift * sizeof(T));
 }
 
-template <typename T>
+template<typename T>
 constexpr inline T clamp(T value, T min_val, T max_val) {
     return value < min_val ? min_val : value > max_val ? max_val : value;
 }

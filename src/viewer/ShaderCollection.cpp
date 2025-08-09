@@ -5,11 +5,11 @@
 #include "ShaderCollection.h"
 
 // Include embedded shaders
-#include "resources/shaders/color_pos.vert.h"
-#include "resources/shaders/color_pos.frag.h"
-#include "resources/shaders/circle.vert.h"
 #include "resources/shaders/circle.frag.h"
 #include "resources/shaders/circle.geom.h"
+#include "resources/shaders/circle.vert.h"
+#include "resources/shaders/color_pos.frag.h"
+#include "resources/shaders/color_pos.vert.h"
 #include "resources/shaders/simple.vert.h"
 #include "resources/shaders/uniform_color.frag.h"
 

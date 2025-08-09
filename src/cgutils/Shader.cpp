@@ -140,7 +140,7 @@ Shader::Shader(const std::string &vertex, const std::string &fragment,
     }
 }
 
-Shader::Shader(const EmbeddedShaders& shaders) {
+Shader::Shader(const EmbeddedShaders &shaders) {
     if (shaders.geometry_source) {
         LOG_INFO("Start compiling embedded shader: vertex, fragment, geometry");
     } else {

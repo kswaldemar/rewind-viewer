@@ -23,7 +23,8 @@
  *
  *  For available types see enum PrimitiveType in Frame.h header
  *
- *  Colors has ARGB format, if you set only RGB component alpha channel will be set to full opaque value 255.
+ *  Colors has ARGB format, if you set only RGB component alpha channel will be set to full opaque
+ * value 255.
  *
  *  Note: All command only affect currently rendering frame and will not appear in the next frame
  *
@@ -34,18 +35,18 @@
  *   - Layers are drawn in ascending order
  */
 class RewindClient {
-public:
+ public:
     enum Color : uint32_t {
         COLOR_RED = 0xFF0000,
         COLOR_GREEN = 0x00FF00,
         COLOR_BLUE = 0x0000FF,
-        COLOR_TRANSPARENT = 0xaa000000, ///ARGB format
-        COLOR_YELLOW = 0x00FFFF00, ///Zero transparency mean fully opaque
+        COLOR_TRANSPARENT = 0xaa000000,  /// ARGB format
+        COLOR_YELLOW = 0x00FFFF00,       /// Zero transparency mean fully opaque
         COLOR_WHITE = 0xFFFFFF
     };
 
     RewindClient(const RewindClient &) = delete;
-    RewindClient &operator=(const RewindClient&) = delete;
+    RewindClient &operator=(const RewindClient &) = delete;
 
     /**
      * Singletone
@@ -69,22 +70,27 @@ public:
         send(format(fmt, x1, y1, x2, y2, color, fill ? "true" : "false"));
     }
 
-    void rectangle(double x1, double y1, double x2, double y2, const std::array<uint32_t, 4> &colors, bool fill = true) {
+    void rectangle(double x1, double y1, double x2, double y2,
+                   const std::array<uint32_t, 4> &colors, bool fill = true) {
         static const char *fmt =
             R"({"type": "rectangle", "tl": [%lf, %lf], "br": [%lf, %lf], "color": [%u, %u, %u, %u], "fill": %s})";
-        send(format(fmt, x1, y1, x2, y2, colors[0], colors[1], colors[2], colors[3], fill ? "true" : "false"));
+        send(format(fmt, x1, y1, x2, y2, colors[0], colors[1], colors[2], colors[3],
+                    fill ? "true" : "false"));
     }
 
-    void triangle(double x1, double y1, double x2, double y2, double x3, double y3, uint32_t color, bool fill = false) {
+    void triangle(double x1, double y1, double x2, double y2, double x3, double y3, uint32_t color,
+                  bool fill = false) {
         static const char *fmt =
             R"({"type": "triangle", "points": [%lf, %lf, %lf, %lf, %lf, %lf], "color": %u, "fill": %s})";
         send(format(fmt, x1, y1, x2, y2, x3, y3, color, fill ? "true" : "false"));
     }
 
-    void triangle(double x1, double y1, double x2, double y2, double x3, double y3, const std::array<uint32_t, 3> &colors, bool fill = true) {
+    void triangle(double x1, double y1, double x2, double y2, double x3, double y3,
+                  const std::array<uint32_t, 3> &colors, bool fill = true) {
         static const char *fmt =
             R"({"type": "triangle", "points": [%lf, %lf, %lf, %lf, %lf, %lf], "color": [%u, %u, %u], "fill": %s})";
-        send(format(fmt, x1, y1, x2, y2, x3, y3, colors[0], colors[1], colors[2], fill ? "true" : "false"));
+        send(format(fmt, x1, y1, x2, y2, x3, y3, colors[0], colors[1], colors[2],
+                    fill ? "true" : "false"));
     }
 
     void line(double x1, double y1, double x2, double y2, uint32_t color) {
@@ -119,21 +125,19 @@ public:
         send(s);
     }
 
-    void popup(double x, double y, double r, const std::string& text) {
-        static const char *fmt =
-            R"({"type": "popup", "p": [%lf, %lf], "r": %lf, "text": "%s"})";
+    void popup(double x, double y, double r, const std::string &text) {
+        static const char *fmt = R"({"type": "popup", "p": [%lf, %lf], "r": %lf, "text": "%s"})";
         send(format(fmt, x, y, r, text.c_str()));
     }
 
-    void popup(double x1, double y1, double x2, double y2, const std::string& text) {
+    void popup(double x1, double y1, double x2, double y2, const std::string &text) {
         static const char *fmt =
             R"({"type": "popup", "tl": [%lf, %lf], "br": [%lf, %lf], "text": "%s"})";
         send(format(fmt, x1, y1, x2, y2, text.c_str()));
     }
 
     void set_options(int layer, bool permanent = false) {
-        static const char *fmt =
-            R"({"type": "options", "layer": %i, "permanent": %s})";
+        static const char *fmt = R"({"type": "options", "layer": %i, "permanent": %s})";
         send(format(fmt, layer, permanent ? "true" : "false"));
     }
 
@@ -145,7 +149,7 @@ public:
         send(R"({"type": "end"})");
     }
 
-private:
+ private:
     template<typename... Args>
     static inline std::string format(const char *fmt, Args... args) {
         static char buf[2048];
@@ -158,7 +162,8 @@ private:
         socket_.Initialize();
         socket_.DisableNagleAlgoritm();
         if (!socket_.Open(reinterpret_cast<const uint8_t *>(host.c_str()), port)) {
-            fprintf(stderr, "RewindClient:: Cannot open viewer socket. Launch viewer before strategy");
+            fprintf(stderr,
+                    "RewindClient:: Cannot open viewer socket. Launch viewer before strategy");
         }
     }
 

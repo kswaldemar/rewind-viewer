@@ -11,7 +11,7 @@
 namespace {
 
 /// Helper function
-template <typename T>
+template<typename T>
 inline T value_or_default(const nlohmann::json &j, const std::string &name, T def_val) {
     const auto it = j.find(name);
     if (it != j.end()) {

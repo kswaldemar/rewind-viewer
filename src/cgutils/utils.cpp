@@ -15,7 +15,7 @@ void gl_check_error(const char *file, int line) {
     GLenum errorCode;
     while ((errorCode = glGetError()) != GL_NO_ERROR) {
         std::string error;
-        //@formatter:off
+        // clang-format off
         switch (errorCode) {
             case GL_INVALID_ENUM:                 error = "INVALID_ENUM"; break;
             case GL_INVALID_VALUE:                error = "INVALID_VALUE"; break;
@@ -24,7 +24,7 @@ void gl_check_error(const char *file, int line) {
             case GL_INVALID_FRAMEBUFFER_OPERATION:error = "INVALID_FRAMEBUFFER_OPERATION"; break;
             default:                              error = "UNKONWN_ERROR"; break;
         }
-        //@formatter:on
+        // clang-format on
         LOG_ERROR("OPENGL:: %s | %s (%d)", error.c_str(), file, line);
     }
 }
@@ -40,7 +40,7 @@ void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenu
 
     LOG_WARN("Debug message (%u): %s", id, message);
 
-    //@formatter:off
+    // clang-format off
     switch (source)
     {
         case GL_DEBUG_SOURCE_API_ARB:             fprintf(stderr, "Source: API"); break;
@@ -73,7 +73,7 @@ void APIENTRY debug_output_callback(GLenum source, GLenum type, GLuint id, GLenu
         default: break;
     }
     fprintf(stderr, "\n");
-    //@formatter:on
+    // clang-format on
 }
 
 }  // namespace cg

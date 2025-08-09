@@ -8,3 +8,4 @@ BreakConstructorInitializers: BeforeColon
 FixNamespaceComments: true
 BreakConstructorInitializersBeforeComma: true
 IncludeBlocks: Preserve
+SpaceAfterTemplateKeyword: false

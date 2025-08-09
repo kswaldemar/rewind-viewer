@@ -18,15 +18,15 @@ class Shader {
 
     // File-based constructor (legacy)
     Shader(const std::string &vertex, const std::string &fragment, const std::string &geom = "");
-    
+
     // Source-based constructor for embedded shaders
     struct EmbeddedShaders {
-        const char* vertex_source;
-        const char* fragment_source;
-        const char* geometry_source = nullptr;
+        const char *vertex_source;
+        const char *fragment_source;
+        const char *geometry_source = nullptr;
     };
-    Shader(const EmbeddedShaders& shaders);
-    
+    Shader(const EmbeddedShaders &shaders);
+
     ~Shader();
 
     void use() const;

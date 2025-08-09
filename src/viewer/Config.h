@@ -42,6 +42,6 @@ struct Config {
 
     static std::unique_ptr<Config> init_with_imgui(const char* fname);
 
-    Config(Config &) = delete;
+    Config(Config&) = delete;
     Config() = default;
 };

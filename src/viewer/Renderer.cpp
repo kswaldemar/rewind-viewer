@@ -75,14 +75,14 @@ Renderer::Renderer(ResourceManager *res, glm::u32vec2 area_size, glm::u16vec2 gr
     LOG_INFO("Create rectangle for future rendering");
     attr_->rect_vao = mgr_->gen_vertex_array();
     GLuint vbo = mgr_->gen_buffer();
-    //@formatter:off
+    // clang-format off
     const float points[] = {
         -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,
          1.0f, -1.0f, 0.0f,   1.0f, 0.0f,
         -1.0f,  1.0f, 0.0f,   0.0f, 1.0f,
          1.0f,  1.0f, 0.0f,   1.0f, 1.0f,
     };
-    //@formatter:on
+    // clang-format on
 
     glBindVertexArray(attr_->rect_vao);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -130,9 +130,9 @@ void Renderer::render_background(glm::vec3 color) {
     glBindVertexArray(attr_->rect_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    //if (auto context = test_draw()) {
-    //    context->draw(ctx_render_params_, *shaders_);
-    //}
+    // if (auto context = test_draw()) {
+    //     context->draw(ctx_render_params_, *shaders_);
+    // }
 }
 
 void Renderer::render_grid(glm::vec3 color) {

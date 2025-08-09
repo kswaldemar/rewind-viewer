@@ -82,7 +82,7 @@ void write(ImGuiTextBuffer &to, const char *name, glm::u16vec2 pos) {
     to.appendf("%s=(%hu,%hu)\n", name, pos.x, pos.y);
 }
 
-template <typename T>
+template<typename T>
 void write(ImGuiTextBuffer &to, const char *name, T value, const char *desc) {
     if (desc) {
         to.appendf(";%s\n", desc);
@@ -131,7 +131,7 @@ void callback_WriteAll(ImGuiContext *, ImGuiSettingsHandler *handler, ImGuiTextB
 
 }  // namespace
 
-std::unique_ptr<Config> Config::init_with_imgui(const char* fname) {
+std::unique_ptr<Config> Config::init_with_imgui(const char *fname) {
     auto cfg = std::make_unique<Config>();
 
     ImGuiContext *context = ImGui::GetCurrentContext();

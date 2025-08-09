@@ -104,7 +104,8 @@ GLFWwindow *setup_window() {
     int height;
     int nr_channels;
     // Load embedded icon
-    auto icon_data = stbi_load_from_memory(icon_png, icon_png_size, &width, &height, &nr_channels, 0);
+    auto icon_data =
+        stbi_load_from_memory(icon_png, icon_png_size, &width, &height, &nr_channels, 0);
     if (!icon_data) {
         LOG_ERROR("Cannot load embedded application icon");
         return nullptr;

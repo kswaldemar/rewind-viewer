@@ -10,9 +10,9 @@
 #include <version.h>
 
 #include <fontawesome.h>
-#include "resources/fontawesome_ttf.h"
 #include <imgui_impl/imgui_impl_glfw.h>
 #include <imgui_impl/imgui_impl_opengl3.h>
+#include "resources/fontawesome_ttf.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -84,11 +84,11 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     io.ConfigWindowsResizeFromEdges = false;
     const float scale_factor = get_scale_factor();
     auto font_cfg = ImFontConfig();
-    font_cfg.SizePixels = DEFAULT_FONT_SIZE;  // Use base size, not scaled
-    font_cfg.RasterizerDensity = scale_factor;  // ImGui 1.92+ way for Retina/high-DPI
-    font_cfg.OversampleH = 0;  // Auto (ImGui 1.92+ default for better quality)
-    font_cfg.OversampleV = 0;  // Auto (ImGui 1.92+ default for better quality)
-    font_cfg.PixelSnapH = true;  // Better antialiasing
+    font_cfg.SizePixels = DEFAULT_FONT_SIZE;
+    font_cfg.RasterizerDensity = scale_factor;
+    font_cfg.OversampleH = 0;
+    font_cfg.OversampleV = 0;
+    font_cfg.PixelSnapH = true;
 
     // Load and merge fontawesome to current font
     // NOTE: ImGui 1.92+ changed font merging behavior - now searches FIRST font with glyph
@@ -100,13 +100,14 @@ UIController::UIController(Camera *camera, Config *conf) : camera_(camera), conf
     const ImWchar icons_range[] = {ICON_MIN_FA, ICON_MAX_FA, 0};
     ImFontConfig icons_config;
     icons_config.MergeMode = true;
-    icons_config.RasterizerDensity = scale_factor;  // Same Retina handling for icons
-    icons_config.OversampleH = 0;  // Auto for better quality
-    icons_config.OversampleV = 0;  // Auto for better quality
-    icons_config.PixelSnapH = false;  // Better antialiasing for icons
-    icons_config.FontDataOwnedByAtlas = false;  // Don't free embedded data
-    io.Fonts->AddFontFromMemoryTTF(const_cast<void*>(static_cast<const void*>(fontawesome_ttf)),
-                                   fontawesome_ttf_size, FONT_AWESOME_FONT_SIZE, &icons_config, icons_range);
+    icons_config.RasterizerDensity = scale_factor;
+    icons_config.OversampleH = 0;
+    icons_config.OversampleV = 0;
+    icons_config.PixelSnapH = false;
+    icons_config.FontDataOwnedByAtlas = false;
+    io.Fonts->AddFontFromMemoryTTF(const_cast<void *>(static_cast<const void *>(fontawesome_ttf)),
+                                   fontawesome_ttf_size, FONT_AWESOME_FONT_SIZE, &icons_config,
+                                   icons_range);
     // No need for FontScaleMain with RasterizerDensity approach
     // Need to call it here, otherwise fontawesome glyph ranges would be corrupted on Windows
     ImGui_ImplOpenGL3_CreateDeviceObjects();
