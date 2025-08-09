@@ -25,6 +25,7 @@ static const char *NETWORK_HOST = "127.0.0.1";
 static const uint16_t NETWORK_PORT = 9111;
 
 GLFWwindow *setup_window();
+void set_window_icon(GLFWwindow *window);
 void prepare_and_run_game_loop(GLFWwindow *window);
 
 int main(int argc, char **argv) {
@@ -100,26 +101,35 @@ GLFWwindow *setup_window() {
         return nullptr;
     }
 
-    int width;
-    int height;
-    int nr_channels;
-    // Load embedded icon
-    auto icon_data =
-        stbi_load_from_memory(icon_png, icon_png_size, &width, &height, &nr_channels, 0);
-    if (!icon_data) {
-        LOG_ERROR("Cannot load embedded application icon");
-        return nullptr;
-    }
-    GLFWimage icon{width, height, icon_data};
-    LOG_INFO("Setup application icon");
-    glfwSetWindowIcon(window, 1, &icon);
-    stbi_image_free(icon_data);
+    set_window_icon(window);
 
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(
         window, [](GLFWwindow *, int width, int height) { glViewport(0, 0, width, height); });
 
     return window;
+}
+
+void set_window_icon([[maybe_unused]] GLFWwindow *window) {
+    int width;
+    int height;
+    int nr_channels;
+    auto icon_data =
+        stbi_load_from_memory(icon_png, icon_png_size, &width, &height, &nr_channels, 0);
+    if (!icon_data) {
+        LOG_ERROR("Cannot load embedded application icon");
+        return;
+    }
+
+#ifdef __APPLE__
+    LOG_INFO("Icon loaded, skipping setup on MacOS");
+#else
+    LOG_INFO("Setup application icon");
+    GLFWimage icon{width, height, icon_data};
+    glfwSetWindowIcon(window, 1, &icon);
+#endif
+
+    stbi_image_free(icon_data);
 }
 
 void prepare_and_run_game_loop(GLFWwindow *window) {
