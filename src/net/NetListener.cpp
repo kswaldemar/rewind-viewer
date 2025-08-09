@@ -74,10 +74,8 @@ void NetListener::serve_connection(CActiveSocket *client) {
         }
         if (nbytes > 0) {
             auto data = client->GetData();
-            // todo: Maybe remove that zero, because it doesn't make sense in case of binary data
-            //  same for debug print
-            data[nbytes] = '\0';
-            LOG_V9("NetClient:: Message %d bytes, '%s'", nbytes, data);
+            LOG_V9("NetClient:: Message %d bytes, '%.*s'", nbytes, static_cast<int>(nbytes),
+                   reinterpret_cast<const char *>(data));
             handler_->set_immediate_mode(immediate_mode_.load());
             // Strategy can send several messages in one block
             handler_->handle_message(data, static_cast<uint32_t>(nbytes));

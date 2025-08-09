@@ -9,6 +9,7 @@ add_subdirectory(3rdparty/glad)
 add_subdirectory(3rdparty/stb_image)
 add_subdirectory(3rdparty/csimplesocket)
 add_subdirectory(3rdparty/json)
+add_subdirectory(3rdparty/rapidjson)
 add_subdirectory(3rdparty/loguru)
 
 if(UNIX)

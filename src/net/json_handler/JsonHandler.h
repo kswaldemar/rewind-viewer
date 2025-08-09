@@ -1,7 +1,6 @@
 #include <net/ProtoHandler.h>
 
-#include <nlohmann/json.hpp>
-
+#include <rapidjson/fwd.h>
 #include <cstdint>
 
 class JsonHandler : public ProtoHandler {
@@ -11,7 +10,8 @@ class JsonHandler : public ProtoHandler {
     void handle_message(const uint8_t *data, uint32_t nbytes) override;
 
  private:
-    void process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end);
+    void process_json_message(const rapidjson::Document& doc);
 
     std::string fragment_msg_;
+    size_t buffer_start_ = 0;
 };

@@ -4,24 +4,43 @@
 #include <net/PrimitiveType.h>
 #include <viewer/FrameEditor.h>
 
-#include <nlohmann/json.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/reader.h>
+#include <rapidjson/stream.h>
+#include <rapidjson/error/en.h>
 
 #include <cassert>
 
 namespace {
 
-/// Helper function
-template<typename T>
-inline T value_or_default(const nlohmann::json &j, const std::string &name, T def_val) {
-    const auto it = j.find(name);
-    if (it != j.end()) {
-        return it->get<T>();
+/// Helper functions
+bool value_or_default(const rapidjson::Value &j, const char* name, bool def_val) {
+    if (auto it = j.FindMember(name); it != j.MemberEnd()) {
+        return it->value.GetBool();
     }
     return def_val;
 }
 
-bool contains(const nlohmann::json &j, const std::string &key) {
-    return j.find(key) != j.end();
+bool contains(const rapidjson::Value &j, const char* key) {
+    return j.HasMember(key);
+}
+
+std::vector<float> convert_to_float_array(const rapidjson::Value& v) {
+    std::vector<float> result;
+    result.reserve(v.Size());
+    for (const auto& elem : v.GetArray()) {
+        result.push_back(elem.GetFloat());
+    }
+    return result;
+}
+
+std::vector<uint32_t> convert_to_uint_array(const rapidjson::Value& v) {
+    std::vector<uint32_t> result;
+    result.reserve(v.Size());
+    for (const auto& elem : v.GetArray()) {
+        result.push_back(elem.GetUint());
+    }
+    return result;
 }
 
 void normalize(glm::vec2 &min_corner, glm::vec2 &max_corner) {
@@ -129,22 +148,22 @@ glm::vec2 convert_position(const GeoPoints &points) {
  * Json deserialization
  */
 
-inline void from_json(const nlohmann::json &j, ColorShape &p) {
-    p.color = convert_color(j["color"].get<uint32_t>());
+inline void from_json(const rapidjson::Value &j, ColorShape &p) {
+    p.color = convert_color(j["color"].GetUint());
     p.fill = value_or_default(j, "fill", true);
 }
 
-[[maybe_unused]] inline void from_json(const nlohmann::json &j, Circle &p) {
+[[maybe_unused]] inline void from_json(const rapidjson::Value &j, Circle &p) {
     from_json(j, static_cast<ColorShape &>(p));
-    p.radius = j["r"].get<float>();
-    p.center = convert_position(j["p"].get<GeoPoints>());
+    p.radius = j["r"].GetFloat();
+    p.center = convert_position(convert_to_float_array(j["p"]));
 }
 
-[[maybe_unused]] inline void from_json(const nlohmann::json &j, Popup &p) {
+[[maybe_unused]] inline void from_json(const rapidjson::Value &j, Popup &p) {
     if (contains(j, "tl") && contains(j, "br")) {
         p.is_round = false;
-        auto min_corner = convert_position(j["tl"].get<GeoPoints>());
-        auto max_corner = convert_position(j["br"].get<GeoPoints>());
+        auto min_corner = convert_position(convert_to_float_array(j["tl"]));
+        auto max_corner = convert_position(convert_to_float_array(j["br"]));
         normalize(min_corner, max_corner);
 
         const auto diff = max_corner - min_corner;
@@ -153,18 +172,18 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
         p.h = diff.y;
     } else if (contains(j, "r") && contains(j, "p")) {
         p.is_round = true;
-        p.radius = j["r"].get<float>();
-        p.center = convert_position(j["p"].get<GeoPoints>());
+        p.radius = j["r"].GetFloat();
+        p.center = convert_position(convert_to_float_array(j["p"]));
     } else {
         throw ParsingError{"Popup should contain either fields [p, r] or [tl, br]"};
     }
 
-    p.text = j["text"].get<std::string>();
+    p.text = std::string(j["text"].GetString());
 }
 
-[[maybe_unused]] inline void from_json(const nlohmann::json &j, Rectangle &p) {
-    if (j["color"].is_array()) {
-        const auto colors = j["color"].get<std::vector<uint32_t>>();
+[[maybe_unused]] inline void from_json(const rapidjson::Value &j, Rectangle &p) {
+    if (j["color"].IsArray()) {
+        const auto colors = convert_to_uint_array(j["color"]);
         if (colors.size() != 4) {
             throw ParsingError{"Rectangle expect exactly 4 colors for gradient setup, got " +
                                std::to_string(colors.size())};
@@ -173,25 +192,25 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
             p.colors[i] = convert_color(colors[i]);
         }
     } else {
-        auto color = convert_color(j["color"].get<uint32_t>());
+        auto color = convert_color(j["color"].GetUint());
         p.colors.fill(color);
     }
     p.fill = value_or_default(j, "fill", true);
 
-    p.top_left = convert_position(j["tl"].get<GeoPoints>());
-    p.bottom_right = convert_position(j["br"].get<GeoPoints>());
+    p.top_left = convert_position(convert_to_float_array(j["tl"]));
+    p.bottom_right = convert_position(convert_to_float_array(j["br"]));
     normalize(p.top_left, p.bottom_right);
 }
 
-[[maybe_unused]] inline void from_json(const nlohmann::json &j, Polyline &p) {
+[[maybe_unused]] inline void from_json(const rapidjson::Value &j, Polyline &p) {
     from_json(j, static_cast<ColorShape &>(p));
 
-    p.points = convert_check(j["points"].get<GeoPoints>());
+    p.points = convert_check(convert_to_float_array(j["points"]));
 }
 
-[[maybe_unused]] inline void from_json(const nlohmann::json &j, Triangle &p) {
-    if (j["color"].is_array()) {
-        const auto colors = j["color"].get<std::vector<uint32_t>>();
+[[maybe_unused]] inline void from_json(const rapidjson::Value &j, Triangle &p) {
+    if (j["color"].IsArray()) {
+        const auto colors = convert_to_uint_array(j["color"]);
         if (colors.size() != 3) {
             throw ParsingError{"Triangle expect exactly 3 colors for gradient setup, got " +
                                std::to_string(colors.size())};
@@ -200,12 +219,12 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
             p.colors[i] = convert_color(colors[i]);
         }
     } else {
-        auto color = convert_color(j["color"].get<uint32_t>());
+        auto color = convert_color(j["color"].GetUint());
         p.colors.fill(color);
     }
     p.fill = value_or_default(j, "fill", true);
 
-    p.points = convert_check(j["points"].get<GeoPoints>());
+    p.points = convert_check(convert_to_float_array(j["points"]));
     if (p.points.size() != 3) {
         throw ParsingError{"Triangle should be created using exactly 3 points, got " +
                            std::to_string(p.points.size())};
@@ -215,37 +234,38 @@ inline void from_json(const nlohmann::json &j, ColorShape &p) {
 }  // namespace pod
 
 void JsonHandler::handle_message(const uint8_t *data, uint32_t nbytes) {
-    const uint8_t *beg = data;
-    const uint8_t *block_end = data + nbytes;
-    while (true) {
-        const uint8_t *end = std::find(beg, block_end, '}');
-        if (end == block_end) {
-            if (beg != block_end) {
-                fragment_msg_ = std::string(beg, end);
-            }
+    constexpr size_t kBufferMaxSize = 4096;
+    if (fragment_msg_.size() + nbytes > kBufferMaxSize) {
+        fragment_msg_.erase(0, buffer_start_);
+        buffer_start_ = 0;
+    }
+
+    // copy to internal buffer, performance cost
+    fragment_msg_.append(reinterpret_cast<const char*>(data), nbytes);
+
+    size_t processed = 0;
+    size_t available_data = fragment_msg_.size() - buffer_start_;
+    while (processed < available_data) {
+        rapidjson::Document doc;
+        rapidjson::StringStream ss(fragment_msg_.c_str() + buffer_start_ + processed);
+        doc.ParseStream<rapidjson::kParseStopWhenDoneFlag>(ss);
+
+        if (doc.HasParseError()) {
+            // Not enough data for complete JSON or invalid fragment; wait for more data
             break;
         }
-        ++end;
-        // Support fragmented messages
-        if (fragment_msg_.empty()) {
-            process_json_message(beg, end);
-        } else {
-            fragment_msg_ += std::string(beg, end);
-            process_json_message(
-                reinterpret_cast<const uint8_t *>(fragment_msg_.data()),
-                reinterpret_cast<const uint8_t *>(fragment_msg_.data() + fragment_msg_.size()));
-            fragment_msg_.clear();
-        }
-        beg = end;
+
+        process_json_message(doc);
+        processed += static_cast<size_t>(ss.Tell());
     }
+
+    buffer_start_ += processed;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t *chunk_end) {
-    using namespace nlohmann;
+void JsonHandler::process_json_message(const rapidjson::Document& j) {
     try {
-        auto j = json::parse(chunk_begin, chunk_end);
-        PrimitiveType type = primitve_type_from_str(j["type"]);
+        PrimitiveType type = primitve_type_from_str(std::string(j["type"].GetString()));
 
         auto &ctx = get_frame_editor().context();
 
@@ -256,35 +276,40 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             }
             case PrimitiveType::CIRCLE: {
                 LOG_V8("JsonHandler::Circle detected");
-                auto obj = j.get<pod::Circle>();
+                pod::Circle obj;
+                from_json(j, obj);
                 ctx.add_circle(obj.center, obj.radius, obj.color, obj.fill);
                 break;
             }
             case PrimitiveType::RECTANGLE: {
                 LOG_V8("JsonHandler::Rectangle detected");
-                auto obj = j.get<pod::Rectangle>();
+                pod::Rectangle obj;
+                from_json(j, obj);
                 ctx.add_rectangle(obj.top_left, obj.bottom_right, obj.colors, obj.fill);
                 break;
             }
             case PrimitiveType::TRIANGLE: {
                 LOG_V8("JsonHandler::Triangle detected");
-                auto obj = j.get<pod::Triangle>();
+                pod::Triangle obj;
+                from_json(j, obj);
                 ctx.add_triangle(obj.points[0], obj.points[1], obj.points[2], obj.colors, obj.fill);
                 break;
             }
             case PrimitiveType::POLYLINE: {
                 LOG_V8("JsonHandler::Polyline detected");
-                auto obj = j.get<pod::Polyline>();
+                pod::Polyline obj;
+                from_json(j, obj);
                 ctx.add_polyline(obj.points, obj.color);
                 break;
             }
             case PrimitiveType::MESSAGE:
                 LOG_V8("JsonHandler::Message");
-                get_frame_editor().add_user_text(j["message"].get<std::string>());
+                get_frame_editor().add_user_text(std::string(j["message"].GetString()));
                 break;
             case PrimitiveType::POPUP: {
                 LOG_V8("JsonHandler::Popup");
-                auto obj = j.get<pod::Popup>();
+                pod::Popup obj;
+                from_json(j, obj);
                 if (obj.is_round) {
                     get_frame_editor().add_round_popup(obj.center, obj.radius, std::move(obj.text));
                 } else {
@@ -295,16 +320,14 @@ void JsonHandler::process_json_message(const uint8_t *chunk_begin, const uint8_t
             }
             case PrimitiveType::OPTIONS: {
                 LOG_V8("JsonHandler::Layer");
-                auto it = j.find("permanent");
                 bool found_option = false;
-                if (it != j.end()) {
-                    use_permanent_frame(it->get<bool>());
+                if (j.HasMember("permanent")) {
+                    use_permanent_frame(j["permanent"].GetBool());
                     found_option = true;
                 }
 
-                it = j.find("layer");
-                if (it != j.end()) {
-                    set_layer(it->get<size_t>());
+                if (j.HasMember("layer")) {
+                    set_layer(j["layer"].GetUint64());
                     found_option = true;
                 }
 
