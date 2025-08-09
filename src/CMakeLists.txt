@@ -67,7 +67,7 @@ add_dependencies(${PROJECT_NAME} Embedded_resources)
 
 target_link_libraries(${PROJECT_NAME}
     Glad glfw glm
-    ImGui stb_image csimplesocket nljson loguru rapidjson)
+    ImGui stb_image csimplesocket loguru rapidjson)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
