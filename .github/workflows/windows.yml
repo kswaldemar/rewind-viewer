@@ -1,28 +1,41 @@
 name: Windows
 
-on: [push]
+on: 
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v4
       with:
         submodules: true
 
+    - name: Setup CMake
+      uses: jwlawson/actions-setup-cmake@v2
+      with:
+        cmake-version: '3.30.x'
+
+    - name: Setup MSVC
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A x64
 
     - name: Build
-      run: cmake --build build --target rewindviewer --parallel 6 --config Release
-    
-    - name: Copy assets
-      run: cp -R ./resources ./build/Release
-      shell: bash
+      run: cmake --build build --target rewindviewer --parallel $env:NUMBER_OF_PROCESSORS --config Release
     
     - name: Upload binary
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
         name: rewindviewer_win
-        path: build/Release
+        path: |
+          build/Release/*.exe
+          build/Release/*.dll

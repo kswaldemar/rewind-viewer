@@ -1,10 +1,9 @@
 # Rewind viewer
 
 [![MIT License](https://img.shields.io/github/license/kswaldemar/rewind-viewer.svg?style=flat-square)](./LICENSE)
-[![C++ standard](https://img.shields.io/badge/C++-14-blue.svg?style=flat-square)](https://isocpp.org/)
+[![C++ standard](https://img.shields.io/badge/C++-20-blue.svg?style=flat-square)](https://isocpp.org/)
 [![OpenGL](https://img.shields.io/badge/OpenGL-3.3-green.svg?style=flat-square)](https://www.khronos.org/opengl/)
 [![RAIC](https://img.shields.io/badge/Russian%20AI%20Cup-2017-yellow.svg?style=flat-square)](http://russianaicup.ru/)
-[![Build status](https://travis-ci.org/kswaldemar/rewind-viewer.svg?branch=master)](https://travis-ci.org/kswaldemar/rewind-viewer)
 [![Linux](https://github.com/kswaldemar/rewind-viewer/workflows/Linux/badge.svg)](https://github.com/kswaldemar/rewind-viewer/actions?query=workflow%3ALinux)
 [![Windows](https://github.com/kswaldemar/rewind-viewer/workflows/Windows/badge.svg)](https://github.com/kswaldemar/rewind-viewer/actions?query=workflow%3AWindows)
 [![GitHub Releases](https://img.shields.io/github/release/kswaldemar/rewind-viewer.svg?style=flat-square)](https://github.com/kswaldemar/rewind-viewer/releases)
@@ -30,7 +29,7 @@ send all data (like buildings, units etc.) and you can draw only data visible by
 
 Source code with changelog for significant releases can be found in [github releases page](https://github.com/kswaldemar/rewind-viewer/releases).
 
-Prebuilt windows binaries for other version, such as bugfixes [can be found here](https://github.com/kswaldemar/rewind-viewer/issues/23). It is required to have x86 C++ Redistributable for Visual Studio 2015 installed to run prebuild windows binaries.
+Prebuilt windows binaries for other versions, such as bugfixes [can be found here](https://github.com/kswaldemar/rewind-viewer/issues/23). Recent builds may require Visual Studio C++ Redistributable to run prebuilt windows binaries.
 
 
 ## Build
@@ -52,7 +51,7 @@ mkdir build && cd build
 cmake ..
 cmake --build . --config Release
 ```
-*Note*: Compiler with c++14 support needed. That means Visual Studio 2015 or higher on Windows.
+*Note*: Compiler with C++20 support needed. That means Visual Studio 2022 or higher on Windows.
 
 
 ## Strategy integration
