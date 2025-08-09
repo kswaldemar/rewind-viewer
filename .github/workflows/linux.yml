@@ -15,7 +15,7 @@ jobs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libegl1-mesa-dev
+        sudo apt-get install -y libglu1-mesa-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libegl1-mesa-dev libwayland-dev libxkbcommon-dev wayland-protocols
       
     - name: Checkout repository
       uses: actions/checkout@v4

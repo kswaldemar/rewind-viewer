@@ -1,8 +1,14 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.15)
 project(rewind-viewer LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(EmbedResources)
+
+# Ensure consistent MSVC runtime on Windows: use dynamic runtime (/MD, /MDd)
+if (MSVC)
+    cmake_policy(SET CMP0091 NEW)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+endif()
 
 #3rdparites
 add_subdirectory(3rdparty/glad)

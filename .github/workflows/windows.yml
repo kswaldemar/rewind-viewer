@@ -1,6 +1,6 @@
 name: Windows
 
-on: 
+on:
   push:
     branches: [ main, develop ]
   pull_request:
@@ -27,11 +27,11 @@ jobs:
         arch: x64
 
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -G "Visual Studio 17 2022" -A x64
+      run: cmake -S . -B build -G "Ninja Multi-Config"
 
     - name: Build
-      run: cmake --build build --target rewindviewer --parallel $env:NUMBER_OF_PROCESSORS --config Release
-    
+      run: cmake --build build --target rewindviewer --parallel --config Release
+
     - name: Upload binary
       uses: actions/upload-artifact@v4
       with:
