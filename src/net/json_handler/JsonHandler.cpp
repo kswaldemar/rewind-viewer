@@ -102,7 +102,7 @@ struct Triangle {
 };
 
 std::vector<glm::vec2> convert_check(const GeoPoints &points) {
-    if (!points.size() % 2 != 0) {
+    if (points.size() % 2 != 0) {
         throw ParsingError{
             "Invalid geopoints format: number of elements should be divisible by 2, got" +
             std::to_string(points.size())};
