@@ -108,7 +108,7 @@ Key 3rd party libraries in `3rdparty/`:
 - **GLFW**: Window management and input
 - **ImGui**: Immediate mode UI framework
 - **GLM**: Mathematics library for graphics
-- **nlohmann/json**: JSON parsing
+- **RapidJSON**: JSON parsing
 - **loguru**: Structured logging
 - **CSimpleSocket**: TCP networking
 - **GLAD**: OpenGL function loader
